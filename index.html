@@ -1,4 +1,9 @@
-<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>조공부터 소장까지</title>
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>조공부터 소장까지</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+KR:wght@400;500;700;900&display=swap">
@@ -254,7 +259,9 @@ details.dev summary{cursor:pointer}
   h3{font-size:16px}
 }
 @media (prefers-reduced-motion:reduce){.btn{transition:none}}
-</style></head><body>
+</style>
+</head>
+<body>
 
 <div id="wrap">
   <canvas id="cv" aria-label="게임 화면"></canvas>
@@ -1955,7 +1962,7 @@ function updateFx(dt){
     else if(f.type==='breath'){f.y-=40*dt; f.x+=Math.sin(f.t*6)*10*dt;}
     else if(f.type==='stink'){
       f.r+=240*dt;
-      if(!f.hit&&!run.ending){const d=Math.hypot(P.x-f.x,P.y-f.y); if(Math.abs(d-f.r)<16){f.hit=true; hurtPlayer(f.dmg);}}
+      if(!f.hit&&!run.ending&&f.r>0){const d=Math.hypot(P.x-f.x,P.y-f.y); if(Math.abs(d-f.r)<16){f.hit=true; hurtPlayer(f.dmg);}}
       if(f.r>=f.maxR) f.t=f.life;
     }
   }
@@ -2239,10 +2246,10 @@ function render(dt,time){
   // 공격 범위
   ctx.strokeStyle='rgba(255,194,26,.18)'; ctx.lineWidth=2/z; ctx.setLineDash([10,10]); ctx.lineDashOffset=-time*20;
   ctx.beginPath(); ctx.arc(P.x,P.y,ST.range,0,TAU); ctx.stroke(); ctx.setLineDash([]);
-  for(const f of run.fx) if(f.type==='stink'){
+  for(const f of run.fx) if(f.type==='stink'&&f.r>0){ // 두 번째 파동은 반지름이 음수에서 출발(지연) — 음수 반지름으로 arc를 부르면 오류
     const a=1-f.r/f.maxR;
     ctx.strokeStyle=`rgba(190,230,90,${.55*a+.1})`; ctx.lineWidth=14; ctx.beginPath(); ctx.arc(f.x,f.y,f.r,0,TAU); ctx.stroke();
-    ctx.strokeStyle=`rgba(150,90,180,${.4*a})`; ctx.lineWidth=4; ctx.beginPath(); ctx.arc(f.x,f.y,f.r-10,0,TAU); ctx.stroke();
+    ctx.strokeStyle=`rgba(150,90,180,${.4*a})`; ctx.lineWidth=4; ctx.beginPath(); ctx.arc(f.x,f.y,Math.max(0,f.r-10),0,TAU); ctx.stroke();
   }
   for(const c of run.crates) if(vis(c.x,c.y,30)) drawCrate(c);
   for(const it of run.items) if(vis(it.x,it.y,30)) drawItem(it,time);
@@ -2780,7 +2787,8 @@ function frame(now){
   if(!SIM.on){
     let gdt=dt; // 보스·정예 처치 순간 잠깐 느려졌다가 부드럽게 정상 속도로 (화면 연출 전용, 시뮬레이션에는 영향 없음)
     if(state==='play'&&run&&run.slowmo>0){ const k=run.slowmo; run.slowmo=Math.max(0,k-dt); gdt=dt*(k>.25?.3:.3+.7*(1-k/.25)); }
-    if(state==='play'&&run) update(gdt); render(gdt,clock); }
+    try{ if(state==='play'&&run) update(gdt); render(gdt,clock); }
+    catch(err){ if(!frame.warned){ frame.warned=true; console.error('프레임 오류(계속 진행):',err); } try{ ctx.setLineDash([]); ctx.globalAlpha=1; ctx.globalCompositeOperation='source-over'; }catch(e){} } }
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
@@ -2816,4 +2824,6 @@ Object.defineProperty(window,'__JOGONG_SIM__',{value:{
 
 })();
 </script>
-</body></html>
+
+</body>
+</html>
