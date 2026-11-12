@@ -1,9 +1,7 @@
-<!doctype html>
-<html lang="ko">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>조공부터 소장까지</title>
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>조공부터 소장까지</title>
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+KR:wght@400;500;700;900&display=swap">
@@ -36,6 +34,16 @@ input{-webkit-user-select:text;user-select:text}
 #btnSound{position:absolute;top:52px;right:62px;width:40px;height:40px;border-radius:6px;border:1px solid var(--line);background:rgba(6,22,36,.7);color:var(--ink);display:grid;place-items:center;cursor:pointer;z-index:5;padding:0}
 #btnPause[hidden]+#btnSound{display:none}
 @media (min-width:641px){#btnSound{top:100px;right:14px}}
+/* 전체화면 버튼: 게임 중(소리 버튼 옆), 사무소 헤더, 로그인 화면, 일시정지 화면 */
+#btnFull{position:absolute;top:52px;right:110px;width:40px;height:40px;border-radius:6px;border:1px solid var(--line);background:rgba(6,22,36,.7);color:var(--ink);display:grid;place-items:center;cursor:pointer;z-index:5;padding:0}
+#btnPause[hidden]~#btnFull{display:none}
+@media (min-width:641px){#btnFull{top:148px;right:14px}}
+.fsico{width:20px;height:20px;display:block}
+.fsico .c{display:none}.fs-on .fsico .e{display:none}.fs-on .fsico .c{display:inline}
+#btnOfFull{padding:6px 9px;display:inline-grid;place-items:center}
+.nofs #btnFull,.nofs #btnOfFull,.nofs .fsonly{display:none!important}
+.fshint{display:none;font-size:12px;color:var(--muted);line-height:1.6}
+.nofs .fshint{display:block}
 .sndico{width:20px;height:20px;display:block}
 .sndico .x{display:none}.muted .sndico .w{display:none}.muted .sndico .x{display:inline}
 #btnOfSnd{padding:6px 9px;display:inline-grid;place-items:center}
@@ -248,7 +256,7 @@ details.dev summary{cursor:pointer}
   .tabs .long{display:none}.tabs .short{display:inline}
   .tabs .badge{margin-left:3px;padding:0 5px}
   .tabbody{order:3;padding:12px 12px 16px}
-  .office-cta{order:4;flex-direction:column;align-items:stretch;gap:6px;padding:8px 12px 10px;border-top:1px solid var(--line);border-bottom:0}
+  .office-cta{order:4;flex-direction:column;align-items:stretch;gap:6px;padding:8px 12px calc(10px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line);border-bottom:0}
   .office-cta .btn{width:100%;font-size:18px;padding:13px}
   .office-cta p{order:-1;min-width:0;font-size:12px;text-align:center}
   .saveinfo{text-align:center;font-size:10px}
@@ -276,14 +284,13 @@ details.dev summary{cursor:pointer}
 .enhauto select{padding:8px 10px;border-radius:4px;border:1px solid var(--line);background:#06131e;color:var(--ink);font:inherit;font-size:14px}
 .enhauto small{font-size:12px;color:var(--muted);line-height:1.5}
 @media (prefers-reduced-motion:reduce){.btn{transition:none}}
-</style>
-</head>
-<body>
+</style></head><body>
 
 <div id="wrap">
   <canvas id="cv" aria-label="게임 화면"></canvas>
   <button id="btnPause" type="button" aria-label="일시정지" hidden><span></span></button>
   <button id="btnSound" type="button" aria-label="소리 끄기/켜기"><svg class="sndico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><g class="w" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M16 9a4 4 0 0 1 0 6"/><path d="M18.5 6.5a7.5 7.5 0 0 1 0 11"/></g><g class="x" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M16 9l6 6M22 9l-6 6"/></g></svg></button>
+  <button id="btnFull" type="button" aria-label="전체화면" title="전체화면 (F)"><svg class="fsico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><g class="e"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/></g><g class="c"><path d="M9 4v5H4M20 9h-5V4M15 20v-5h5M4 15h5v5"/></g></svg></button>
 
   <section id="login" class="overlay">
     <div class="title-box">
@@ -303,7 +310,9 @@ details.dev summary{cursor:pointer}
         <div class="msg" id="authMsg" role="status"></div>
         <div class="mode" id="modeLine"><i></i><span>저장소 확인 중…</span></div>
       </form>
-      <div class="controls">이동 <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> 또는 방향키 · 모바일은 화면을 누른 채 끌기 · 일시정지 <kbd>Esc</kbd> · 공격과 경험치 회수는 자동</div>
+      <div class="controls">이동 <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> 또는 방향키 · 모바일은 화면을 누른 채 끌기 · 일시정지 <kbd>Esc</kbd> · 전체화면 <kbd>F</kbd> · 공격과 경험치 회수는 자동</div>
+      <div class="row fsonly"><button class="btn ghost small fsbtn" type="button" id="btnLgFull"><svg class="fsico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-4px;margin-right:6px"><g class="e"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/></g><g class="c"><path d="M9 4v5H4M20 9h-5V4M15 20v-5h5M4 15h5v5"/></g></svg><span class="fslabel">전체화면으로 하기</span></button></div>
+      <p class="fshint">이 화면에서는 전체화면을 쓸 수 없습니다. 휴대폰은 브라우저의 공유 → '홈 화면에 추가'로 저장해 열면 주소창 없이 넓게 플레이할 수 있습니다.</p>
       <details class="dev">
         <summary>테스트 시작 (기록 저장 안 됨, 레벨에 맞춰 스킬·무기 자동 세팅)</summary>
         <div class="devrow">
@@ -324,6 +333,7 @@ details.dev summary{cursor:pointer}
           <div class="chip gold"><small>골드</small><b id="ofGold">0</b></div>
           <div class="chip sp"><small>스킬 포인트</small><b id="ofSp">0</b></div>
           <button class="btn ghost small" type="button" id="btnOfSnd" aria-label="소리 끄기/켜기"><svg class="sndico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><g class="w" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M16 9a4 4 0 0 1 0 6"/><path d="M18.5 6.5a7.5 7.5 0 0 1 0 11"/></g><g class="x" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M16 9l6 6M22 9l-6 6"/></g></svg></button>
+          <button class="btn ghost small" type="button" id="btnOfFull" aria-label="전체화면" title="전체화면 (F)"><svg class="fsico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><g class="e"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/></g><g class="c"><path d="M9 4v5H4M20 9h-5V4M15 20v-5h5M4 15h5v5"/></g></svg></button>
           <button class="btn ghost small" type="button" id="btnLogout">로그아웃</button>
         </div>
       </div>
@@ -1747,6 +1757,7 @@ window.addEventListener('keydown',e=>{
   const k=e.key.toLowerCase();
   if(state==='play'&&['arrowup','arrowdown','arrowleft','arrowright',' '].includes(k)) e.preventDefault();
   keys.add(k);
+  if(k==='f'&&!e.repeat&&!e.ctrlKey&&!e.metaKey&&!e.altKey&&!(e.target&&e.target.tagName==='TEXTAREA')) toggleFull();
   if((k==='escape'||k==='p')&&(state==='play'||state==='pause')) togglePause();
   if(state==='boon'&&['1','2','3'].includes(k)){const b=document.querySelectorAll('#boonBody .card')[+k-1]; if(b) b.click();}
   if(state==='boon'&&k==='r'&&!e.repeat){const b=$('#btnReroll'); if(b&&!b.disabled) b.click();}
@@ -3164,13 +3175,15 @@ function togglePause(){
         <div><small>공격 범위</small><b>${Math.round(st.range)}</b></div><div><small>골드</small><b>${fmt(save.gold)}</b></div></div>
       <div class="slot"><span id="pIcon"></span><div class="meta"><small>장착 무기</small><b>${WEAPON[w.type].name} +${w.plus}</b><small>${WEAPON[w.type].mName}: ${WEAPON[w.type].mDesc(Math.round(st.magicDmg/st.dmg*100))}</small></div></div>
       <div class="row"><button class="btn" id="btnResume" type="button">계속하기</button>
-        <button class="btn ghost" id="btnQuit" type="button">사무소로 (이번 스테이지 포기)</button></div>
+        <button class="btn ghost" id="btnQuit" type="button">사무소로 (이번 스테이지 포기)</button>
+        <button class="btn ghost small fsonly" id="btnPsFull" type="button"><span class="fslabel">${FS.el()?'전체화면 끄기':'전체화면으로 하기'}</span></button><span class="msg" id="fsMsg" role="status"></span></div>
       ${save.sp?`<div class="note">사용하지 않은 스킬 포인트 ${save.sp}개가 있습니다. 스테이지를 마친 뒤 사무소에서 사용하세요.</div>`:''}
       ${buildSummary(st)}
       <label class="vol" style="grid-template-columns:auto 1fr;cursor:pointer"><input type="checkbox" id="optDmgNum" ${UIP.dmgNum?'checked':''} style="width:18px;height:18px;margin:0"><span>타격 피해 숫자 표시 (치명타 숫자는 항상 표시)</span></label>
       ${volHtml()}`;
     show('#pause'); bindVol($('#pauseBody')); $('#optDmgNum').onchange=e=>{ UIP.dmgNum=e.target.checked; saveUIP(); }; SND.duck(true); $('#pIcon').appendChild(pipeCanvas(w.type,w.plus,72,28));
     $('#btnResume').onclick=togglePause; $('#btnResume').focus({preventScroll:true});
+    $('#btnPsFull').onclick=()=>toggleFull(); syncFull();
     let armed=false; $('#btnQuit').onclick=e=>{ if(!armed){armed=true; e.target.textContent='한 번 더 누르면 포기합니다'; return;} persist(); openOffice(); };
   }else if(state==='pause'){ hideAll(); state='play'; SND.duck(false); }
 }
@@ -3189,6 +3202,28 @@ function syncSnd(){ const m=SND.pref.mute; for(const id of ['#btnSound','#btnOfS
 $('#btnSound').onclick=e=>{ SND.toggleMute(); syncSnd(); e.currentTarget.blur(); };
 $('#btnOfSnd').onclick=()=>{ SND.toggleMute(); syncSnd(); };
 syncSnd();
+/* 전체화면: 버튼을 누른 순간(사용자 동작 안)에 요청. 막힌 환경(아이폰 Safari·일부 앱 내 보기·권한 없는 iframe)에서는 버튼을 숨기고 '홈 화면에 추가' 안내 */
+const FS={
+  el:()=>document.fullscreenElement||document.webkitFullscreenElement||null,
+  ok:()=>{ const d=document.documentElement; return !!((document.fullscreenEnabled||document.webkitFullscreenEnabled)&&(d.requestFullscreen||d.webkitRequestFullscreen)); },
+};
+function fsMsg(t){ if(state==='play') toast('전체화면',t,'#9fe8ff'); else if(state==='office') toastOffice(t); else if(state==='login') authMsg(t); else { const m=$('#fsMsg'); if(m) m.textContent=t; } }
+function toggleFull(){
+  try{
+    if(FS.el()){ const x=document.exitFullscreen||document.webkitExitFullscreen; if(x){ const p=x.call(document); if(p&&p.catch) p.catch(()=>{}); } return; }
+    if(!FS.ok()){ fsMsg('이 화면에서는 전체화면을 쓸 수 없습니다. 휴대폰은 공유 → 홈 화면에 추가로 넓게 플레이할 수 있습니다.'); return; }
+    const d=document.documentElement, rq=d.requestFullscreen||d.webkitRequestFullscreen;
+    const p=rq.call(d,{navigationUI:'hide'}); if(p&&p.catch) p.catch(()=>fsMsg('브라우저가 전체화면을 허용하지 않았습니다.'));
+  }catch(e){ fsMsg('브라우저가 전체화면을 허용하지 않았습니다.'); }
+}
+function syncFull(){
+  const on=!!FS.el();
+  document.documentElement.classList.toggle('nofs',!FS.ok()&&!on);
+  for(const id of ['#btnFull','#btnOfFull','#btnLgFull','#btnPsFull']){ const el=$(id); if(!el) continue; el.classList.toggle('fs-on',on); el.setAttribute('aria-label',on?'전체화면 끄기':'전체화면'); el.title=on?'전체화면 끄기 (F)':'전체화면 (F)'; const lb=el.querySelector('.fslabel'); if(lb) lb.textContent=on?'전체화면 끄기':'전체화면으로 하기'; }
+}
+['fullscreenchange','webkitfullscreenchange'].forEach(ev=>document.addEventListener(ev,()=>{ syncFull(); resize(); setTimeout(resize,250); }));
+for(const id of ['#btnFull','#btnOfFull','#btnLgFull']) $(id).addEventListener('click',e=>{ toggleFull(); e.currentTarget.blur(); });
+syncFull();
 document.addEventListener('click',e=>{ const b=e.target.closest('button'); if(b&&!b.closest('#boonBody')&&b.id!=='btnSound'&&b.id!=='btnOfSnd'&&!b.dataset.learn) SND.play('click'); },true);
 
 /* =====================================================================
@@ -3245,5 +3280,4 @@ Object.defineProperty(window,'__JOGONG_SIM__',{value:{
 })();
 </script>
 
-</body>
-</html>
+</body></html>
