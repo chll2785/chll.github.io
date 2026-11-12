@@ -1,9 +1,4 @@
-<!doctype html>
-<html lang="ko">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>조공부터 소장까지</title>
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>조공부터 소장까지</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+KR:wght@400;500;700;900&display=swap">
@@ -271,9 +266,7 @@ details.dev summary{cursor:pointer}
 .buildsec{display:flex;flex-direction:column;gap:6px}
 .buildsec h3{font-size:15px}
 @media (prefers-reduced-motion:reduce){.btn{transition:none}}
-</style>
-</head>
-<body>
+</style></head><body>
 
 <div id="wrap">
   <canvas id="cv" aria-label="게임 화면"></canvas>
@@ -1607,6 +1600,7 @@ window.addEventListener('keydown',e=>{
   keys.add(k);
   if((k==='escape'||k==='p')&&(state==='play'||state==='pause')) togglePause();
   if(state==='boon'&&['1','2','3'].includes(k)){const b=document.querySelectorAll('#boonBody .card')[+k-1]; if(b) b.click();}
+  if(state==='boon'&&k==='r'&&!e.repeat){const b=$('#btnReroll'); if(b&&!b.disabled) b.click();}
 });
 window.addEventListener('keyup',e=>keys.delete(e.key.toLowerCase()));
 window.addEventListener('blur',()=>keys.clear());
@@ -2838,16 +2832,28 @@ function reqList(r){
 }
 
 /* ---------- 현장 지원 (정예 상자) ---------- */
-function openBoon(){
+/* 다시 뽑기: 공정(스테이지)마다 1회, 보스 공정은 2회 — 뱀서류의 레벨업 '리롤'처럼 원하는 지원이 없을 때 한 번 더 고를 기회 */
+function rollBoons(exclude){
   const pool=[...BOONS]; for(let i=pool.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1)); [pool[i],pool[j]]=[pool[j],pool[i]];}
-  const opts=pool.slice(0,3);
+  const fresh=pool.filter(b=>!exclude||!exclude.has(b.id));
+  return (fresh.length>=3?fresh:pool).slice(0,3);
+}
+function openBoon(){
+  const opts=rollBoons();
   if(SIM.on){ applyBoon(opts[0].id); return; }
+  if(run.rerolls==null) run.rerolls=run.boss?2:1;
   SND.duck(true);
   state='boon'; keys.clear(); joy.id=null;
+  renderBoon(opts);
+}
+function renderBoon(opts){
   $('#boonBody').innerHTML=`<div class="eyebrow">현장 지원 상자</div><h2>이번 공정에만 적용할 지원을 고르세요</h2>
-    <div class="cards">${opts.map((b,i)=>`<button class="card" type="button" data-id="${b.id}"><span class="key">${i+1}번</span><span class="nm">${b.name}</span><span class="ds">${b.desc}</span>${run.boons[b.id]?`<span class="st">현재 ${run.boons[b.id]}단계 중첩</span>`:''}</button>`).join('')}</div>`;
+    <div class="cards">${opts.map((b,i)=>`<button class="card" type="button" data-id="${b.id}"><span class="key">${i+1}번</span><span class="nm">${b.name}</span><span class="ds">${b.desc}</span>${run.boons[b.id]?`<span class="st">현재 ${run.boons[b.id]}단계 중첩</span>`:''}</button>`).join('')}</div>
+    <div class="row" style="justify-content:space-between"><span style="font-size:12px;color:var(--muted)">숫자키 1~3으로 선택 · <kbd>R</kbd> 다시 뽑기</span>
+      <button class="btn ghost small" type="button" id="btnReroll" ${run.rerolls>0?'':'disabled'}>다시 뽑기 (이번 공정 남은 ${run.rerolls}회)</button></div>`;
   show('#boon');
   $$('#boonBody .card').forEach(c=>c.onclick=()=>{ applyBoon(c.dataset.id); SND.play('boon'); SND.duck(false); hideAll(); state='play'; });
+  $('#btnReroll').onclick=()=>{ if(run.rerolls<=0) return; run.rerolls--; SND.play('chest'); renderBoon(rollBoons(new Set(opts.map(b=>b.id)))); };
   setTimeout(()=>{const c=$('#boonBody .card'); if(c) c.focus({preventScroll:true});},30);
 }
 function applyBoon(id){
@@ -3036,7 +3042,4 @@ Object.defineProperty(window,'__JOGONG_SIM__',{value:{
 }});
 
 })();
-</script>
-
-</body>
-</html>
+</script></body></html>
