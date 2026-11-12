@@ -1,9 +1,4 @@
-<!doctype html>
-<html lang="ko">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>조공부터 소장까지</title>
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>조공부터 소장까지</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+KR:wght@400;500;700;900&display=swap">
@@ -270,10 +265,13 @@ details.dev summary{cursor:pointer}
 .skchips span.max i{color:var(--c)}
 .buildsec{display:flex;flex-direction:column;gap:6px}
 .buildsec h3{font-size:15px}
+/* 연속 강화 (목표 단계까지 자동 반복) */
+.enhauto{display:flex;flex-direction:column;gap:8px;padding:10px 12px;border:1px dashed var(--line);border-radius:4px}
+.enhauto .row{gap:8px}
+.enhauto select{padding:8px 10px;border-radius:4px;border:1px solid var(--line);background:#06131e;color:var(--ink);font:inherit;font-size:14px}
+.enhauto small{font-size:12px;color:var(--muted);line-height:1.5}
 @media (prefers-reduced-motion:reduce){.btn{transition:none}}
-</style>
-</head>
-<body>
+</style></head><body>
 
 <div id="wrap">
   <canvas id="cv" aria-label="게임 화면"></canvas>
@@ -2869,7 +2867,7 @@ function renderEnh(body){
         <dt>성공 확률</dt><dd><span class="rate">${Math.round(rate*100)}%</span></dd>
         <dt>비용</dt><dd style="color:${save.gold>=cost?'#ffd84a':'#ff9d84'}">${fmt(cost)} G (보유 ${fmt(save.gold)} G)</dd></dl>
       <p style="font-size:12px">실패해도 무기는 파괴되지 않고 강화 단계도 내려가지 않습니다. 골드만 소모됩니다.</p>`}
-      <button class="btn" type="button" id="btnEnh" ${maxed||save.gold<cost?'disabled':''}>${maxed?'최대 강화':'강화하기'}</button>
+      <button class="btn" type="button" id="btnEnh" ${maxed||save.gold<cost?'disabled':''}>${maxed?'최대 강화':'강화하기'}</button>${enhAutoHtml(it)}
       <div class="result ${enhResult.startsWith('성공')?'ok':enhResult?'fail':''}" role="status">${enhResult}</div>
     </div>
     <div class="list"><h3>무기 선택</h3><div class="grid" id="enhGrid"></div><h3>보호구 선택</h3><div class="grid" id="enhGearGrid"></div>
@@ -2881,7 +2879,7 @@ function renderEnh(body){
     b.appendChild(pipeCanvas(x.type,x.plus,96,32)); b.insertAdjacentHTML('beforeend',`<span class="nm">${WEAPON[x.type].name} +${x.plus}</span><span class="sub">${x.uid===eq.uid?'장착 중':'Lv '+WEAPON[x.type].req+(isJunk(x,eq)?' · 하위':'')}</span>`);
     b.onclick=()=>{enhItem=x.uid; enhResult=''; renderEnh(body);}; g.appendChild(b);
   }
-  fillGearEnhGrid(body);
+  fillGearEnhGrid(body); bindEnhAuto(body,it);
   $('#btnEnh').onclick=()=>{
     if(maxed||save.gold<cost) return;
     save.gold-=cost;
@@ -2890,6 +2888,35 @@ function renderEnh(body){
   };
 }
 
+/* 연속 강화: 목표 단계(+N)에 닿거나 골드가 모자랄 때까지 같은 확률로 강화를 반복 (모바일 수집형·뱀서류의 '목표까지 업그레이드' 편의 기능 참고)
+   한 번씩 누르는 강화와 확률·비용이 완전히 같고, 실패해도 파괴·하락 없음. 두 번 눌러 확인 */
+let enhTarget=null;
+const isGearItem=it=>String(it.uid)[0]==='g';
+const enhCostOf=it=>isGearItem(it)?gearEnhCost(it):enhCost(it);
+function enhExpect(it,target){ let g=0; const t={...it}; for(;t.plus<target&&t.plus<MAX_PLUS;t.plus++) g+=enhCostOf(t)/ENH_RATE[t.plus]; return g; }
+function enhAutoHtml(it){
+  if(it.plus>=MAX_PLUS) return '';
+  const tg=clamp(enhTarget??MAX_PLUS,it.plus+1,MAX_PLUS);
+  let opts=''; for(let n=it.plus+1;n<=MAX_PLUS;n++) opts+=`<option value="${n}" ${n===tg?'selected':''}>+${n}</option>`;
+  return `<div class="enhauto"><div class="row"><label for="enhTarget" style="font-size:13px">목표</label><select id="enhTarget" aria-label="연속 강화 목표 단계">${opts}</select>
+    <button class="btn ghost small" type="button" id="btnEnhAuto" ${save.gold<enhCostOf(it)?'disabled':''}>연속 강화</button></div>
+    <small id="enhAutoInfo">평균 예상 비용 약 ${fmt(enhExpect(it,tg))} G · 목표에 닿거나 골드가 모자라면 멈춥니다</small></div>`;
+}
+function bindEnhAuto(body,it){
+  const sel=body.querySelector('#enhTarget'), btn=body.querySelector('#btnEnhAuto'); if(!sel||!btn) return;
+  let arm=false;
+  sel.onchange=()=>{ enhTarget=+sel.value; arm=false; btn.textContent='연속 강화'; body.querySelector('#enhAutoInfo').textContent=`평균 예상 비용 약 ${fmt(enhExpect(it,enhTarget))} G · 목표에 닿거나 골드가 모자라면 멈춥니다`; };
+  btn.onclick=()=>{
+    const target=+sel.value;
+    if(!arm){ arm=true; btn.textContent=`한 번 더 누르면 +${target}까지 강화`; return; }
+    const from=it.plus; let tries=0, ok=0, spent=0;
+    while(it.plus<target&&it.plus<MAX_PLUS&&tries<1000){ const c=enhCostOf(it); if(save.gold<c) break; save.gold-=c; spent+=c; tries++; if(Math.random()<ENH_RATE[it.plus]){ it.plus++; ok++; } }
+    const nm=isGearItem(it)?gearName(it):WEAPON[it.type].name;
+    enhResult=it.plus>=target?`성공! ${nm} +${from} → +${it.plus} · ${tries}회 시도 (성공 ${ok}) · ${fmt(spent)}G 사용`
+      :`골드 부족으로 멈춤 · +${from} → +${it.plus} · ${tries}회 시도 (성공 ${ok}) · ${fmt(spent)}G 사용`;
+    SND.play(ok?'enhOk':'enhFail'); if(tries) persist(); refreshOffice(); renderEnh(body);
+  };
+}
 function fillGearEnhGrid(body){
   const gg=$('#enhGearGrid'); if(!gg) return;
   const list=[...save.gear].sort((a,b)=>{ const ea=gearOn(a.slot)===a?1:0, eb=gearOn(b.slot)===b?1:0; return eb-ea||GEAR_SLOTS.indexOf(a.slot)-GEAR_SLOTS.indexOf(b.slot)||b.tier-a.tier||b.plus-a.plus; });
@@ -2908,7 +2935,7 @@ function renderGearEnh(body,it){
         <dt>성공 확률</dt><dd><span class="rate">${Math.round(rate*100)}%</span></dd>
         <dt>비용</dt><dd style="color:${save.gold>=cost?'#ffd84a':'#ff9d84'}">${fmt(cost)} G (보유 ${fmt(save.gold)} G)</dd></dl>
       <p style="font-size:12px">실패해도 보호구는 파괴되지 않고 강화 단계도 내려가지 않습니다. 골드만 소모됩니다.</p>`}
-      <button class="btn" type="button" id="btnEnh" ${maxed||save.gold<cost?'disabled':''}>${maxed?'최대 강화':'강화하기'}</button>
+      <button class="btn" type="button" id="btnEnh" ${maxed||save.gold<cost?'disabled':''}>${maxed?'최대 강화':'강화하기'}</button>${enhAutoHtml(it)}
       <div class="result ${enhResult.startsWith('성공')?'ok':enhResult?'fail':''}" role="status">${enhResult}</div>
     </div>
     <div class="list"><h3>무기 선택</h3><div class="grid" id="enhGrid"></div><h3>보호구 선택</h3><div class="grid" id="enhGearGrid"></div>
@@ -2920,7 +2947,7 @@ function renderGearEnh(body,it){
     b.appendChild(pipeCanvas(x.type,x.plus,96,32)); b.insertAdjacentHTML('beforeend',`<span class="nm">${WEAPON[x.type].name} +${x.plus}</span><span class="sub">${x.uid===eq.uid?'장착 중':'Lv '+WEAPON[x.type].req}</span>`);
     b.onclick=()=>{enhItem=x.uid; enhResult=''; renderEnh(body);}; g.appendChild(b);
   }
-  fillGearEnhGrid(body);
+  fillGearEnhGrid(body); bindEnhAuto(body,it);
   $('#btnEnh').onclick=()=>{
     if(maxed||save.gold<cost) return;
     save.gold-=cost;
@@ -3201,5 +3228,4 @@ Object.defineProperty(window,'__JOGONG_SIM__',{value:{
 })();
 </script>
 
-</body>
-</html>
+</body></html>
