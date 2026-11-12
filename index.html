@@ -1,4 +1,9 @@
-<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>조공부터 소장까지</title>
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>조공부터 소장까지</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+KR:wght@400;500;700;900&display=swap">
@@ -169,7 +174,7 @@ details.dev summary{cursor:pointer}
 .result.fail{color:#ff9d84}
 
 /* 세이브 코드 */
-.codebox{width:100%;min-height:96px;resize:vertical;padding:10px 12px;border-radius:4px;border:1px solid var(--line);background:#06131e;color:var(--ink);font:12px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;word-break:break-all;-webkit-user-select:text;user-select:text}
+.codebox{box-sizing:border-box;width:100%;max-width:100%;min-height:96px;resize:vertical;padding:10px 12px;border-radius:4px;border:1px solid var(--line);background:#06131e;color:var(--ink);font:12px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;word-break:break-all;-webkit-user-select:text;user-select:text}
 /* 직급 */
 .ladder{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
 .rankcard{border:1px solid var(--line);border-radius:4px;padding:10px;display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center;min-width:0}
@@ -183,14 +188,71 @@ details.dev summary{cursor:pointer}
 .two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 @media (max-width:560px){.two{grid-template-columns:1fr}}
 .list{display:flex;flex-direction:column;gap:8px}
+.two>*,.invwrap>*,.skillwrap>*{min-width:0}
 .dmgrep{display:flex;flex-direction:column;gap:6px;padding:12px 14px;border:1px solid var(--line);border-radius:4px;background:var(--panel-2)}
 .dmgrow{display:grid;grid-template-columns:minmax(0,9.5em) minmax(0,1fr) 3em;gap:10px;align-items:center;font-size:13px}
 .dmgrow span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink)}
 .dmgrow i{display:block;height:8px;border-radius:4px;background:rgba(255,255,255,.07);overflow:hidden}
 .dmgrow b{display:block;height:100%;border-radius:4px}
 .dmgrow em{font-style:normal;text-align:right;font-variant-numeric:tabular-nums;color:var(--muted)}
+/* 스킬 목록 보기 (모바일 기본) */
+.skillhead{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.viewtoggle{display:flex;border:1px solid var(--line);border-radius:4px;overflow:hidden}
+.viewtoggle button{appearance:none;background:none;border:0;color:var(--muted);font:inherit;font-size:13px;font-weight:700;padding:8px 14px;cursor:pointer}
+.viewtoggle button[aria-pressed="true"]{background:var(--hazard);color:var(--hazard-ink)}
+.spsum{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.spsum b{color:var(--ok);font-size:16px}
+.skgroup{display:flex;flex-direction:column;gap:6px;margin-bottom:18px}
+.skgroup h4{margin:0 0 2px;font-family:var(--f-display);font-weight:400;font-size:17px}
+.skrow{display:flex;gap:10px;align-items:center;padding:10px 12px;border:1px solid var(--line);border-left:4px solid var(--c);border-radius:4px;background:var(--panel-2)}
+.skrow[data-d="2"]{margin-left:14px}.skrow[data-d="3"]{margin-left:28px}.skrow[data-d="4"]{margin-left:42px}
+.skrow.locked{opacity:.55}
+.skrow.maxed{border-color:var(--c)}
+.skinfo{flex:1;min-width:0;display:flex;flex-direction:column;gap:5px}
+.sktop{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.sktop b{font-size:14px}
+.sklv{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.skeff{font-size:12px;color:var(--muted);line-height:1.45}
+.skeff span{color:var(--ok)}
+.skbtns{display:flex;gap:6px;flex:none}
+.skbtns .btn{min-width:46px;padding:10px 8px;font-size:15px}
+.tabs .short{display:none}
+
+/* 모바일 사무소: 전체 화면, 상단 정보 한 줄, 탭 균등 분할, 출근 버튼은 하단 고정 */
+@media (max-width:640px){
+  #office{padding:0;place-items:stretch}
+  .office{width:100%;height:100%;max-height:none;border:0;border-radius:0;box-shadow:none}
+  .office::before{height:6px}
+  .office-head{order:1;padding:8px 12px;gap:10px;flex-wrap:nowrap}
+  #officeAvatar{width:38px!important;height:42px!important;flex:none}
+  .office-head .who b{font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .office-head .who small{font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .chips{gap:6px;flex-wrap:nowrap;flex:none}
+  .chip{min-width:0;padding:5px 8px;flex-direction:row;align-items:baseline;gap:3px}
+  .chip small{display:none}
+  .chip b{font-size:13px;white-space:nowrap}
+  .chip.gold b::after{content:" G";font-size:11px}
+  .chip.sp b::before{content:"SP ";font-size:11px}
+  #btnLogout{padding:6px 8px;font-size:12px}
+  .tabs{order:2}
+  .tabs button{flex:1 1 0;padding:12px 2px;font-size:13px;text-align:center}
+  .tabs .long{display:none}.tabs .short{display:inline}
+  .tabs .badge{margin-left:3px;padding:0 5px}
+  .tabbody{order:3;padding:12px 12px 16px}
+  .office-cta{order:4;flex-direction:column;align-items:stretch;gap:6px;padding:8px 12px 10px;border-top:1px solid var(--line);border-bottom:0}
+  .office-cta .btn{width:100%;font-size:18px;padding:13px}
+  .office-cta p{order:-1;min-width:0;font-size:12px;text-align:center}
+  .saveinfo{text-align:center;font-size:10px}
+  .slot.empty{display:none}
+  .invwrap,.skillwrap{gap:12px}
+  .grid{grid-template-columns:repeat(auto-fill,minmax(100px,1fr))}
+  .item canvas{width:84px;height:28px}
+  h3{font-size:16px}
+}
 @media (prefers-reduced-motion:reduce){.btn{transition:none}}
-</style></head><body>
+</style>
+</head>
+<body>
 
 <div id="wrap">
   <canvas id="cv" aria-label="게임 화면"></canvas>
@@ -243,11 +305,11 @@ details.dev summary{cursor:pointer}
         <span class="saveinfo" id="saveInfo"></span>
       </div>
       <div class="tabs" role="tablist">
-        <button type="button" role="tab" data-tab="skills" aria-selected="true">스킬 트리<span class="badge" id="spBadge" hidden></span></button>
-        <button type="button" role="tab" data-tab="inv" aria-selected="false">인벤토리 · 장비</button>
-        <button type="button" role="tab" data-tab="enh" aria-selected="false">무기 강화</button>
-        <button type="button" role="tab" data-tab="rank" aria-selected="false">직급 · 복장</button>
-        <button type="button" role="tab" data-tab="code" aria-selected="false">세이브 코드</button>
+        <button type="button" role="tab" data-tab="skills" aria-selected="true"><span class="long">스킬 트리</span><span class="short">스킬</span><span class="badge" id="spBadge" hidden></span></button>
+        <button type="button" role="tab" data-tab="inv" aria-selected="false"><span class="long">인벤토리 · 장비</span><span class="short">장비</span></button>
+        <button type="button" role="tab" data-tab="enh" aria-selected="false"><span class="long">무기 강화</span><span class="short">강화</span></button>
+        <button type="button" role="tab" data-tab="rank" aria-selected="false"><span class="long">직급 · 복장</span><span class="short">직급</span></button>
+        <button type="button" role="tab" data-tab="code" aria-selected="false"><span class="long">세이브 코드</span><span class="short">코드</span></button>
       </div>
       <div class="tabbody" id="tabBody"></div>
     </div>
@@ -296,8 +358,10 @@ const CFG={
   MONSTER_DMG_MUL:1.5,       // 몬스터 접촉 대미지 배율 (초반 7~11)
   BOSS_HP_GROWTH:1.5,        // 보스 1~4등급: 등급마다 체력 ×1.5
   BOSS_HP_GROWTH_LATE:1.7,   // 보스 5~10등급: 등급마다 체력 ×1.7
-  BOSS_HP_TUNE:[1,1,1.15,1,1.45,1.12,1,1,1,1], // 등급별 보정: 새 무기로 바뀐 직후(S30·S50·S60) 보스가 20초 안에 녹던 것을 보정
+  BOSS_HP_TUNE:[1,1,1.15,1,1.45,1.3,1.12,1,1,1], // 등급별 보정: 새 무기로 바뀐 직후(S30·S50·S60) 보스가 20초 안에 녹던 것을 보정 (회전 배관 강화 후 S60 1.12→1.3, S70 1→1.12)
   SPIKE_WARN:.5,             // 가시 발사 예고 시간(초)
+  ORBIT_R_BASE:66, ORBIT_R_RANGE:.2, // 회전 배관 반경 = 66 + 공격 범위×0.2 (범위 스킬과 함께 커짐)
+  ORBIT_HIT_R:24, ORBIT_HIT_CD:.4, ORBIT_KNOCK:22, // 회전 배관 판정 반경·같은 적 재타격 간격(초)·밀어내기
   MAX_ENEMIES:520,
   SPAWN_BASE:1.4, SPAWN_PER_STAGE:.085, // 초당 출현 수
   IFRAME:.5,                 // 피격 후 무적(초)
@@ -419,7 +483,7 @@ const SKILLS=[
   {id:'a6',br:'atk',d:4,off:.17,  name:'치명 증폭',   max:10,req:['a5',5],  eff:l=>`치명타 피해 ${200+l*15}%`},
   {id:'r1',br:'rng',d:1,off:0,    name:'현장 시야',   max:15,req:null,      eff:l=>`공격 범위 +${l*4}%`},
   {id:'r2',br:'rng',d:2,off:-.22, name:'강한 어깨',   max:10,req:['r1',5],  eff:l=>`파이프 속도 +${l*5}%`},
-  {id:'r3',br:'rng',d:3,off:-.2,  name:'회전 배관',   max:4, req:['r2',5],  eff:l=>`몸 주위를 도는 파이프 ${l}개`},
+  {id:'r3',br:'rng',d:3,off:-.2,  name:'회전 배관',   max:4, req:['r2',5],  eff:l=>`몸 주위를 도는 파이프 ${l}개 (닿은 적을 밀어냄, 공격 범위가 넓을수록 크게 돎)`},
   {id:'r4',br:'rng',d:4,off:-.17, name:'회전 가속',   max:8, req:['r3',1],  eff:l=>`회전 파이프 피해 +${l*15}%, 회전 속도 +${l*6}%`},
   {id:'r5',br:'rng',d:2,off:.22,  name:'묵직한 타격', max:5, req:['r1',8],  eff:l=>`적중 시 적을 ${l*4}만큼 더 밀어냄`},
   {id:'g1',br:'mag',d:1,off:0,    name:'마법 증폭',   max:15,req:null,      eff:l=>`무기 추가 마법 피해 +${l*5}%`},
@@ -671,7 +735,7 @@ function stats(){
     pierce:CFG.BASE_PIERCE+sk('a4')+bn('pierce'), crit:.03*sk('a5'), critMul:2+.15*sk('a6'),
     range:CFG.BASE_RANGE*(1+.04*sk('r1'))*(1+.2*bn('range')),
     shotSpeed:CFG.SHOT_SPEED*(1+.05*sk('r2')),
-    orbit:sk('r3')+bn('orbit'), orbitMul:.8*(1+.15*sk('r4')), orbitSpd:3.2*(1+.06*sk('r4')),
+    orbit:sk('r3')+bn('orbit'), orbitMul:1.0*(1+.15*sk('r4')), orbitSpd:3.2*(1+.06*sk('r4')),
     knock:5+4*sk('r5'),
     elemDur:1+.1*sk('g2'), extraTargets:sk('g3'), shock:sk('g4'), bolt:sk('g5'),
     maxHp:Math.round((CFG.BASE_HP+CFG.HP_PER_LEVEL*(lv-1)+rb.hp)*(1+.03*sk('s1'))*(1+.15*bn('heal'))),
@@ -1452,8 +1516,11 @@ function update(dt){
   // 회전 배관
   if(ST.orbit>0){
     P.orbitA+=dt*ST.orbitSpd;
-    for(let i=0;i<ST.orbit;i++){const a=P.orbitA+i/ST.orbit*TAU, ox=P.x+Math.cos(a)*78, oy=P.y+Math.sin(a)*78;
-      for(const e of enemiesNear(ox,oy,18)) if(e.orbitCd<=0){e.orbitCd=.5; damage(e,ST.dmg*ST.orbitMul,false,'orbit');}
+    const orR=orbitRadius();
+    for(let i=0;i<ST.orbit;i++){const a=P.orbitA+i/ST.orbit*TAU, ox=P.x+Math.cos(a)*orR, oy=P.y+Math.sin(a)*orR;
+      for(const e of enemiesNear(ox,oy,CFG.ORBIT_HIT_R)) if(e.orbitCd<=0){e.orbitCd=CFG.ORBIT_HIT_CD; damage(e,ST.dmg*ST.orbitMul,false,'orbit');
+        if(!e.dead&&!e.boss){const kx=e.x-P.x, ky=e.y-P.y, kd=Math.hypot(kx,ky)||1, kn=e.elite?CFG.ORBIT_KNOCK*.4:CFG.ORBIT_KNOCK; e.x+=kx/kd*kn; e.y+=ky/kd*kn;}
+        if(!SIM.on&&run.fx.length<260) run.fx.push({type:'spark',x:e.x,y:e.y,t:0,life:.22,a:a+Math.PI/2});}
       for(const c of run.crates) if((c.x-ox)**2+(c.y-oy)**2<(c.r+12)**2) breakCrate(c);}
   }
   // 파이프
@@ -1493,6 +1560,7 @@ function update(dt){
   }
   if(run.ending){ run.endT-=dt; if(run.endT<=0){ for(const it of run.items) if(it.kind!=='chest') collectItem(it); run.items=[]; stageCleared(); } }
 }
+function orbitRadius(){ return CFG.ORBIT_R_BASE+ST.range*CFG.ORBIT_R_RANGE; }
 function updateBoss(b,dt){
   const dx=P.x-b.x, dy=P.y-b.y, d=Math.hypot(dx,dy)||1;
   b.wob+=dt;
@@ -1819,7 +1887,11 @@ function render(dt,time){
     ctx.save(); ctx.translate(b.x+(b.mode==='wind'?rand(-2,2):0),b.y); drawRay(ctx,b,time); ctx.restore();
     if(b.slowT>0){ctx.fillStyle='rgba(150,220,255,.2)'; ctx.beginPath(); ctx.arc(b.x,b.y,b.r,0,TAU); ctx.fill();}
   }
-  if(ST.orbit>0) for(let i=0;i<ST.orbit;i++){const a=P.orbitA+i/ST.orbit*TAU; ctx.save(); ctx.translate(P.x+Math.cos(a)*78,P.y+Math.sin(a)*78); ctx.rotate(a+Math.PI/2); drawPipeArt(ctx,ST.weapon.type,ST.weapon.plus,13,4,time,false); ctx.restore();}
+  if(ST.orbit>0){ const orR=orbitRadius(); // 회전 배관: 궤도 잔상 + 파이프
+    ctx.save(); ctx.lineCap='round'; ctx.strokeStyle=ST.wdef.color; ctx.lineWidth=7;
+    for(let i=0;i<ST.orbit;i++){const a=P.orbitA+i/ST.orbit*TAU; for(let k=1;k<=3;k++){ctx.globalAlpha=.16/k; ctx.beginPath(); ctx.arc(P.x,P.y,orR,a-.13*k,a-.13*(k-1)); ctx.stroke();}}
+    ctx.restore();
+    for(let i=0;i<ST.orbit;i++){const a=P.orbitA+i/ST.orbit*TAU; ctx.save(); ctx.translate(P.x+Math.cos(a)*orR,P.y+Math.sin(a)*orR); ctx.rotate(a+Math.PI/2); drawPipeArt(ctx,ST.weapon.type,ST.weapon.plus,13,4,time,false); ctx.restore();} }
   for(const s of run.shots) drawShot(s,time);
   for(const b of run.eshots){ ctx.save(); ctx.translate(b.x,b.y); ctx.rotate(Math.atan2(b.vy,b.vx)); ctx.fillStyle=b.k>=10?'#5ae6ff':b.k>=8?'#d24dff':'#f1e3d0'; ctx.beginPath(); ctx.moveTo(10,0); ctx.lineTo(-6,-4); ctx.lineTo(-3,0); ctx.lineTo(-6,4); ctx.fill(); ctx.strokeStyle='rgba(0,0,0,.4)'; ctx.lineWidth=1; ctx.stroke(); ctx.restore(); }
   if(P.shield){ ctx.strokeStyle=`rgba(159,232,255,${.45+.2*Math.sin(time*4)})`; ctx.lineWidth=2.5; ctx.beginPath(); ctx.arc(P.x,P.y-4,34,0,TAU); ctx.stroke(); }
@@ -1835,6 +1907,7 @@ function render(dt,time){
     else if(f.type==='bolt'){ctx.strokeStyle=`rgba(240,250,140,${1-t})`; ctx.lineWidth=2.2; ctx.beginPath(); ctx.moveTo(f.x1,f.y1); for(let i=1;i<6;i++){const k=i/6; ctx.lineTo(f.x1+(f.x2-f.x1)*k+rand(-8,8),f.y1+(f.y2-f.y1)*k+rand(-8,8));} ctx.lineTo(f.x2,f.y2); ctx.stroke();}
     else if(f.type==='ring'){ctx.strokeStyle=f.color; ctx.globalAlpha=1-t; ctx.lineWidth=5*(1-t)+1; ctx.beginPath(); ctx.arc(f.x,f.y,f.r*Math.sqrt(t),0,TAU); ctx.stroke(); ctx.globalAlpha=1;}
     else if(f.type==='strike'){ctx.strokeStyle=`rgba(200,210,255,${1-t})`; ctx.lineWidth=4; ctx.beginPath(); ctx.moveTo(f.x+rand(-10,10),f.y-260); for(let i=1;i<=6;i++) ctx.lineTo(f.x+rand(-14,14),f.y-260+i*43); ctx.stroke(); ctx.fillStyle=`rgba(200,210,255,${.4*(1-t)})`; ctx.beginPath(); ctx.arc(f.x,f.y,45,0,TAU); ctx.fill();}
+    else if(f.type==='spark'){ctx.strokeStyle=`rgba(255,240,190,${1-t})`; ctx.lineWidth=2; for(let k=-1;k<=1;k++){const a=f.a+k*.5, r0=4+t*6, r1=10+t*16; ctx.beginPath(); ctx.moveTo(f.x+Math.cos(a)*r0,f.y+Math.sin(a)*r0); ctx.lineTo(f.x+Math.cos(a)*r1,f.y+Math.sin(a)*r1); ctx.stroke();}}
     else if(f.type==='boom'){ctx.strokeStyle=`rgba(95,240,255,${1-t})`; ctx.lineWidth=6*(1-t)+1; ctx.beginPath(); ctx.arc(f.x,f.y,80*Math.sqrt(t),0,TAU); ctx.stroke(); ctx.fillStyle=`rgba(95,240,255,${.25*(1-t)})`; ctx.fill();}
     else if(f.type==='chest'){
       const s=Math.min(1,f.t*4), y=f.y-Math.min(30,f.t*60);
@@ -1985,7 +2058,39 @@ function renderTab(){
 
 /* 스킬 트리 (마인드맵) */
 function nodePos(s){ const b=BRANCHES[s.br], rad=[0,128,232,332,428][s.d], a=(b.angle*Math.PI/180)+s.off; return {x:500+Math.cos(a)*rad,y:500+Math.sin(a)*rad}; }
+let skillView=null; // 'list' | 'map' (처음엔 화면 폭으로 결정)
+function skillHead(){
+  const spent=SKILLS.reduce((a,x)=>a+sk(x.id),0), total=SKILLS.reduce((a,x)=>a+x.max,0), v=skillView||(innerWidth<700?'list':'map');
+  return `<div class="skillhead"><div class="viewtoggle" role="group" aria-label="보기 방식"><button type="button" data-view="list" aria-pressed="${v==='list'}">목록</button><button type="button" data-view="map" aria-pressed="${v==='map'}">마인드맵</button></div>
+    <span class="spsum">남은 포인트 <b>${save.sp}</b> · 습득 ${spent} / ${total}</span></div>`;
+}
+function bindSkillHead(body){ body.querySelectorAll('.viewtoggle button').forEach(b=>b.onclick=()=>{ skillView=b.dataset.view; renderSkills(body); }); }
+function renderSkillList(body){
+  let h=skillHead();
+  for(const k in BRANCHES){
+    const b=BRANCHES[k], list=SKILLS.filter(x=>x.br===k);
+    // 부모 바로 아래에 자식이 오도록 트리 순서로 정렬
+    const ordered=[], walk=pid=>{ for(const x of list.filter(y=>(y.req?y.req[0]:null)===pid)){ ordered.push(x); walk(x.id); } }; walk(null);
+    h+=`<section class="skgroup"><h4 style="color:${b.color}">${b.name}</h4>`;
+    for(const x of ordered){
+      const lv=sk(x.id), open=skillUnlocked(x), can=canLearn(x), max=lv>=x.max;
+      const eff=max?`${x.eff(lv)} · 최대`:open?(lv?`${x.eff(lv)} → <span>${x.eff(lv+1)}</span>`:`배우면 <span>${x.eff(1)}</span>`):`${SKILL[x.req[0]].name} Lv ${x.req[1]} 이상 필요 (현재 ${sk(x.req[0])})`;
+      h+=`<div class="skrow${open?'':' locked'}${max?' maxed':''}" data-d="${x.d}" style="--c:${b.color}">
+        <div class="skinfo"><div class="sktop"><b>${x.name}</b><span class="sklv">${open?`Lv ${lv} / ${x.max}`:'잠김'}</span></div>${pips(lv,x.max)}<div class="skeff">${eff}</div></div>
+        <div class="skbtns"><button class="btn small" type="button" data-learn="${x.id}" data-n="1" aria-label="${x.name} 1번 배우기" ${can?'':'disabled'}>+1</button><button class="btn ghost small" type="button" data-learn="${x.id}" data-n="5" aria-label="${x.name} 5번 배우기" ${can?'':'disabled'}>+5</button></div></div>`;
+    }
+    h+='</section>';
+  }
+  h+=`<button class="linkbtn" type="button" id="btnReset">스킬 초기화 (포인트 전부 돌려받기)</button>`;
+  body.innerHTML=h; bindSkillHead(body);
+  body.querySelectorAll('[data-learn]').forEach(btn=>btn.onclick=()=>{
+    let ok=false; for(let i=0;i<+btn.dataset.n;i++) if(learnSkill(btn.dataset.learn)) ok=true;
+    if(ok){ persist(); const st=body.scrollTop; refreshOffice(); renderSkillList(body); body.scrollTop=st; }
+  });
+  let armed=false; $('#btnReset').onclick=e=>{ if(!armed){armed=true; e.target.textContent='한 번 더 누르면 초기화됩니다'; return;} resetSkills(); persist(); refreshOffice(); renderSkillList(body); };
+}
 function renderSkills(body){
+  if((skillView||(innerWidth<700?'list':'map'))==='list') return renderSkillList(body);
   let svg=`<svg viewBox="0 0 1000 1000" role="group" aria-label="스킬 트리">`;
   for(const k in BRANCHES){const b=BRANCHES[k], a=b.angle*Math.PI/180; svg+=`<text x="${500+Math.cos(a)*485}" y="${500+Math.sin(a)*485+5}" text-anchor="middle" font-size="13" font-weight="700" fill="${b.color}" opacity=".85">${b.name}</text>`;}
   for(const s of SKILLS){
@@ -2008,7 +2113,7 @@ function renderSkills(body){
   }
   svg+='</svg>';
   const s=SKILL[selSkill], lv=sk(s.id), open=skillUnlocked(s);
-  body.innerHTML=`<div class="skillwrap"><div class="mapbox" id="mapbox">${svg}</div>
+  body.innerHTML=`${skillHead()}<div class="skillwrap"><div class="mapbox" id="mapbox">${svg}</div>
     <div class="skilldetail">
       <div class="eyebrow" style="color:${BRANCHES[s.br].color}">${BRANCHES[s.br].name} 계열 · ${['','1단계 (하위)','2단계','3단계','4단계 (최상위)'][s.d]} 스킬</div>
       <h3>${s.name}</h3><div class="lvl">레벨 ${lv} / ${s.max}</div>${pips(lv,s.max)}
@@ -2020,6 +2125,7 @@ function renderSkills(body){
       <p style="font-size:12px">${save.sp?`남은 스킬 포인트 ${save.sp}`:'레벨이 오를 때마다 스킬 포인트 1을 받습니다.'}</p>
       <button class="linkbtn" type="button" id="btnReset">스킬 초기화 (포인트 전부 돌려받기)</button>
     </div></div>`;
+  bindSkillHead(body);
   const mb=$('#mapbox'); if(mb.scrollWidth>mb.clientWidth) mb.scrollLeft=(mb.scrollWidth-mb.clientWidth)/2;
   body.querySelectorAll('.node').forEach(n=>{ const pick=()=>{selSkill=n.dataset.id; const sl=mb.scrollLeft; renderSkills(body); $('#mapbox').scrollLeft=sl;}; n.addEventListener('click',pick); n.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault(); pick();}}); });
   const learnN=n=>{ let ok=false; for(let i=0;i<n;i++) if(learnSkill(selSkill)) ok=true; if(ok){ persist(); const sl=mb.scrollLeft, st=mb.scrollTop; refreshOffice(); renderSkills(body); $('#mapbox').scrollLeft=sl; $('#mapbox').scrollTop=st; } };
@@ -2301,4 +2407,6 @@ Object.defineProperty(window,'__JOGONG_SIM__',{value:{
 
 })();
 </script>
-</body></html>
+
+</body>
+</html>
