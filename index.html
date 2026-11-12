@@ -1,9 +1,4 @@
-<!doctype html>
-<html lang="ko">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>조공부터 소장까지</title>
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>조공부터 소장까지</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+KR:wght@400;500;700;900&display=swap">
@@ -259,9 +254,7 @@ details.dev summary{cursor:pointer}
   h3{font-size:16px}
 }
 @media (prefers-reduced-motion:reduce){.btn{transition:none}}
-</style>
-</head>
-<body>
+</style></head><body>
 
 <div id="wrap">
   <canvas id="cv" aria-label="게임 화면"></canvas>
@@ -981,6 +974,9 @@ const tierIdx=type=>WEAPONS.findIndex(w=>w.id===type);
 function isJunk(it,eq){ eq=eq||equipped(); if(it.uid===eq.uid) return false;
   return tierIdx(it.type)<tierIdx(eq.type)||(it.type===eq.type&&it.plus<=eq.plus); }
 function junkItems(){ const eq=equipped(); return save.inv.filter(it=>isJunk(it,eq)); }
+/* 착용 가능한 무기 중 가장 좋은 것 (등급 → 강화 순). 장착 무기보다 좋을 때만 돌려준다 */
+function betterWeapon(){ const eq=equipped(); const b=save.inv.filter(it=>WEAPON[it.type].req<=save.level).sort((a,c)=>tierIdx(c.type)-tierIdx(a.type)||c.plus-a.plus)[0];
+  return b&&b.uid!==eq.uid&&(tierIdx(b.type)>tierIdx(eq.type)||(b.type===eq.type&&b.plus>eq.plus))?b:null; }
 function sellItems(list){ let g=0; const ids=new Set(list.map(i=>i.uid)); for(const it of list) g+=sellPrice(it); save.inv=save.inv.filter(i=>!ids.has(i.uid)); save.gold+=g; return g; }
 function rollWeaponType(stage){
   const el=WEAPONS.filter(w=>w.req<=Math.max(save.level,stage*CFG.EXPECTED_LV_PER_STAGE)+15);
@@ -2287,9 +2283,13 @@ let skillView=null; // 'list' | 'map' (처음엔 화면 폭으로 결정)
 function skillHead(){
   const spent=SKILLS.reduce((a,x)=>a+sk(x.id),0), total=SKILLS.reduce((a,x)=>a+x.max,0), v=skillView||(innerWidth<700?'list':'map');
   return `<div class="skillhead"><div class="viewtoggle" role="group" aria-label="보기 방식"><button type="button" data-view="list" aria-pressed="${v==='list'}">목록</button><button type="button" data-view="map" aria-pressed="${v==='map'}">마인드맵</button></div>
-    <span class="spsum">남은 포인트 <b>${save.sp}</b> · 습득 ${spent} / ${total}</span></div>`;
+    <span class="spsum">남은 포인트 <b>${save.sp}</b> · 습득 ${spent} / ${total}</span>
+    <button class="btn small" type="button" id="btnAutoSp" ${save.sp&&SKILLS.some(canLearn)?'':'disabled'} title="공격·투척·생존을 고르게 키우는 추천 순서대로 남은 포인트를 한 번에 배분합니다">추천 자동 배분</button></div>`;
 }
-function bindSkillHead(body){ body.querySelectorAll('.viewtoggle button').forEach(b=>b.onclick=()=>{ skillView=b.dataset.view; renderSkills(body); }); }
+/* 추천 자동 배분: 포인트가 많이 쌓였을 때(특히 모바일) 한 번에 찍기. 두 번 눌러 확인, 이미 찍은 스킬은 그대로 둔다 */
+function autoSpend(){ const before=save.sp; autoSkills(); const used=before-save.sp; if(used>0){ SND.play('learn'); persist(); } return used; }
+function bindSkillHead(body){ body.querySelectorAll('.viewtoggle button').forEach(b=>b.onclick=()=>{ skillView=b.dataset.view; renderSkills(body); });
+  const a=body.querySelector('#btnAutoSp'); if(a){ let arm=false; a.onclick=()=>{ if(!arm){ arm=true; a.textContent=`한 번 더 누르면 SP ${save.sp} 배분`; return; } const n=autoSpend(); refreshOffice(); renderSkills(body); toastOffice(n?`추천 순서대로 스킬 포인트 ${n}개를 배분했습니다.`:'배울 수 있는 스킬이 없습니다.'); }; } }
 function renderSkillList(body){
   let h=skillHead();
   for(const k in BRANCHES){
@@ -2368,7 +2368,8 @@ function renderInv(body){
   const eq=equipped();
   if(!selItem||!save.inv.find(i=>i.uid===selItem)) selItem=eq.uid;
   const it=save.inv.find(i=>i.uid===selItem), w=WEAPON[it.type], s=itemStats(it), isEq=it.uid===eq.uid, lvOk=save.level>=w.req;
-  body.innerHTML=`${(()=>{const j=junkItems(), g=j.reduce((a,i)=>a+sellPrice(i),0); return `<div class="row" style="justify-content:space-between;margin-bottom:14px;padding:10px 12px;border:1px solid var(--line);border-radius:4px;background:var(--panel-2)"><span style="font-size:12px;color:var(--muted);flex:1;min-width:180px">${j.length?`장착 무기보다 약한 무기 <b style="color:var(--ink)">${j.length}개</b>`:'정리할 하위 무기가 없습니다'} · 가방이 가득 차면 하위 무기는 자동으로 팝니다</span><button class="btn small" type="button" id="btnSellJunk" ${j.length?'':'disabled'}>하위 무기 일괄 판매${j.length?` +${fmt(g)}G`:''}</button></div>`;})()}<div class="invwrap">
+  const bw=betterWeapon();
+  body.innerHTML=`${bw?`<div class="row" style="justify-content:space-between;margin-bottom:10px;padding:10px 12px;border:1px solid var(--ok);border-radius:4px;background:rgba(95,211,154,.08)"><span style="font-size:13px;flex:1;min-width:180px">장착 가능한 더 좋은 무기: <b>${WEAPON[bw.type].name} +${bw.plus}</b></span><button class="btn small" type="button" id="btnBestW">바로 장착</button></div>`:''}${(()=>{const j=junkItems(), g=j.reduce((a,i)=>a+sellPrice(i),0); return `<div class="row" style="justify-content:space-between;margin-bottom:14px;padding:10px 12px;border:1px solid var(--line);border-radius:4px;background:var(--panel-2)"><span style="font-size:12px;color:var(--muted);flex:1;min-width:180px">${j.length?`장착 무기보다 약한 무기 <b style="color:var(--ink)">${j.length}개</b>`:'정리할 하위 무기가 없습니다'} · 가방이 가득 차면 하위 무기는 자동으로 팝니다</span><button class="btn small" type="button" id="btnSellJunk" ${j.length?'':'disabled'}>하위 무기 일괄 판매${j.length?` +${fmt(g)}G`:''}</button></div>`;})()}<div class="invwrap">
     <div class="list"><h3>장비창</h3><div class="slots">${EQUIP_SLOTS.map(sl=>sl.id==='weapon'
       ?`<div class="slot"><span id="eqIcon"></span><div class="meta"><small>무기</small><b>${WEAPON[eq.type].name} +${eq.plus}</b><small>${WEAPON[eq.type].mName}</small></div></div>`
       :`<div class="slot empty"><div class="meta"><small>${sl.name}</small><b>추후 추가</b></div></div>`).join('')}</div>
@@ -2396,6 +2397,7 @@ function renderInv(body){
   }
   const bj=$('#btnSellJunk'); if(bj){ let arm=false; bj.onclick=e=>{ if(!arm){arm=true; e.target.textContent=`한 번 더 누르면 ${junkItems().length}개 판매`; return;} sellItems(junkItems()); selItem=null; persist(); refreshOffice(); renderInv(body); }; }
   $('#btnEquip').onclick=()=>{ save.equip.weapon=it.uid; persist(); refreshOffice(); renderInv(body); };
+  const bb=$('#btnBestW'); if(bb) bb.onclick=()=>{ save.equip.weapon=bw.uid; selItem=bw.uid; SND.play('weapon'); persist(); refreshOffice(); renderInv(body); };
   let armed=false; $('#btnSell').onclick=e=>{ if(!armed){armed=true; e.target.textContent='한 번 더 누르면 판매'; return;} save.gold+=sellPrice(it); save.inv=save.inv.filter(i=>i.uid!==it.uid); selItem=null; persist(); refreshOffice(); renderInv(body); };
 }
 
@@ -2549,6 +2551,7 @@ function showClear(cleared,promos,last){
     ${dmgReport()}
     ${promo}${found}
     ${run.levelsGained?`<div class="note">스킬 포인트 ${run.levelsGained}개를 얻었습니다. 현장 사무소의 스킬 트리에서 사용하세요. (보유 ${save.sp})</div>`:''}
+    ${(save.sp&&SKILLS.some(canLearn))||betterWeapon()?`<div class="row" id="quickPrep">${save.sp&&SKILLS.some(canLearn)?`<button class="btn ghost small" type="button" id="btnQuickSp">SP ${save.sp} 추천 자동 배분</button>`:''}${betterWeapon()?`<button class="btn ghost small" type="button" id="btnQuickW">${WEAPON[betterWeapon().type].name} +${betterWeapon().plus} 장착</button>`:''}<span class="msg ok" id="quickMsg" role="status"></span></div>`:''}
     ${nextRank?`<div class="req"><h3>다음 승진: ${nextRank.name}</h3>${reqList(nextRank)}</div>`:''}
     ${(!last&&isBossStage(next))?`<div class="warnline">다음 공정 STAGE ${next}에 보스 <b>${BOSS_NAMES[next/10-1]}</b>가 출현합니다.</div>`:''}
     <div class="row">${last?'':`<button class="btn" id="btnNext" type="button">STAGE ${next} 출근</button>`}
@@ -2557,6 +2560,9 @@ function showClear(cleared,promos,last){
   if(promos.length) $('#promoBox').prepend(avatarCanvas(promos[promos.length-1],64,70,1.3));
   const bn=$('#btnNext'); if(bn){bn.onclick=()=>startStage(next); bn.focus({preventScroll:true});}
   $('#btnOffice1').onclick=openOffice;
+  // 클리어 화면에서 바로 정비: 추천 배분 / 더 좋은 무기 장착 후 곧장 다음 공정으로
+  const qs=$('#btnQuickSp'); if(qs) qs.onclick=()=>{ const n=autoSpend(); qs.disabled=true; qs.textContent=n?`스킬 ${n}개 배분 완료`:'배울 스킬 없음'; };
+  const qw=$('#btnQuickW'); if(qw) qw.onclick=()=>{ const b=betterWeapon(); if(b){ save.equip.weapon=b.uid; SND.play('weapon'); persist(); } qw.disabled=true; qw.textContent='장착 완료'; };
 }
 function showDead(){
   state='dead'; persist();
@@ -2651,5 +2657,4 @@ Object.defineProperty(window,'__JOGONG_SIM__',{value:{
 })();
 </script>
 
-</body>
-</html>
+</body></html>
