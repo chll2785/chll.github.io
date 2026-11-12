@@ -1,4 +1,9 @@
-<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>조공부터 소장까지</title>
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>조공부터 소장까지</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+KR:wght@400;500;700;900&display=swap">
@@ -271,7 +276,9 @@ details.dev summary{cursor:pointer}
 .enhauto select{padding:8px 10px;border-radius:4px;border:1px solid var(--line);background:#06131e;color:var(--ink);font:inherit;font-size:14px}
 .enhauto small{font-size:12px;color:var(--muted);line-height:1.5}
 @media (prefers-reduced-motion:reduce){.btn{transition:none}}
-</style></head><body>
+</style>
+</head>
+<body>
 
 <div id="wrap">
   <canvas id="cv" aria-label="게임 화면"></canvas>
@@ -587,20 +594,23 @@ const CFG={
   HP_PER_LEVEL:4,            // 레벨업마다 최대 체력 +4 (최대 레벨 300 기준)
   MAX_LEVEL:300, MAX_STAGE:100,
   EXPECTED_LV_PER_STAGE:3.2, // 스테이지당 기대 레벨 상승 (몬스터 강화 배율 계산용)
-  MONSTER_HP_MUL:1.2,        // 몬스터 체력 추가 배율 (몬스터 수 2배에 맞춰 1.4 → 1.2)
-  MONSTER_HP_STAGE:.03,      // 스테이지당 몬스터 체력 추가 상승 (후반 무기·스킬 성장 보정)
-  MONSTER_HP_EXP:1.025,
+  MONSTER_HP_MUL:1.2,        // 몬스터 체력 추가 배율
+  MONSTER_HP_STAGE:.03,      // 스테이지당 몬스터 체력 추가 상승
+  MONSTER_HP_STAGE2:.035,    // 25스테이지 이후 스테이지당 추가 상승 (중후반 제자리 클리어 방지)
+  MONSTER_HP_EXP:1.025,      // 30스테이지 이후 스테이지마다 몬스터 체력 ×이 값
   SPIT_FROM:11,               // 물총 물고기(원거리 공격) 등장 스테이지
   SPIT_CHANCE:[.07,.0016,.16], // 등장 확률: 기본 + 스테이지당, 최대
   SPIT_DMG:.75,               // 물대포 피해 = 몸통 박치기 피해 × 배율
   SPIT_CD:[2.6,3.6],          // 발사 간격(초)
   SPIT_RANGE:430,             // 이 거리 안에서 발사, 다가오는 속도 절반
-  BOSS_ADD_HP:.5,            // 보스전 잡몹 체력 배율 (잡몹이 보스를 가리는 벽이 되지 않도록)      // 30스테이지 이후 스테이지마다 몬스터 체력 ×이 값 (가만히 서서 다 녹이는 것 방지)
+  BOSS_ADD_HP:.35,           // 보스전 잡몹 체력 배율 (잡몹이 보스를 가리는 벽이 되지 않도록)
+  BOSS_ADD_MAX:350,          // 보스전 잡몹 최대 수 (잡몹 1000마리가 보스를 가려 딜이 막히던 것 방지)
+  LOK_PER_SEC:3,             // 처치 회복은 초당 처치 3마리 분까지만 (몬스터 2배로 회복이 피해를 압도하던 것 방지)
   BOSS_HP_MUL:2.0,
   MONSTER_DMG_MUL:2.0,       // 몬스터 접촉 대미지 배율 (1.5 → 2.0)
   BOSS_HP_GROWTH:1.5,        // 보스 1~4등급: 등급마다 체력 ×1.5
   BOSS_HP_GROWTH_LATE:1.7,   // 보스 5~10등급: 등급마다 체력 ×1.7
-  BOSS_HP_TUNE:[.9,1,1.15,1.2,1.6,1.3,1.12,1,1.1,1.1], // 등급별 보정: 새 무기로 바뀐 직후(S30·S50·S60) 보스가 20초 안에 녹던 것을 보정 (회전 배관 강화 후 S60 1.12→1.3, S70 1→1.12, S40 21~25초 → 1.2)
+  BOSS_HP_TUNE:[.8,1,1.15,1.2,1.6,1.3,1.12,1,.8,1.1], // 등급별 보정: 새 무기로 바뀐 직후(S30·S50·S60) 보스가 20초 안에 녹던 것을 보정 (회전 배관 강화 후 S60 1.12→1.3, S70 1→1.12, S40 21~25초 → 1.2)
   SPIKE_WARN:.5,             // 가시 발사 예고 시간(초)
   ORBIT_R_BASE:66, ORBIT_R_RANGE:.2, // 회전 배관 반경 = 66 + 공격 범위×0.2 (범위 스킬과 함께 커짐)
   ORBIT_HIT_R:24, ORBIT_HIT_CD:.4, ORBIT_KNOCK:22, // 회전 배관 판정 반경·같은 적 재타격 간격(초)·밀어내기
@@ -624,7 +634,7 @@ const CFG={
   BOSS_GOLD_MUL:1.2,
   GOLD_TIER_MUL:.5,          // 어종 구간마다 잡몹 골드 +50%
   GOLD_MUL:2.0,              // 모든 골드 획득 배율 (보호구 강화 비용만큼 상향, 몬스터 2배와 합쳐 이전 대비 약 2.5배)
-  MOB_XP_MUL:.55,             // 일반 몬스터 경험치 배율 (몬스터 2배 → 마리당 경험치 줄임)
+  MOB_XP_MUL:.62,             // 일반 몬스터 경험치 배율 (몬스터 2배 → 마리당 경험치 줄임)
   BOSS_DMG_TUNE:[1,1.25,1.25,1.25,1.25,1.2,1.15,1.1,1,1], // 등급별 보스 공격력 배율
   WAVE_MUL:2,                // 포위 웨이브 마릿수 배율
   MOB_SPD_STAGE:.004,        // 스테이지당 몬스터 이동 속도 상승
@@ -744,7 +754,7 @@ const SKILLS=[
   {id:'s4',br:'srv',d:3,off:-.2,  name:'불굴의 의지', max:3, req:['s2',6],  eff:l=>`스테이지당 1회 체력 ${20+l*10}%로 부활`},
   {id:'s6',br:'srv',d:4,off:-.17, name:'안전 보호막', max:6, req:['s4',1],  eff:l=>`${14-l*1.5}초마다 피해 1회를 막는 보호막`},
   {id:'s3',br:'srv',d:2,off:.22,  name:'안전 장구',   max:15,req:['s1',8],  eff:l=>`받는 피해 -${l*2}%`},
-  {id:'s5',br:'srv',d:3,off:.2,   name:'흡수 장갑',   max:5, req:['s3',5],  eff:l=>`적 처치 시 최대 체력의 ${(l*.15).toFixed(2)}% 회복`},
+  {id:'s5',br:'srv',d:3,off:.2,   name:'흡수 장갑',   max:5, req:['s3',5],  eff:l=>`적 처치 시 최대 체력의 ${(l*.1).toFixed(1)}% 회복 (초당 ${CFG.LOK_PER_SEC}마리까지)`},
   {id:'m1',br:'mob',d:1,off:0,    name:'안전화',      max:12,req:null,      eff:l=>`이동 속도 +${(l*2.5).toFixed(1)}%`},
   {id:'m2',br:'mob',d:2,off:-.22, name:'회피 본능',   max:6, req:['m1',4],  eff:l=>`피격 후 무적 +${(l*.05).toFixed(2)}초`},
   {id:'m3',br:'mob',d:3,off:-.2,  name:'긴급 회피',   max:10,req:['m2',3],  eff:l=>`${l*2}% 확률로 피해를 완전히 회피`},
@@ -1785,10 +1795,10 @@ function startStage(n){
 }
 function spawnRadius(){ return Math.hypot(V.w,V.h)/2/V.zoom+50; }
 // 몬스터 체력 배율: 직선 상승 + 30스테이지 이후 지수 상승 (후반 무기·스킬 성장 속도에 맞춤)
-const mobHpMul=st=>CFG.MONSTER_HP_MUL*(1+CFG.MONSTER_HP_STAGE*(st-1))*Math.pow(CFG.MONSTER_HP_EXP,Math.max(0,st-30))*(isBossStage(st)?CFG.BOSS_ADD_HP:1);
+const mobHpMul=st=>CFG.MONSTER_HP_MUL*(1+CFG.MONSTER_HP_STAGE*(st-1)+CFG.MONSTER_HP_STAGE2*Math.max(0,st-25))*Math.pow(CFG.MONSTER_HP_EXP,Math.max(0,st-30))*(isBossStage(st)?CFG.BOSS_ADD_HP:1);
 function pickType(){ const t=run.tier; return (t>0&&Math.random()<.25)?t-1:t; }
 function spawnEnemy(ti,ang){
-  if(run.enemies.length>=CFG.MAX_ENEMIES) return;
+  if(run.enemies.length>=(run.boss?CFG.BOSS_ADD_MAX:CFG.MAX_ENEMIES)) return;
   const f=FISH[ti], a=ang??rand(0,TAU), R=spawnRadius()+rand(0,60), hp=f.hp*run.scale*mobHpMul(run.stage);
   run.enemies.push({f,x:P.x+Math.cos(a)*R,y:P.y+Math.sin(a)*R,hp,maxHp:hp,r:f.r,spd:f.spd*(1+CFG.MOB_SPD_STAGE*run.stage)*rand(.9,1.1),
     dmg:Math.round(f.dmg*run.scale*CFG.MONSTER_DMG_MUL),xp:f.xp,flash:0,ang:a+Math.PI,wob:rand(0,TAU),slowT:0,dotT:0,dotDps:0,orbitCd:0,
@@ -1905,7 +1915,7 @@ function killEnemy(e){
   }
   gainXp(e.xp*ST.xpMul*CFG.MOB_XP_MUL);
   if(!SIM.on&&run.fx.length<260) run.fx.push({type:'xp',x:e.x,y:e.y,t:0,life:.5,sx:e.x,sy:e.y});
-  if(ST.lifeOnKill>0) P.hp=Math.min(ST.maxHp,P.hp+ST.maxHp*ST.lifeOnKill);
+  if(ST.lifeOnKill>0&&(run.lokN||0)<CFG.LOK_PER_SEC){ run.lokN=(run.lokN||0)+1; P.hp=Math.min(ST.maxHp,P.hp+ST.maxHp*ST.lifeOnKill); }
   run.combo++; run.comboT=2; run.bestCombo=Math.max(run.bestCombo,run.combo);
   if(run.combo%50===0){ const bonus=Math.round(run.combo/20*(1+run.tier*CFG.GOLD_TIER_MUL)*ST.goldMul); SND.play('combo'); addGold(bonus,P.x,P.y-40,6); toast(`${run.combo} 콤보!`,`연속 처치 보너스 +${fmt(bonus)}G`,'#ff9d5c'); }
   const g=e.f.gold, tier=run.tier+1, gt=1+run.tier*CFG.GOLD_TIER_MUL;
@@ -2049,6 +2059,7 @@ function update(dt){
   if(P.moving){P.walk+=dt*12; if(Math.abs(ix)>.1&&P.throwT<=0) P.face=ix>0?1:-1;}
   P.inv=Math.max(0,P.inv-dt); P.throwT=Math.max(0,P.throwT-dt);
   if(ST.regen>0&&P.hp<ST.maxHp) P.hp=Math.min(ST.maxHp,P.hp+ST.maxHp*ST.regen*dt);
+  run.lokT=(run.lokT||0)+dt; if(run.lokT>=1){ run.lokT-=1; run.lokN=0; } // 처치 회복 1초 창
   if(P.hp>ST.maxHp) P.hp=ST.maxHp;
   if(!SIM.on){P.bubbleT-=dt; if(P.bubbleT<=0){P.bubbleT=rand(1.2,2.4); run.fx.push({type:'breath',x:P.x+P.face*8,y:P.y-30,t:0,life:1.6});}}
 
@@ -2100,8 +2111,9 @@ function update(dt){
     if(ST.aura>0&&d<130) slow*=1-ST.aura;
     if(d>R*1.7){const a=Math.atan2(dy,dx)+rand(-.6,.6); e.x=P.x+Math.cos(a)*R; e.y=P.y+Math.sin(a)*R; continue;}
     e.wob+=dt*(e.f.kind==='plankton'?3:8)*slow;
-    if(e.spitter&&d<CFG.SPIT_RANGE){ slow*=.5; e.spitT-=dt*(slow>0?1:0);
-      if(e.spitT<=0){ e.spitT=rand(CFG.SPIT_CD[0],CFG.SPIT_CD[1]); const sp=230+run.stage*.8; run.eshots.push({x:e.x+dx/d*e.r,y:e.y+dy/d*e.r,vx:dx/d*sp,vy:dy/d*sp,r:6,life:CFG.SPIT_RANGE/sp+.4,dmg:Math.round(e.dmg*CFG.SPIT_DMG),water:true}); if(!SIM.on) SND.play('spit'); } }
+    if(e.spitter){ const sr=Math.max(CFG.SPIT_RANGE,ST.range+110); e.spitT-=dt*(slow>0?1:0); if(d>=sr) e.spitT=Math.max(e.spitT,.6); else slow*=.5; }
+    if(e.spitter&&d<Math.max(CFG.SPIT_RANGE,ST.range+110)){
+      if(e.spitT<=0){ e.spitT=rand(CFG.SPIT_CD[0],CFG.SPIT_CD[1]); const sp=230+run.stage*.8; run.eshots.push({x:e.x+dx/d*e.r,y:e.y+dy/d*e.r,vx:dx/d*sp,vy:dy/d*sp,r:6,life:Math.max(CFG.SPIT_RANGE,ST.range+110)/sp+.4,dmg:Math.round(e.dmg*CFG.SPIT_DMG),water:true}); if(!SIM.on) SND.play('spit'); } }
     const ux=dx/d, uy=dy/d, w=Math.sin(e.wob*.5)*.22;
     const vx=(ux-uy*w)*e.spd*slow, vy=(uy+ux*w)*e.spd*slow;
     e.x+=vx*dt; e.y+=vy*dt; e.ang=Math.atan2(vy,vx);
@@ -2807,6 +2819,8 @@ function renderInv(body){
       <p style="font-size:12px">무기는 몬스터에게서 낮은 확률로, 보스에게서 높은 확률로 떨어집니다. 스테이지가 높을수록 상위 무기가 나옵니다.</p>
       <h3 style="margin-top:8px">보호구 <span style="font-family:var(--f-body);font-size:13px;color:var(--muted)">${save.gear.length} / ${GEAR_MAX}</span></h3>
       ${(()=>{const bl=betterGearList(); return bl.length?`<div class="row" style="justify-content:space-between;padding:10px 12px;border:1px solid var(--ok);border-radius:4px;background:rgba(95,211,154,.08)"><span style="font-size:13px;flex:1;min-width:180px">더 좋은 보호구: <b>${bl.map(g=>gearName(g)+' +'+g.plus).join(', ')}</b></span><button class="btn small" type="button" id="btnBestG">모두 장착</button></div>`:'';})()}
+      ${(()=>{const j=save.gear.filter(isJunkGear), g=j.reduce((a,x)=>a+gearSell(x),0), per=GEAR_SLOTS.map(sl=>[GEAR[sl].name,j.filter(x=>x.slot===sl).length]).filter(v=>v[1]).map(v=>v[0]+' '+v[1]).join(' · ');
+        return `<div class="row" style="justify-content:space-between;padding:10px 12px;border:1px solid var(--line);border-radius:4px;background:var(--panel-2)"><span style="font-size:12px;color:var(--muted);flex:1;min-width:180px">${j.length?`장착 보호구보다 약한 보호구 <b style="color:var(--ink)">${j.length}개</b> (${per})`:'정리할 하위 보호구가 없습니다'} · 가방이 가득 차면 하위 보호구는 자동으로 팝니다</span><button class="btn small" type="button" id="btnSellJunkG" ${j.length?'':'disabled'}>하위 보호구 일괄 판매${j.length?` +${fmt(g)}G`:''}</button></div>`;})()}
       <div id="gearDet"></div>
       <div class="grid" id="gearGrid"></div>
       <p style="font-size:12px">안전모는 체력·피해 감소, 장갑은 공격 속도·치명타, 작업화는 이동 속도·회피를 올립니다. 정예와 보스가 주로 떨어뜨립니다.</p></div></div>`;
@@ -2848,6 +2862,9 @@ function renderGearPart(body){
     b.appendChild(gearCanvas(g,40,40)); b.insertAdjacentHTML('beforeend',`<span class="nm">${gearName(g)} +${g.plus}</span><span class="sub">${on&&on.uid===g.uid?'장착 중':'Lv '+GEAR_REQ[g.tier]+(isJunkGear(g)?' · 하위':'')}</span>`);
     b.onclick=()=>{ selGear=g.uid; renderInv(body); }; grid.appendChild(b);
   }
+  const bjg=$('#btnSellJunkG'); if(bjg){ let arm=false; bjg.onclick=e=>{ const j=save.gear.filter(isJunkGear); if(!j.length) return;
+    if(!arm){arm=true; e.target.textContent=`한 번 더 누르면 ${j.length}개 판매`; return;}
+    const g=j.reduce((a,x)=>a+gearSell(x),0); save.gold+=g; save.gear=save.gear.filter(x=>!isJunkGear(x)); selGear=null; SND.play('coins'); persist(); refreshOffice(); renderInv(body); toastOffice(`하위 보호구 ${j.length}개 판매 · +${fmt(g)} G`); }; }
   const bg=$('#btnBestG'); if(bg) bg.onclick=()=>{ for(const g of betterGearList()) save.equip[g.slot]=g.uid; SND.play('weapon'); persist(); refreshOffice(); renderInv(body); };
 }
 /* 무기·보호구 강화 */
@@ -3228,4 +3245,5 @@ Object.defineProperty(window,'__JOGONG_SIM__',{value:{
 })();
 </script>
 
-</body></html>
+</body>
+</html>
