@@ -1,9 +1,4 @@
-<!doctype html>
-<html lang="ko">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>조공부터 소장까지</title>
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>조공부터 소장까지</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+KR:wght@400;500;700;900&display=swap">
@@ -195,9 +190,7 @@ details.dev summary{cursor:pointer}
 .dmgrow b{display:block;height:100%;border-radius:4px}
 .dmgrow em{font-style:normal;text-align:right;font-variant-numeric:tabular-nums;color:var(--muted)}
 @media (prefers-reduced-motion:reduce){.btn{transition:none}}
-</style>
-</head>
-<body>
+</style></head><body>
 
 <div id="wrap">
   <canvas id="cv" aria-label="게임 화면"></canvas>
@@ -303,6 +296,8 @@ const CFG={
   MONSTER_DMG_MUL:1.5,       // 몬스터 접촉 대미지 배율 (초반 7~11)
   BOSS_HP_GROWTH:1.5,        // 보스 1~4등급: 등급마다 체력 ×1.5
   BOSS_HP_GROWTH_LATE:1.7,   // 보스 5~10등급: 등급마다 체력 ×1.7
+  BOSS_HP_TUNE:[1,1,1.15,1,1.45,1.12,1,1,1,1], // 등급별 보정: 새 무기로 바뀐 직후(S30·S50·S60) 보스가 20초 안에 녹던 것을 보정
+  SPIKE_WARN:.5,             // 가시 발사 예고 시간(초)
   MAX_ENEMIES:520,
   SPAWN_BASE:1.4, SPAWN_PER_STAGE:.085, // 초당 출현 수
   IFRAME:.5,                 // 피격 후 무적(초)
@@ -370,7 +365,7 @@ const BOSS_COLORS=[['#c9a0a4','#8e6a70'],['#c09097','#86606a'],['#b58288','#7a54
 function bossDef(k){
   const st=k*10, sc=monsterScale(st);
   return {name:BOSS_NAMES[k-1],k,color:BOSS_COLORS[k-1],r:46+k*6,
-    hp:Math.round(520*(k<=4?Math.pow(CFG.BOSS_HP_GROWTH,k-1):Math.pow(CFG.BOSS_HP_GROWTH,3)*Math.pow(CFG.BOSS_HP_GROWTH_LATE,k-4))*sc*CFG.BOSS_HP_MUL),
+    hp:Math.round(520*(k<=4?Math.pow(CFG.BOSS_HP_GROWTH,k-1):Math.pow(CFG.BOSS_HP_GROWTH,3)*Math.pow(CFG.BOSS_HP_GROWTH_LATE,k-4))*sc*CFG.BOSS_HP_MUL*(CFG.BOSS_HP_TUNE[k-1]||1)),
     dmg:Math.round(14*sc), spd:54+k*3, gold:Math.round((500*k+150*k*k)*CFG.BOSS_GOLD_MUL), xp:Math.round(xpToNext(Math.round(st*CFG.EXPECTED_LV_PER_STAGE))*1.2)};
 }
 
@@ -456,7 +451,7 @@ const SKILL=Object.fromEntries(SKILLS.map(s=>[s.id,s]));
 const WEAPONS=[
   {id:'scrap',  name:'폐 파이프',      req:1,  coef:1.0, magicPct:.15, magic:'rust',   mName:'녹물 부식', mDesc:p=>`적중 시 3초간 초당 공격력의 ${p}% 지속 피해`, cost:20,   color:'#b5683a'},
   {id:'glass',  name:'유리 파이프',    req:45, coef:1.35,magicPct:.35, magic:'shard',  mName:'파편 비산', mDesc:p=>`25% 확률로 유리 파편 3개가 튀어 각각 공격력의 ${p}% 마법 피해`, cost:80, color:'#9fe8ff'},
-  {id:'plastic',name:'플라스틱 파이프',req:90, coef:1.8, magicPct:.6,  magic:'bounce', mName:'탄성 반동', mDesc:p=>`적중 후 근처 적에게 한 번 튕겨 공격력의 ${p}% 마법 피해`, cost:250, color:'#5aa8ff'},
+  {id:'plastic',name:'플라스틱 파이프',req:90, coef:1.8, magicPct:.6,  magic:'bounce', mName:'탄성 반동', mDesc:p=>`적중할 때마다 탄성 고무 조각이 근처 적에게 튕겨 공격력의 ${p}% 마법 피해 (연쇄 확장만큼 더 튕김)`, cost:250, color:'#5aa8ff'},
   {id:'galva',  name:'갈바 파이프',    req:150,coef:2.5, magicPct:.45, magic:'chain',  mName:'아연 전류', mDesc:p=>`근처 적 2마리에게 전류가 이어져 공격력의 ${p}% 마법 피해`, cost:600, color:'#e9f27a'},
   {id:'sus',    name:'서스 파이프',    req:210,coef:3.4, magicPct:.3,  magic:'frost',  mName:'스테인리스 냉각', mDesc:p=>`적중 시 공격력의 ${p}% 추가 마법 피해, 1.5초간 45% 감속`, cost:1500, color:'#bfe9ff'},
   {id:'tube',   name:'튜브 파이프',    req:270,coef:4.6, magicPct:.6,  magic:'burst',  mName:'수압 폭발', mDesc:p=>`적중 지점 반경 80 폭발, 범위 내 모든 적에게 공격력의 ${p}% 마법 피해`, cost:3500, color:'#5ff0ff'},
@@ -676,7 +671,7 @@ function stats(){
     pierce:CFG.BASE_PIERCE+sk('a4')+bn('pierce'), crit:.03*sk('a5'), critMul:2+.15*sk('a6'),
     range:CFG.BASE_RANGE*(1+.04*sk('r1'))*(1+.2*bn('range')),
     shotSpeed:CFG.SHOT_SPEED*(1+.05*sk('r2')),
-    orbit:sk('r3')+bn('orbit'), orbitMul:.5*(1+.15*sk('r4')), orbitSpd:3.2*(1+.06*sk('r4')),
+    orbit:sk('r3')+bn('orbit'), orbitMul:.8*(1+.15*sk('r4')), orbitSpd:3.2*(1+.06*sk('r4')),
     knock:5+4*sk('r5'),
     elemDur:1+.1*sk('g2'), extraTargets:sk('g3'), shock:sk('g4'), bolt:sk('g5'),
     maxHp:Math.round((CFG.BASE_HP+CFG.HP_PER_LEVEL*(lv-1)+rb.hp)*(1+.03*sk('s1'))*(1+.15*bn('heal'))),
@@ -1288,7 +1283,7 @@ function fire(){
     let a=Math.atan2(t.y-P.y,t.x-P.x);
     if(i>=targets.length) a+=Math.ceil((i-targets.length+1)/2)*.2*((i%2)?1:-1);
     run.shots.push({kind:'pipe',x:P.x,y:P.y-8,vx:Math.cos(a)*ST.shotSpeed,vy:Math.sin(a)*ST.shotSpeed,rot:rand(0,TAU),
-      dmg:ST.dmg,pierce:ST.pierce,bounce:ST.wdef.magic==='bounce'?1+ST.extraTargets:0,life,r:10,hit:new Set(),crit:Math.random()<ST.crit,trail:[],shock:shockShot&&i===0});
+      dmg:ST.dmg,pierce:ST.pierce,bounce:0,life,r:10,hit:new Set(),crit:Math.random()<ST.crit,trail:[],shock:shockShot&&i===0});
   }
   P.face=Math.cos(Math.atan2(targets[0].y-P.y,targets[0].x-P.x))>=0?1:-1;
   P.throwT=.18;
@@ -1315,6 +1310,7 @@ function onPipeHit(e,s){
   switch(ST.wdef.magic){
     case 'rust': e.dotDps=Math.max(e.dotDps,m); e.dotT=3*ST.elemDur; break;
     case 'shard': if(Math.random()<.25){const a0=Math.atan2(s.vy,s.vx), k=3+ST.extraTargets; for(let i=0;i<k;i++){const a=a0+(i-(k-1)/2)*.6+rand(-.2,.2); run.shots.push({kind:'shard',x:e.x,y:e.y,vx:Math.cos(a)*420,vy:Math.sin(a)*420,rot:a,dmg:m,pierce:0,bounce:0,life:.35,r:6,hit:new Set([e]),crit:false,trail:[]});}} break;
+    case 'bounce': {const nx=nearestK(1,220,e.x,e.y,new Set([e]))[0]; if(nx){const a=Math.atan2(nx.y-e.y,nx.x-e.x); run.shots.push({kind:'bounce',x:e.x,y:e.y,vx:Math.cos(a)*460,vy:Math.sin(a)*460,rot:a,dmg:m,pierce:0,bounce:ST.extraTargets,life:.6,r:8,hit:new Set([e]),crit:false,trail:[]});}} break;
     case 'chain': {const ts=nearestK(2+ST.extraTargets,160,e.x,e.y,new Set([e])); for(const t of ts){damage(t,m,false,'magic'); if(!SIM.on) run.fx.push({type:'bolt',x1:e.x,y1:e.y,x2:t.x,y2:t.y,t:0,life:.18});}} break;
     case 'frost': if(!e.dead) {e.slowT=1.5*ST.elemDur;} damage(e,m,false,'magic'); break;
     case 'burst': {for(const t of enemiesNear(e.x,e.y,80)) damage(t,m,false,'magic'); if(!SIM.on) run.fx.push({type:'boom',x:e.x,y:e.y,t:0,life:.45});} break;
@@ -1457,14 +1453,14 @@ function update(dt){
   if(ST.orbit>0){
     P.orbitA+=dt*ST.orbitSpd;
     for(let i=0;i<ST.orbit;i++){const a=P.orbitA+i/ST.orbit*TAU, ox=P.x+Math.cos(a)*78, oy=P.y+Math.sin(a)*78;
-      for(const e of enemiesNear(ox,oy,10)) if(e.orbitCd<=0){e.orbitCd=.5; damage(e,ST.dmg*ST.orbitMul,false,'orbit');}
+      for(const e of enemiesNear(ox,oy,18)) if(e.orbitCd<=0){e.orbitCd=.5; damage(e,ST.dmg*ST.orbitMul,false,'orbit');}
       for(const c of run.crates) if((c.x-ox)**2+(c.y-oy)**2<(c.r+12)**2) breakCrate(c);}
   }
   // 파이프
   const boss=run.bossRef&&!run.bossRef.dead?run.bossRef:null;
   for(let si=0;si<run.shots.length;si++){
     const s=run.shots[si];
-    if(!SIM.on&&s.kind==='pipe'&&ST.wdef.magic!=='rust'){s.trail.push(s.x,s.y); if(s.trail.length>10) s.trail.splice(0,2);}
+    if(!SIM.on&&(s.kind==='bounce'||s.kind==='pipe'&&ST.wdef.magic!=='rust')){s.trail.push(s.x,s.y); if(s.trail.length>10) s.trail.splice(0,2);}
     s.x+=s.vx*dt; s.y+=s.vy*dt; s.rot+=dt*14; s.life-=dt;
     if(s.life<=0) continue;
     let hitE=null;
@@ -1513,8 +1509,10 @@ function updateBoss(b,dt){
   if(b.stinkCd<=0){b.stinkCd=7-Math.min(3,k*.3);
     const n=k>=9?2:1; for(let i=0;i<n;i++) run.fx.push({type:'stink',x:b.x,y:b.y,r:b.r*.6-i*120,maxR:b.r+260,hit:false,dmg:Math.round(b.dmg*.7),t:0,life:9});}
   if(k>=3){ b.summonCd=(b.summonCd??8)-dt; if(b.summonCd<=0){ b.summonCd=12; const n=6+k; for(let i=0;i<n;i++){const a=i/n*TAU; spawnEnemy(run.tier,0); const e=run.enemies[run.enemies.length-1]; if(e){e.x=b.x+Math.cos(a)*(b.r+30); e.y=b.y+Math.sin(a)*(b.r+30);}} if(!SIM.on) run.fx.push({type:'ring',x:b.x,y:b.y,t:0,life:.5,r:b.r+60,color:'#d77bff'}); } }
-  if(k>=5){ b.spikeCd=(b.spikeCd??4)-dt; if(b.spikeCd<=0){ b.spikeCd=Math.max(3,6-k*.25); const n=5+(k-5), a0=Math.atan2(dy,dx);
-    for(let i=0;i<n;i++){const a=a0+(i-(n-1)/2)*.22; run.eshots.push({x:b.x+Math.cos(a)*b.r*.8,y:b.y+Math.sin(a)*b.r*.8,vx:Math.cos(a)*260,vy:Math.sin(a)*260,r:7,life:2.6,dmg:Math.round(b.dmg*.6),k});} } }
+  if(k>=5){ // 가시 발사: 부채꼴 예고선을 먼저 보여 주고(SPIKE_WARN초) 그 방향으로 발사 — 피할 수 있는 패턴
+    if(b.spikeWarn>0){ b.spikeWarn-=dt; if(b.spikeWarn<=0){ const n=b.spikeN, a0=b.spikeA;
+      for(let i=0;i<n;i++){const a=a0+(i-(n-1)/2)*.22; run.eshots.push({x:b.x+Math.cos(a)*b.r*.8,y:b.y+Math.sin(a)*b.r*.8,vx:Math.cos(a)*260,vy:Math.sin(a)*260,r:7,life:2.6,dmg:Math.round(b.dmg*.6),k});} } }
+    else{ b.spikeCd=(b.spikeCd??4)-dt; if(b.spikeCd<=0){ b.spikeCd=Math.max(3,6-k*.25); b.spikeN=5+(k-5); b.spikeA=Math.atan2(dy,dx); b.spikeWarn=CFG.SPIKE_WARN; } } }
   if(d>spawnRadius()*1.6){b.x=P.x-dx/d*spawnRadius(); b.y=P.y-dy/d*spawnRadius();}
 }
 function updateFx(dt){
@@ -1651,6 +1649,8 @@ function drawPlayer(time){
   ctx.restore();
 }
 function drawShot(s,time){
+  if(s.kind==='bounce'){if(s.trail.length>=4){ctx.strokeStyle='rgba(90,168,255,.45)'; ctx.lineWidth=4; ctx.beginPath(); ctx.moveTo(s.trail[0],s.trail[1]); for(let i=2;i<s.trail.length;i+=2) ctx.lineTo(s.trail[i],s.trail[i+1]); ctx.lineTo(s.x,s.y); ctx.stroke();}
+    const q=1+.18*Math.sin(time*30); ctx.fillStyle='#5aa8ff'; ctx.beginPath(); ctx.ellipse(s.x,s.y,6*q,6/q,s.rot,0,TAU); ctx.fill(); ctx.fillStyle='rgba(225,240,255,.9)'; ctx.beginPath(); ctx.arc(s.x-1.5,s.y-1.5,2,0,TAU); ctx.fill(); return;}
   if(s.kind==='shard'){ctx.save(); ctx.translate(s.x,s.y); ctx.rotate(s.rot); ctx.fillStyle='rgba(200,245,255,.9)'; ctx.beginPath(); ctx.moveTo(5,0); ctx.lineTo(-3,-2.5); ctx.lineTo(-2,2.5); ctx.fill(); ctx.restore(); return;}
   const col=ST.wdef.color;
   if(s.trail.length>=4){ctx.strokeStyle=col; ctx.globalAlpha=.35; ctx.lineWidth=3; ctx.beginPath(); ctx.moveTo(s.trail[0],s.trail[1]); for(let i=2;i<s.trail.length;i+=2) ctx.lineTo(s.trail[i],s.trail[i+1]); ctx.lineTo(s.x,s.y); ctx.stroke(); ctx.globalAlpha=1;}
@@ -1666,6 +1666,32 @@ function drawCoinIcon(x,y,r){
 }
 function rrect(x,y,w,h,r){ctx.beginPath(); if(ctx.roundRect) ctx.roundRect(x,y,w,h,r); else ctx.rect(x,y,w,h);}
 
+function drawOffscreen(time){ // 화면 밖 보스·정예·지원 상자 방향 표시 (가장자리 화살표 + 거리)
+  const z=V.zoom, list=[];
+  const b=run.bossRef; if(b&&!b.dead) list.push({x:b.x,y:b.y,c:'#ff5d6c',lb:'보스',big:1});
+  for(const e of run.enemies) if(e.elite&&!e.dead) list.push({x:e.x,y:e.y,c:'#ffd84a',lb:'정예'});
+  for(const it of run.items) if(it.kind==='chest') list.push({x:it.x,y:it.y,c:'#ffc21a',lb:'지원'});
+  if(!list.length) return;
+  const narrow=V.w<640, top=narrow?(b&&!b.dead?168:118):(b&&!b.dead?92:84), m=22, cx=V.w/2, cy=V.h/2;
+  ctx.setTransform(V.dpr,0,0,V.dpr,0,0); ctx.textAlign='center'; ctx.textBaseline='middle';
+  for(const o of list){
+    const dx=(o.x-P.x)*z, dy=(o.y-P.y)*z;
+    if(Math.abs(dx)<V.w/2-10&&Math.abs(dy)<V.h/2-10) continue; // 화면 안이면 표시 안 함
+    const a=Math.atan2(dy,dx), ca=Math.cos(a), sa=Math.sin(a);
+    const kx=ca>0?(V.w-m-cx)/ca:ca<0?(m-cx)/ca:Infinity, ky=sa>0?(V.h-m-cy)/sa:sa<0?(top-cy)/sa:Infinity, k=Math.min(kx,ky);
+    const x=cx+ca*k, y=cy+sa*k, pulse=1+.12*Math.sin(time*6), s=(o.big?13:10)*pulse;
+    ctx.save(); ctx.translate(x,y);
+    ctx.globalAlpha=.9; ctx.fillStyle='rgba(2,12,21,.7)'; ctx.beginPath(); ctx.arc(0,0,s+9,0,TAU); ctx.fill();
+    ctx.strokeStyle=o.c; ctx.lineWidth=2; ctx.stroke();
+    ctx.rotate(a); ctx.fillStyle=o.c; ctx.beginPath(); ctx.moveTo(s+1,0); ctx.lineTo(-s*.55,-s*.7); ctx.lineTo(-s*.2,0); ctx.lineTo(-s*.55,s*.7); ctx.closePath(); ctx.fill();
+    ctx.restore();
+    const tx=clamp(x-ca*(s+22),30,V.w-30), ty=clamp(y-sa*(s+22),top-4,V.h-14);
+    ctx.font=`700 11px ${FB}`; ctx.lineWidth=3; ctx.strokeStyle='rgba(0,0,0,.7)';
+    const t=`${o.lb} ${Math.round(Math.hypot(o.x-P.x,o.y-P.y)/40)}m`;
+    ctx.strokeText(t,tx,ty); ctx.fillStyle=o.c; ctx.fillText(t,tx,ty);
+  }
+  ctx.globalAlpha=1;
+}
 function drawHUD(time){
   ctx.setTransform(V.dpr,0,0,V.dpr,0,0);
   const narrow=V.w<640;
@@ -1787,6 +1813,9 @@ function render(dt,time){
   const b=run.bossRef;
   if(b&&!b.dead){
     if(b.mode==='wind'){ctx.save(); ctx.strokeStyle=`rgba(255,80,60,${.4+.4*Math.sin(time*30)})`; ctx.lineWidth=b.r*.9; ctx.lineCap='round'; ctx.setLineDash([18,14]); ctx.beginPath(); ctx.moveTo(b.x,b.y); ctx.lineTo(b.x+b.dx*b.spd*3.1,b.y+b.dy*b.spd*3.1); ctx.stroke(); ctx.restore();}
+    if(b.spikeWarn>0){ const p=1-b.spikeWarn/CFG.SPIKE_WARN, n=b.spikeN; ctx.save(); ctx.lineCap='round'; // 가시 발사 예고선
+      for(let i=0;i<n;i++){const a=b.spikeA+(i-(n-1)/2)*.22, r0=b.r*.8, r1=r0+120+420*p; ctx.strokeStyle=`rgba(255,${b.def.k>=8?110:200},90,${.18+.5*p})`; ctx.lineWidth=3+5*p; ctx.setLineDash([12,10]); ctx.beginPath(); ctx.moveTo(b.x+Math.cos(a)*r0,b.y+Math.sin(a)*r0); ctx.lineTo(b.x+Math.cos(a)*r1,b.y+Math.sin(a)*r1); ctx.stroke();}
+      ctx.restore(); }
     ctx.save(); ctx.translate(b.x+(b.mode==='wind'?rand(-2,2):0),b.y); drawRay(ctx,b,time); ctx.restore();
     if(b.slowT>0){ctx.fillStyle='rgba(150,220,255,.2)'; ctx.beginPath(); ctx.arc(b.x,b.y,b.r,0,TAU); ctx.fill();}
   }
@@ -1833,7 +1862,7 @@ function render(dt,time){
     ctx.strokeText(fl.text,fl.x,fl.y); ctx.fillStyle=fl.color; ctx.fillText(fl.text,fl.x,fl.y);
   }
   ctx.globalAlpha=1;
-  drawHUD(time); drawCoins();
+  drawOffscreen(time); drawHUD(time); drawCoins();
   if(joy.id!==null&&state==='play'){
     const r=wrap.getBoundingClientRect(), ox=joy.ox-r.left, oy=joy.oy-r.top;
     let dx=joy.x-joy.ox, dy=joy.y-joy.oy; const d=Math.hypot(dx,dy); if(d>50){dx=dx/d*50; dy=dy/d*50;}
@@ -2272,6 +2301,4 @@ Object.defineProperty(window,'__JOGONG_SIM__',{value:{
 
 })();
 </script>
-
-</body>
-</html>
+</body></html>
