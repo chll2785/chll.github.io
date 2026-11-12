@@ -1646,6 +1646,11 @@ function killEnemy(e){
   if(e.dead) return;
   e.dead=true; run.kills++; save.totalKills++;
   if(!SIM.on) burst(e.x,e.y,e.boss?'#ffd2dc':'#bfefff',e.boss?40:6,e.r);
+  // 처치 연출: 물고기가 하얗게 번쩍이며 부풀었다 사라지는 잔상 (뱀서류의 '터지는' 처치감), 보스·정예는 짧은 슬로 모션
+  if(!SIM.on){
+    if(!e.boss&&run.fx.length<240) run.fx.push({type:'corpse',x:e.x,y:e.y,f:e.f,ang:e.ang,sc:e.r/e.f.r,fr:Math.floor((e.wob/TAU*FRAMES)%FRAMES+FRAMES)%FRAMES,t:0,life:e.elite?.32:.2});
+    if(!reduceMotion&&(e.boss||e.elite)) run.slowmo=Math.max(run.slowmo||0,e.boss?1.1:.18);
+  }
   SND.play(e.boss?'bossDie':e.elite?'eliteDie':'kill');
   if(e.boss){
     save.bossKills++;
@@ -2277,6 +2282,10 @@ function render(dt,time){
     else if(f.type==='strike'){ctx.strokeStyle=`rgba(200,210,255,${1-t})`; ctx.lineWidth=4; ctx.beginPath(); ctx.moveTo(f.x+rand(-10,10),f.y-260); for(let i=1;i<=6;i++) ctx.lineTo(f.x+rand(-14,14),f.y-260+i*43); ctx.stroke(); ctx.fillStyle=`rgba(200,210,255,${.4*(1-t)})`; ctx.beginPath(); ctx.arc(f.x,f.y,45,0,TAU); ctx.fill();}
     else if(f.type==='spark'){ctx.strokeStyle=`rgba(255,240,190,${1-t})`; ctx.lineWidth=2; for(let k=-1;k<=1;k++){const a=f.a+k*.5, r0=4+t*6, r1=10+t*16; ctx.beginPath(); ctx.moveTo(f.x+Math.cos(a)*r0,f.y+Math.sin(a)*r0); ctx.lineTo(f.x+Math.cos(a)*r1,f.y+Math.sin(a)*r1); ctx.stroke();}}
     else if(f.type==='boom'){ctx.strokeStyle=`rgba(95,240,255,${1-t})`; ctx.lineWidth=6*(1-t)+1; ctx.beginPath(); ctx.arc(f.x,f.y,80*Math.sqrt(t),0,TAU); ctx.stroke(); ctx.fillStyle=`rgba(95,240,255,${.25*(1-t)})`; ctx.fill();}
+    else if(f.type==='corpse'){
+      const S=getSprites(f.f), k=1+.35*t; ctx.save(); ctx.globalAlpha=(1-t)*(1-t); ctx.translate(f.x,f.y); ctx.rotate(f.ang); if(Math.cos(f.ang)<0) ctx.scale(1,-1);
+      ctx.scale(f.sc*k,f.sc*k*(1-.25*t)); ctx.drawImage(S.white[f.fr],-S.w/2/SPR,-S.h/2/SPR,S.w/SPR,S.h/SPR); ctx.restore(); ctx.globalAlpha=1;
+    }
     else if(f.type==='chest'){
       const s=Math.min(1,f.t*4), y=f.y-Math.min(30,f.t*60);
       ctx.save(); ctx.translate(f.x,y); ctx.scale(s,s); ctx.globalAlpha=t>.8?(1-t)*5:1;
@@ -2768,7 +2777,10 @@ document.addEventListener('click',e=>{ const b=e.target.closest('button'); if(b&
 let last=performance.now(), clock=0;
 function frame(now){
   const dt=Math.min(.05,(now-last)/1000); last=now; clock+=dt;
-  if(!SIM.on){ if(state==='play'&&run) update(dt); render(dt,clock); }
+  if(!SIM.on){
+    let gdt=dt; // 보스·정예 처치 순간 잠깐 느려졌다가 부드럽게 정상 속도로 (화면 연출 전용, 시뮬레이션에는 영향 없음)
+    if(state==='play'&&run&&run.slowmo>0){ const k=run.slowmo; run.slowmo=Math.max(0,k-dt); gdt=dt*(k>.25?.3:.3+.7*(1-k/.25)); }
+    if(state==='play'&&run) update(gdt); render(gdt,clock); }
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
