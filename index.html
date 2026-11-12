@@ -253,6 +253,18 @@ details.dev summary{cursor:pointer}
   .item canvas{width:84px;height:28px}
   h3{font-size:16px}
 }
+/* 일시정지 화면 빌드 요약 (능력치 표 + 습득 스킬 + 이번 공정 지원) */
+.statgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(172px,1fr));gap:4px 14px;font-size:13px;padding:10px 12px;border:1px solid var(--line);border-radius:4px;background:var(--panel-2)}
+.statgrid div{display:flex;justify-content:space-between;gap:8px;min-width:0}
+.statgrid span{color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.statgrid b{font-variant-numeric:tabular-nums;font-weight:700;white-space:nowrap}
+.statgrid b.up{color:var(--ok)}
+.skchips{display:flex;flex-wrap:wrap;gap:5px}
+.skchips span{font-size:12px;padding:3px 7px;border-radius:3px;border:1px solid var(--line);border-left:3px solid var(--c);background:var(--panel-2);white-space:nowrap}
+.skchips span i{font-style:normal;color:var(--muted);margin-left:4px;font-variant-numeric:tabular-nums}
+.skchips span.max i{color:var(--c)}
+.buildsec{display:flex;flex-direction:column;gap:6px}
+.buildsec h3{font-size:15px}
 @media (prefers-reduced-motion:reduce){.btn{transition:none}}
 </style></head><body>
 
@@ -2749,6 +2761,32 @@ function showDead(){
   const n=run.stage; $('#btnRetry').onclick=()=>startStage(n); $('#btnRetry').focus({preventScroll:true});
   $('#btnOffice2').onclick=openOffice;
 }
+/* 일시정지 화면 빌드 요약: 뱀서류의 일시정지 능력치 표처럼 지금 빌드의 세부 수치·습득 스킬·이번 공정 현장 지원을 한눈에 보여 줌 */
+function buildSummary(st){
+  const pct=v=>`${Math.round(v*100)}%`, row=(k,v,up)=>`<div><span>${k}</span><b class="${up?'up':''}">${v}</b></div>`;
+  const rows=[
+    row('투척 간격',`${st.cd.toFixed(2)}초`,st.cd<CFG.BASE_COOLDOWN-1e-6),
+    row('파이프 수',`${st.count}개${st.volley?` · 추가 ${pct(st.volley)}`:''}`,st.count>1||st.volley>0),
+    row('관통',`${st.pierce}`,st.pierce>CFG.BASE_PIERCE),
+    row('치명타',`${pct(st.crit)} · ×${st.critMul.toFixed(2)}`,st.crit>0),
+    row('무기 마법',`${fmt(st.magicDmg)} (${Math.round(st.magicDmg/st.dmg*100)}%)`,false),
+    row('파이프 속도',`${Math.round(st.shotSpeed)}`,st.shotSpeed>CFG.SHOT_SPEED),
+    row('회전 배관',st.orbit?`${st.orbit}개 · ${pct(st.orbitMul)}`:'없음',st.orbit>0),
+    row('낙뢰·충격파',`${st.bolt?'Lv'+st.bolt:'-'} · ${st.shock?'Lv'+st.shock:'-'}`,st.bolt>0||st.shock>0),
+    row('받는 피해',`-${pct(st.armor)}`,st.armor>0),
+    row('자동 회복',`초당 ${(st.regen*100).toFixed(1)}%`,st.regen>0),
+    row('회피·보호막',`${pct(st.dodge)}${st.shield?` · ${(14-1.5*st.shield).toFixed(1)}초`:''}`,st.dodge>0||st.shield>0),
+    row('부활',st.revive?`체력 ${20+st.revive*10}%로 1회${run&&run.revived?' (사용함)':''}`:'없음',st.revive>0&&!(run&&run.revived)),
+    row('이동 속도',`${Math.round(st.speed)}`,st.speed>CFG.PLAYER_SPEED),
+    row('골드·경험치',`×${st.goldMul.toFixed(2)} · ×${st.xpMul.toFixed(2)}`,st.goldMul>1||st.xpMul>1),
+  ].join('');
+  const learned=SKILLS.filter(x=>sk(x.id)>0);
+  const chips=learned.length?`<div class="skchips">${learned.map(x=>{const lv=sk(x.id); return `<span class="${lv>=x.max?'max':''}" style="--c:${BRANCHES[x.br].color}">${x.name}<i>${lv>=x.max?'MAX':lv+'/'+x.max}</i></span>`;}).join('')}</div>`:'<p style="font-size:13px">아직 배운 스킬이 없습니다.</p>';
+  const bs=run&&run.boons?Object.entries(run.boons).filter(([,n])=>n>0):[];
+  const boons=bs.length?`<div class="buildsec"><h3>이번 공정 현장 지원</h3><div class="skchips">${bs.map(([id,n])=>{const b=BOONS.find(o=>o.id===id); return b?`<span style="--c:#5fd39a" title="${esc(b.desc)}">${b.name}<i>×${n}</i></span>`:'';}).join('')}</div></div>`:'';
+  return `<div class="buildsec"><h3>세부 능력치</h3><div class="statgrid">${rows}</div></div>
+    <div class="buildsec"><h3>습득 스킬 <span style="font-family:var(--f-body);font-size:12px;color:var(--muted)">${learned.length} / ${SKILLS.length}종</span></h3>${chips}</div>${boons}`;
+}
 function togglePause(){
   if(state==='play'){
     state='pause'; keys.clear(); joy.id=null;
@@ -2757,10 +2795,11 @@ function togglePause(){
       <div class="report"><div><small>체력</small><b>${Math.ceil(P.hp)}/${st.maxHp}</b></div><div><small>공격력</small><b>${st.dmg.toFixed(1)}</b></div>
         <div><small>공격 범위</small><b>${Math.round(st.range)}</b></div><div><small>골드</small><b>${fmt(save.gold)}</b></div></div>
       <div class="slot"><span id="pIcon"></span><div class="meta"><small>장착 무기</small><b>${WEAPON[w.type].name} +${w.plus}</b><small>${WEAPON[w.type].mName}: ${WEAPON[w.type].mDesc(Math.round(st.magicDmg/st.dmg*100))}</small></div></div>
-      ${save.sp?`<div class="note">사용하지 않은 스킬 포인트 ${save.sp}개가 있습니다. 스테이지를 마친 뒤 사무소에서 사용하세요.</div>`:''}
-      <label class="vol" style="grid-template-columns:auto 1fr;cursor:pointer"><input type="checkbox" id="optDmgNum" ${UIP.dmgNum?'checked':''} style="width:18px;height:18px;margin:0"><span>타격 피해 숫자 표시 (치명타 숫자는 항상 표시)</span></label>
       <div class="row"><button class="btn" id="btnResume" type="button">계속하기</button>
         <button class="btn ghost" id="btnQuit" type="button">사무소로 (이번 스테이지 포기)</button></div>
+      ${save.sp?`<div class="note">사용하지 않은 스킬 포인트 ${save.sp}개가 있습니다. 스테이지를 마친 뒤 사무소에서 사용하세요.</div>`:''}
+      ${buildSummary(st)}
+      <label class="vol" style="grid-template-columns:auto 1fr;cursor:pointer"><input type="checkbox" id="optDmgNum" ${UIP.dmgNum?'checked':''} style="width:18px;height:18px;margin:0"><span>타격 피해 숫자 표시 (치명타 숫자는 항상 표시)</span></label>
       ${volHtml()}`;
     show('#pause'); bindVol($('#pauseBody')); $('#optDmgNum').onchange=e=>{ UIP.dmgNum=e.target.checked; saveUIP(); }; SND.duck(true); $('#pIcon').appendChild(pipeCanvas(w.type,w.plus,72,28));
     $('#btnResume').onclick=togglePause; $('#btnResume').focus({preventScroll:true});
