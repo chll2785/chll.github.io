@@ -1,4 +1,9 @@
-<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>조공부터 소장까지</title>
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>조공부터 소장까지</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+KR:wght@400;500;700;900&display=swap">
@@ -266,7 +271,9 @@ details.dev summary{cursor:pointer}
 .buildsec{display:flex;flex-direction:column;gap:6px}
 .buildsec h3{font-size:15px}
 @media (prefers-reduced-motion:reduce){.btn{transition:none}}
-</style></head><body>
+</style>
+</head>
+<body>
 
 <div id="wrap">
   <canvas id="cv" aria-label="게임 화면"></canvas>
@@ -323,7 +330,7 @@ details.dev summary{cursor:pointer}
       <div class="tabs" role="tablist">
         <button type="button" role="tab" data-tab="skills" aria-selected="true"><span class="long">스킬 트리</span><span class="short">스킬</span><span class="badge" id="spBadge" hidden></span></button>
         <button type="button" role="tab" data-tab="inv" aria-selected="false"><span class="long">인벤토리 · 장비</span><span class="short">장비</span></button>
-        <button type="button" role="tab" data-tab="enh" aria-selected="false"><span class="long">무기 강화</span><span class="short">강화</span></button>
+        <button type="button" role="tab" data-tab="enh" aria-selected="false"><span class="long">장비 강화</span><span class="short">강화</span></button>
         <button type="button" role="tab" data-tab="rank" aria-selected="false"><span class="long">직급 · 복장</span><span class="short">직급</span></button>
         <button type="button" role="tab" data-tab="code" aria-selected="false"><span class="long">세이브 코드</span><span class="short">코드</span></button>
       </div>
@@ -603,6 +610,7 @@ const CFG={
   WEAPON_DROP:.002,          // 일반 몬스터 무기 드랍 확률 (0.2%)
   BOSS_WEAPON_DROP:.5,      // 보스 무기 드랍 확률
   ELITE_WEAPON_DROP:.1,     // 정예 몬스터 무기 드랍 확률
+  GEAR_DROP:.0012, ELITE_GEAR_DROP:.1, BOSS_GEAR_DROP:.6, // 보호구(안전모·장갑·작업화) 드랍 확률: 일반·정예·보스
   INVENTORY_MAX:40,
   ELITE_FIRST:12, ELITE_EVERY:24,   // 정예 몬스터 첫 등장(초)과 간격
   ELITE_HP:12,               // 정예 몬스터 체력 배율
@@ -760,6 +768,83 @@ const wMagic=it=>WEAPON[it.type].magicPct*(1+.06*it.plus);
 const EQUIP_SLOTS=[{id:'weapon',name:'무기'},{id:'helmet',name:'안전모'},{id:'gloves',name:'장갑'},{id:'shoes',name:'작업화'}];
 
 /* =====================================================================
+   5-0. 보호구 — 안전모 · 장갑 · 작업화 (무기와 같은 6등급, 같은 착용 레벨, 강화 +10)
+   ===================================================================== */
+const GEAR_SLOTS=['helmet','gloves','shoes'];
+const GEAR_REQ=[1,45,90,150,210,270];
+const GEAR_COLOR=['#c9cfd4','#ffc828','#ff7a1a','#4a5260','#c8d4dc','#5ff0ff'];
+const GEAR={
+  helmet:{name:'안전모',names:['플라스틱 안전모','ABS 안전모','FRP 안전모','카본 안전모','티타늄 안전모','심해 압력 헬멧'],
+    main:{key:'hp',label:'최대 체력',v:[.04,.08,.12,.16,.21,.27]}, sub:{key:'armor',label:'받는 피해 감소',v:[.01,.02,.03,.04,.05,.06]}},
+  gloves:{name:'장갑',names:['면장갑','코팅 장갑','가죽 장갑','방검 장갑','절연 장갑','강화 잠수 장갑'],
+    main:{key:'rate',label:'공격 속도',v:[.03,.05,.07,.09,.11,.13]}, sub:{key:'crit',label:'치명타 확률',v:[.005,.01,.015,.02,.025,.03]}},
+  shoes:{name:'작업화',names:['고무 장화','안전화','경량 안전화','방수 안전화','철심 작업화','심해 잠수화'],
+    main:{key:'speed',label:'이동 속도',v:[.03,.05,.07,.09,.11,.13]}, sub:{key:'dodge',label:'회피 확률',v:[.005,.01,.015,.02,.025,.03]}},
+};
+const GEAR_COST=[15,60,180,450,1100,2600]; // 강화 비용 기준 (같은 등급 무기보다 낮음)
+const GEAR_MAX=30;                         // 보호구 가방 칸 수
+const gMul=g=>1+.06*g.plus;
+const gVal=(g,which)=>GEAR[g.slot][which].v[g.tier]*gMul(g);
+const gearName=g=>GEAR[g.slot].names[g.tier];
+const gearEnhCost=g=>Math.round(GEAR_COST[g.tier]*Math.pow(g.plus+1,1.3));
+const gearSell=g=>Math.round(GEAR_COST[g.tier]*.6*(1+g.plus*.6));
+const gPct=v=>(Math.round(v*1000)/10)+'%';
+const starterGear=()=>[{uid:'g1',slot:'helmet',tier:0,plus:0},{uid:'g2',slot:'gloves',tier:0,plus:0},{uid:'g3',slot:'shoes',tier:0,plus:0}];
+function gearOn(slot){ return (save.gear||[]).find(g=>g.uid===save.equip[slot])||null; }
+function gearBonus(){ const b={hp:0,armor:0,rate:0,crit:0,speed:0,dodge:0};
+  for(const sl of GEAR_SLOTS){ const g=gearOn(sl); if(!g) continue; const d=GEAR[sl]; b[d.main.key]+=gVal(g,'main'); b[d.sub.key]+=gVal(g,'sub'); }
+  return b; }
+const gearBetter=(a,b)=>!b||a.tier>b.tier||(a.tier===b.tier&&a.plus>b.plus);
+function isJunkGear(g){ const on=gearOn(g.slot); if(!on||g.uid===on.uid) return false; return g.tier<on.tier||(g.tier===on.tier&&g.plus<=on.plus); }
+function bestGear(slot){ return (save.gear||[]).filter(g=>g.slot===slot&&GEAR_REQ[g.tier]<=save.level).sort((a,b)=>b.tier-a.tier||b.plus-a.plus)[0]||null; }
+function betterGearList(){ return GEAR_SLOTS.map(sl=>{ const b=bestGear(sl), on=gearOn(sl); return b&&b.uid!==(on&&on.uid)&&gearBetter(b,on)?b:null; }).filter(Boolean); }
+function rollGear(stage){
+  const top=Math.max(save.level,stage*CFG.EXPECTED_LV_PER_STAGE)+15, el=GEAR_REQ.map((r,i)=>i).filter(i=>GEAR_REQ[i]<=top);
+  const tier=Math.random()<.55?el[el.length-1]:el[Math.floor(Math.random()*el.length)];
+  return {slot:GEAR_SLOTS[Math.floor(Math.random()*3)],tier};
+}
+function dropGear(x,y){
+  const r=rollGear(run.stage), nw={uid:'_new',slot:r.slot,tier:r.tier,plus:0};
+  if(save.gear.length>=GEAR_MAX){
+    if(isJunkGear(nw)){ const g=gearSell(nw); save.gold+=g; run.goldEarned+=g; if(!SIM.on) floater(x,y-30,`${gearName(nw)} → +${fmt(g)} G`,'#ffd84a',16); return; }
+    const junk=save.gear.filter(isJunkGear).sort((a,b)=>gearSell(a)-gearSell(b))[0];
+    if(!junk) return;
+    save.gold+=gearSell(junk); run.goldEarned+=gearSell(junk); save.gear=save.gear.filter(g=>g!==junk);
+  }
+  const it={uid:'g'+(save.nextGid++),slot:r.slot,tier:r.tier,plus:0}; save.gear.push(it); run.gearFound.push(it);
+  if(SIM.on) return;
+  SND.play('weapon'); floater(x,y-48,gearName(it),GEAR_COLOR[it.tier],18);
+  const d=GEAR[it.slot]; toast(`${d.name} 획득 · ${gearName(it)}`,`착용 레벨 ${GEAR_REQ[it.tier]} · ${d.main.label} +${gPct(gVal(it,'main'))} · 사무소 장비 탭에서 장착`,GEAR_COLOR[it.tier]);
+}
+/* 보호구 아이콘 (등급 색 + 강화 반짝임) */
+function gearCanvas(g,w,h){
+  const cv=document.createElement('canvas'), dpr=Math.min(2,devicePixelRatio||1); cv.width=w*dpr; cv.height=h*dpr; cv.style.width=w+'px'; cv.style.height=h+'px';
+  const c=cv.getContext('2d'); c.scale(dpr,dpr); c.translate(w/2,h/2); const s=Math.min(w,h)/40; c.scale(s,s);
+  const col=GEAR_COLOR[g.tier], dk=shade(col,-60), lt=shade(col,45);
+  c.lineJoin='round'; c.lineWidth=2; c.strokeStyle='#14121c';
+  const grd=(y0,y1)=>{ const q=c.createLinearGradient(0,y0,0,y1); q.addColorStop(0,lt); q.addColorStop(.5,col); q.addColorStop(1,dk); return q; };
+  if(g.slot==='helmet'){
+    c.beginPath(); c.moveTo(-15,4); c.quadraticCurveTo(-15,-15,0,-15); c.quadraticCurveTo(15,-15,15,4); c.closePath(); c.fillStyle=grd(-15,4); c.fill(); c.stroke();
+    c.beginPath(); c.moveTo(-18,4); c.lineTo(19,4); c.quadraticCurveTo(21,8,17,8); c.lineTo(-17,8); c.quadraticCurveTo(-20,8,-18,4); c.fillStyle=dk; c.fill(); c.stroke();
+    c.fillStyle=lt; c.fillRect(-2,-15,4,19); c.fillStyle='rgba(255,255,255,.6)'; c.beginPath(); c.ellipse(-7,-8,4,2,-.6,0,TAU); c.fill();
+    if(g.tier>=5){ c.fillStyle='#14384a'; c.beginPath(); c.arc(5,-4,5,0,TAU); c.fill(); c.fillStyle='#9fe8ff'; c.fillRect(3,-6,2,2); }
+  }else if(g.slot==='gloves'){
+    c.beginPath(); c.moveTo(-10,14); c.lineTo(-11,-2); c.lineTo(-14,-6); c.quadraticCurveTo(-16,-10,-12,-10); c.lineTo(-8,-6);
+    for(let i=0;i<4;i++){ const x=-7+i*5; c.lineTo(x,-15+(i===0||i===3?3:0)); c.quadraticCurveTo(x+2,-18+(i===0||i===3?3:0),x+4,-15+(i===0||i===3?3:0)); }
+    c.lineTo(12,-2); c.lineTo(11,14); c.closePath(); c.fillStyle=grd(-16,14); c.fill(); c.stroke();
+    c.fillStyle=dk; c.fillRect(-11,9,22,5); c.strokeRect(-11,9,22,5);
+    if(g.tier===1){ c.fillStyle='rgba(30,30,30,.55)'; c.fillRect(-9,-12,20,9); }
+  }else{
+    c.beginPath(); c.moveTo(-12,-15); c.lineTo(0,-15); c.lineTo(1,0); c.quadraticCurveTo(14,1,17,7); c.lineTo(17,11); c.lineTo(-13,11); c.closePath(); c.fillStyle=grd(-15,11); c.fill(); c.stroke();
+    c.fillStyle='#16181b'; c.fillRect(-14,11,32,4); c.strokeRect(-14,11,32,4);
+    c.fillStyle='rgba(255,255,255,.35)'; c.fillRect(-10,-12,3,18);
+    if(g.tier>=2){ c.fillStyle='#ffd84a'; c.fillRect(-12,-3,13,2); }
+  }
+  if(g.plus>0){ c.font='bold 11px sans-serif'; c.textAlign='right'; c.fillStyle='#ffd84a'; c.strokeStyle='#14121c'; c.lineWidth=3; c.strokeText('+'+g.plus,20,19); c.fillText('+'+g.plus,20,19); }
+  return cv;
+}
+
+/* =====================================================================
    5-1. 현장 지원 (정예 상자에서 고르는 이번 스테이지 한정 강화)
    ===================================================================== */
 const BOONS=[
@@ -788,7 +873,7 @@ const PICKUPS=[
    6. 세이브 데이터 / 계정 / 저장소
    ===================================================================== */
 const freshSave=()=>({v:3,stage:1,maxCleared:0,level:1,xp:0,gold:0,rank:0,sp:0,skills:{},
-  inv:[{uid:'w1',type:'scrap',plus:0}],equip:{weapon:'w1'},nextUid:2,totalKills:0,bossKills:0});
+  inv:[{uid:'w1',type:'scrap',plus:0}],equip:{weapon:'w1',helmet:'g1',gloves:'g2',shoes:'g3'},nextUid:2,gear:starterGear(),nextGid:4,totalKills:0,bossKills:0});
 let save=freshSave();
 let session=null;      // {id, key, salt, hash}
 let guest=false, testMode=false;
@@ -906,6 +991,11 @@ function normalizeSave(s){
   if(!Array.isArray(d.inv)||!d.inv.length){d.inv=[{uid:'w1',type:'scrap',plus:0}]; d.equip={weapon:'w1'};}
   d.inv=d.inv.filter(it=>WEAPON[it.type]);
   if(!d.inv.find(it=>it.uid===d.equip.weapon)) d.equip.weapon=d.inv[0]?d.inv[0].uid:null;
+  // 보호구: 예전 세이브에는 없으므로 기본 세트(플라스틱 안전모·면장갑·고무 장화)를 지급
+  if(!s||!Array.isArray(s.gear)){ d.gear=starterGear(); d.nextGid=4; d.equip=Object.assign({},d.equip,{helmet:'g1',gloves:'g2',shoes:'g3'}); }
+  d.gear=d.gear.filter(g=>g&&GEAR[g.slot]&&g.tier>=0&&g.tier<GEAR_REQ.length);
+  d.nextGid=Math.max(d.nextGid||4,...d.gear.map(g=>(parseInt(String(g.uid).slice(1))||0)+1));
+  for(const sl of GEAR_SLOTS) if(d.equip[sl]&&!d.gear.find(g=>g.uid===d.equip[sl]&&g.slot===sl)) d.equip[sl]=null;
   if(!s||!s.v||s.v<3){ // v2(최대 레벨 100) → v3(최대 레벨 300): 레벨을 3배로 옮기고 스킬은 포인트로 돌려줌
     d.v=3; d.level=clamp(Math.round((d.level||1)*3)-2,1,CFG.MAX_LEVEL); d.xp=0; d.skills={}; d.sp=d.level-1;
   }
@@ -955,22 +1045,22 @@ function stats(){
   const lv=save.level, rb=rankBonus(), w=equipped(), wd=WEAPON[w.type];
   const B=(typeof run!=='undefined'&&run&&run.boons)||{}, bn=k=>B[k]||0;
   const base=CFG.BASE_DMG*(1+CFG.DMG_PER_LEVEL*(lv-1))*(1+rb.dmg);
-  const dmg=base*wCoef(w)*(1+.03*sk('a1'))*(1+.2*bn('dmg'));
+  const dmg=base*wCoef(w)*(1+.03*sk('a1'))*(1+.2*bn('dmg')), GB=gearBonus();
   return {
     weapon:w, wdef:wd, dmg,
     magicDmg:dmg*wMagic(w)*(1+.05*sk('g1'))*(1+.4*bn('magic')),
-    cd:CFG.BASE_COOLDOWN/((1+.03*sk('a2'))*(1+.2*bn('rate'))),
+    cd:CFG.BASE_COOLDOWN/((1+.03*sk('a2'))*(1+.2*bn('rate'))*(1+GB.rate)),
     count:1+sk('a3')+bn('count'), volley:.04*sk('a7'),
-    pierce:CFG.BASE_PIERCE+sk('a4')+bn('pierce'), crit:.03*sk('a5'), critMul:2+.15*sk('a6'),
+    pierce:CFG.BASE_PIERCE+sk('a4')+bn('pierce'), crit:.03*sk('a5')+GB.crit, critMul:2+.15*sk('a6'),
     range:CFG.BASE_RANGE*(1+.04*sk('r1'))*(1+.2*bn('range')),
     shotSpeed:CFG.SHOT_SPEED*(1+.05*sk('r2')),
     orbit:sk('r3')+bn('orbit'), orbitMul:1.0*(1+.15*sk('r4')), orbitSpd:3.2*(1+.06*sk('r4')),
     knock:5+4*sk('r5'),
     elemDur:1+.1*sk('g2'), extraTargets:sk('g3'), shock:sk('g4'), bolt:sk('g5'),
-    maxHp:Math.round((CFG.BASE_HP+CFG.HP_PER_LEVEL*(lv-1)+rb.hp)*(1+.03*sk('s1'))*(1+.15*bn('heal'))),
-    regen:.001*sk('s2'), armor:.02*sk('s3'), revive:sk('s4'), lifeOnKill:.0015*sk('s5'), shield:sk('s6'),
-    speed:CFG.PLAYER_SPEED*(1+.025*sk('m1'))*(1+.15*bn('speed')), iframe:CFG.IFRAME+.05*sk('m2'),
-    dodge:.02*sk('m3'), aura:.03*sk('m4'),
+    maxHp:Math.round((CFG.BASE_HP+CFG.HP_PER_LEVEL*(lv-1)+rb.hp)*(1+.03*sk('s1'))*(1+.15*bn('heal'))*(1+GB.hp)),
+    regen:.001*sk('s2'), armor:Math.min(.6,.02*sk('s3')+GB.armor), revive:sk('s4'), lifeOnKill:.0015*sk('s5'), shield:sk('s6'),
+    speed:CFG.PLAYER_SPEED*(1+.025*sk('m1'))*(1+.15*bn('speed'))*(1+GB.speed), iframe:CFG.IFRAME+.05*sk('m2'),
+    dodge:.02*sk('m3')+GB.dodge, aura:.03*sk('m4'),
     goldMul:(1+.1*sk('f1'))*(1+.5*bn('gold')), dropMul:1+.15*sk('f2'), crateMul:1+.15*sk('f4'),
     xpMul:1+.02*sk('f3'), bonusGold:1+.1*sk('f5'),
   };
@@ -1543,7 +1633,7 @@ function newRun(stage){
   P={x:0,y:0,hp:ST.maxHp,inv:0,atk:.4,face:1,moving:false,walk:0,throwT:0,orbitA:0,bubbleT:0,shield:ST.shield>0,shieldT:0};
   run={dmg:{},boons:{},crates:[],items:[],eshots:[],combo:0,comboT:0,bestCombo:0,throwN:0,boltT:2,freezeT:0,eliteT:CFG.ELITE_FIRST,crateT:2,elitesKilled:0,stage,boss:isBossStage(stage),t:0,duration:isBossStage(stage)?0:stageDuration(stage),
     scale:monsterScale(stage),tier:tierOf(stage),enemies:[],shots:[],fx:[],floaters:[],
-    kills:0,goldEarned:0,xpEarned:0,levelsGained:0,weaponsFound:[],spawnAcc:0,waveT:12,
+    kills:0,goldEarned:0,xpEarned:0,levelsGained:0,weaponsFound:[],gearFound:[],spawnAcc:0,waveT:12,
     ending:false,endT:0,dead:false,deadT:0,revived:false,bossRef:null,shake:0,banner:null,shadowT:rand(8,20),shadow:null};
 }
 function startStage(n){
@@ -1670,6 +1760,7 @@ function killEnemy(e){
     run.fx.push({type:'chest',x:e.x,y:e.y,t:0,life:2.4});
     addGold(Math.round(e.def.gold*ST.goldMul*ST.bonusGold),e.x,e.y,36);
     if(Math.random()<CFG.BOSS_WEAPON_DROP*ST.dropMul) dropWeapon(e.x,e.y);
+    if(Math.random()<CFG.BOSS_GEAR_DROP*ST.dropMul) dropGear(e.x,e.y);
     run.ending=true; run.endT=2.6;
     for(const o of run.enemies) if(!o.dead){o.dead=true; if(!SIM.on) burst(o.x,o.y,'#bfefff',3,o.r);}
     run.shake=reduceMotion?0:14;
@@ -1685,11 +1776,13 @@ function killEnemy(e){
     run.elitesKilled++; dropChest(e.x,e.y);
     addGold(Math.round(20*Math.pow(tier,1.3)*ST.goldMul*ST.bonusGold),e.x,e.y,12);
     if(Math.random()<CFG.ELITE_WEAPON_DROP*ST.dropMul) dropWeapon(e.x,e.y);
+    if(Math.random()<CFG.ELITE_GEAR_DROP*ST.dropMul) dropGear(e.x,e.y);
     if(!SIM.on) burst(e.x,e.y,'#ffd84a',18,e.r);
     return;
   }
   if(Math.random()<g.p*(1+.1*sk('f1'))) addGold(Math.round((g.a[0]+Math.floor(Math.random()*(g.a[1]-g.a[0]+1)))*gt*(1+.5*(run.boons.gold||0))),e.x,e.y,1);
   if(Math.random()<CFG.WEAPON_DROP*ST.dropMul) dropWeapon(e.x,e.y);
+  if(Math.random()<CFG.GEAR_DROP*ST.dropMul) dropGear(e.x,e.y);
 }
 function burst(x,y,color,n,r){
   for(let i=0;i<n;i++){const a=rand(0,TAU),s=rand(30,140); run.fx.push({type:'bub',x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s-20,r:rand(1.5,3.5)+r*.06,t:0,life:rand(.4,.8),color});}
@@ -2406,6 +2499,7 @@ function testSave(stage,lv){
   const prev=save; save=s; while(s.rank<RANKS.length-1&&meetsRank(RANKS[s.rank+1])) s.rank++;
   autoSkills(); const best=[...WEAPONS].reverse().find(w=>w.req<=lv);
   if(best&&best.id!=='scrap'){const it=addWeapon(best.id,Math.min(6,Math.floor(lv/50))); s.equip.weapon=it.uid;}
+  { const t=GEAR_REQ.filter(r=>r<=lv).length-1, pl=Math.min(5,Math.floor(lv/60)); s.gear=GEAR_SLOTS.map((sl,i)=>({uid:'g'+(i+1),slot:sl,tier:t,plus:pl})); }
   save=prev; return s;
 }
 // 자동 분배 순서 (테스트 모드·시뮬레이션용): [스킬, 목표 레벨]을 앞에서부터 채움
@@ -2553,7 +2647,7 @@ function renderInv(body){
   body.innerHTML=`${bw?`<div class="row" style="justify-content:space-between;margin-bottom:10px;padding:10px 12px;border:1px solid var(--ok);border-radius:4px;background:rgba(95,211,154,.08)"><span style="font-size:13px;flex:1;min-width:180px">장착 가능한 더 좋은 무기: <b>${WEAPON[bw.type].name} +${bw.plus}</b></span><button class="btn small" type="button" id="btnBestW">바로 장착</button></div>`:''}${(()=>{const j=junkItems(), g=j.reduce((a,i)=>a+sellPrice(i),0); return `<div class="row" style="justify-content:space-between;margin-bottom:14px;padding:10px 12px;border:1px solid var(--line);border-radius:4px;background:var(--panel-2)"><span style="font-size:12px;color:var(--muted);flex:1;min-width:180px">${j.length?`장착 무기보다 약한 무기 <b style="color:var(--ink)">${j.length}개</b>`:'정리할 하위 무기가 없습니다'} · 가방이 가득 차면 하위 무기는 자동으로 팝니다</span><button class="btn small" type="button" id="btnSellJunk" ${j.length?'':'disabled'}>하위 무기 일괄 판매${j.length?` +${fmt(g)}G`:''}</button></div>`;})()}<div class="invwrap">
     <div class="list"><h3>장비창</h3><div class="slots">${EQUIP_SLOTS.map(sl=>sl.id==='weapon'
       ?`<div class="slot"><span id="eqIcon"></span><div class="meta"><small>무기</small><b>${WEAPON[eq.type].name} +${eq.plus}</b><small>${WEAPON[eq.type].mName}</small></div></div>`
-      :`<div class="slot empty"><div class="meta"><small>${sl.name}</small><b>추후 추가</b></div></div>`).join('')}</div>
+      :(g=>g?`<div class="slot"><span id="eqG_${sl.id}"></span><div class="meta"><small>${sl.name}</small><b>${gearName(g)} +${g.plus}</b><small>${GEAR[sl.id].main.label} +${gPct(gVal(g,'main'))} · ${GEAR[sl.id].sub.label} +${gPct(gVal(g,'sub'))}</small></div></div>`:`<div class="slot empty"><div class="meta"><small>${sl.name}</small><b>비어 있음</b></div></div>`)(gearOn(sl.id))).join('')}</div>
       <div class="idetail"><div class="eyebrow">선택한 무기</div>
         <div id="detIcon"></div><h3>${w.name} +${it.plus}</h3>
         <dl class="stats"><dt>착용 레벨</dt><dd style="color:${lvOk?'inherit':'#ff9d84'}">Lv ${w.req}${lvOk?'':' (레벨 부족)'}</dd>
@@ -2565,8 +2659,15 @@ function renderInv(body){
       </div></div>
     <div class="list"><h3>인벤토리 <span style="font-family:var(--f-body);font-size:13px;color:var(--muted)">${save.inv.length} / ${CFG.INVENTORY_MAX}</span></h3>
       <div class="grid" id="invGrid"></div>
-      <p style="font-size:12px">무기는 몬스터에게서 낮은 확률로, 보스에게서 높은 확률로 떨어집니다. 스테이지가 높을수록 상위 무기가 나옵니다.</p></div></div>`;
+      <p style="font-size:12px">무기는 몬스터에게서 낮은 확률로, 보스에게서 높은 확률로 떨어집니다. 스테이지가 높을수록 상위 무기가 나옵니다.</p>
+      <h3 style="margin-top:8px">보호구 <span style="font-family:var(--f-body);font-size:13px;color:var(--muted)">${save.gear.length} / ${GEAR_MAX}</span></h3>
+      ${(()=>{const bl=betterGearList(); return bl.length?`<div class="row" style="justify-content:space-between;padding:10px 12px;border:1px solid var(--ok);border-radius:4px;background:rgba(95,211,154,.08)"><span style="font-size:13px;flex:1;min-width:180px">더 좋은 보호구: <b>${bl.map(g=>gearName(g)+' +'+g.plus).join(', ')}</b></span><button class="btn small" type="button" id="btnBestG">모두 장착</button></div>`:'';})()}
+      <div id="gearDet"></div>
+      <div class="grid" id="gearGrid"></div>
+      <p style="font-size:12px">안전모는 체력·피해 감소, 장갑은 공격 속도·치명타, 작업화는 이동 속도·회피를 올립니다. 정예와 보스가 주로 떨어뜨립니다.</p></div></div>`;
   $('#eqIcon').appendChild(pipeCanvas(eq.type,eq.plus,72,28));
+  for(const sl of GEAR_SLOTS){ const g=gearOn(sl), el=$('#eqG_'+sl); if(g&&el) el.appendChild(gearCanvas(g,40,40)); }
+  renderGearPart(body);
   $('#detIcon').appendChild(pipeCanvas(it.type,it.plus,200,56));
   const g=$('#invGrid');
   const sorted=[...save.inv].sort((a,b)=>WEAPON[b.type].req-WEAPON[a.type].req||b.plus-a.plus);
@@ -2582,8 +2683,32 @@ function renderInv(body){
   let armed=false; $('#btnSell').onclick=e=>{ if(!armed){armed=true; e.target.textContent='한 번 더 누르면 판매'; return;} save.gold+=sellPrice(it); save.inv=save.inv.filter(i=>i.uid!==it.uid); selItem=null; persist(); refreshOffice(); renderInv(body); };
 }
 
-/* 무기 강화 */
+let selGear=null;
+function renderGearPart(body){
+  if(!selGear||!save.gear.find(g=>g.uid===selGear)) selGear=(gearOn('helmet')||save.gear[0]||{}).uid;
+  const it=save.gear.find(g=>g.uid===selGear), det=$('#gearDet'), grid=$('#gearGrid');
+  if(it){ const d=GEAR[it.slot], on=gearOn(it.slot), isEq=on&&on.uid===it.uid, lvOk=save.level>=GEAR_REQ[it.tier];
+    det.innerHTML=`<div class="idetail" style="margin-bottom:10px"><div class="row" style="gap:12px;flex-wrap:nowrap"><span id="gDetIcon"></span><div style="min-width:0"><div class="eyebrow">${d.name}</div><h3>${gearName(it)} +${it.plus}</h3></div></div>
+      <dl class="stats"><dt>착용 레벨</dt><dd style="color:${lvOk?'inherit':'#ff9d84'}">Lv ${GEAR_REQ[it.tier]}${lvOk?'':' (레벨 부족)'}</dd>
+        <dt>${d.main.label}</dt><dd>+${gPct(gVal(it,'main'))}${on&&!isEq?` <span style="color:var(--muted)">(장착 중 +${gPct(gVal(on,'main'))})</span>`:''}</dd>
+        <dt>${d.sub.label}</dt><dd>+${gPct(gVal(it,'sub'))}</dd></dl>
+      <div class="row"><button class="btn small" type="button" id="btnGEquip" ${isEq||!lvOk?'disabled':''}>${isEq?'장착 중':'장착하기'}</button>
+      <button class="btn ghost small" type="button" id="btnGSell" ${isEq?'disabled':''}>판매 +${fmt(gearSell(it))}G</button></div></div>`;
+    $('#gDetIcon').appendChild(gearCanvas(it,52,52));
+    $('#btnGEquip').onclick=()=>{ save.equip[it.slot]=it.uid; SND.play('weapon'); persist(); refreshOffice(); renderInv(body); };
+    let armed=false; $('#btnGSell').onclick=e=>{ if(!armed){armed=true; e.target.textContent='한 번 더 누르면 판매'; return;} save.gold+=gearSell(it); save.gear=save.gear.filter(g=>g.uid!==it.uid); selGear=null; persist(); refreshOffice(); renderInv(body); };
+  }
+  for(const g of [...save.gear].sort((a,b)=>GEAR_SLOTS.indexOf(a.slot)-GEAR_SLOTS.indexOf(b.slot)||b.tier-a.tier||b.plus-a.plus)){
+    const on=gearOn(g.slot), b=document.createElement('button'); b.type='button'; b.className='item'+(g.uid===selGear?' sel':'')+(on&&on.uid===g.uid?' eq':'');
+    b.appendChild(gearCanvas(g,40,40)); b.insertAdjacentHTML('beforeend',`<span class="nm">${gearName(g)} +${g.plus}</span><span class="sub">${on&&on.uid===g.uid?'장착 중':'Lv '+GEAR_REQ[g.tier]+(isJunkGear(g)?' · 하위':'')}</span>`);
+    b.onclick=()=>{ selGear=g.uid; renderInv(body); }; grid.appendChild(b);
+  }
+  const bg=$('#btnBestG'); if(bg) bg.onclick=()=>{ for(const g of betterGearList()) save.equip[g.slot]=g.uid; SND.play('weapon'); persist(); refreshOffice(); renderInv(body); };
+}
+/* 무기·보호구 강화 */
 function renderEnh(body){
+  const gsel=enhItem&&String(enhItem)[0]==='g'?save.gear.find(g=>g.uid===enhItem):null;
+  if(gsel) return renderGearEnh(body,gsel);
   if(!enhItem||!save.inv.find(i=>i.uid===enhItem)) enhItem=equipped().uid;
   const it=save.inv.find(i=>i.uid===enhItem), w=WEAPON[it.type], maxed=it.plus>=MAX_PLUS;
   const cost=maxed?0:enhCost(it), rate=maxed?0:ENH_RATE[it.plus];
@@ -2600,7 +2725,7 @@ function renderEnh(body){
       <button class="btn" type="button" id="btnEnh" ${maxed||save.gold<cost?'disabled':''}>${maxed?'최대 강화':'강화하기'}</button>
       <div class="result ${enhResult.startsWith('성공')?'ok':enhResult?'fail':''}" role="status">${enhResult}</div>
     </div>
-    <div class="list"><h3>무기 선택</h3><div class="grid" id="enhGrid"></div>
+    <div class="list"><h3>무기 선택</h3><div class="grid" id="enhGrid"></div><h3>보호구 선택</h3><div class="grid" id="enhGearGrid"></div>
       <div class="note">강화 확률: ${ENH_RATE.map((r,i)=>`+${i+1} ${Math.round(r*100)}%`).join(' · ')}</div></div></div>`;
   $('#enhIcon').appendChild(pipeCanvas(it.type,it.plus,220,64));
   const g=$('#enhGrid'), eq=equipped();
@@ -2609,10 +2734,50 @@ function renderEnh(body){
     b.appendChild(pipeCanvas(x.type,x.plus,96,32)); b.insertAdjacentHTML('beforeend',`<span class="nm">${WEAPON[x.type].name} +${x.plus}</span><span class="sub">${x.uid===eq.uid?'장착 중':'Lv '+WEAPON[x.type].req+(isJunk(x,eq)?' · 하위':'')}</span>`);
     b.onclick=()=>{enhItem=x.uid; enhResult=''; renderEnh(body);}; g.appendChild(b);
   }
+  fillGearEnhGrid(body);
   $('#btnEnh').onclick=()=>{
     if(maxed||save.gold<cost) return;
     save.gold-=cost;
     if(Math.random()<rate){ it.plus++; enhResult=`성공! ${w.name} +${it.plus}`; SND.play('enhOk'); } else { enhResult=`실패. +${it.plus} 유지 (골드 ${fmt(cost)} 소모)`; SND.play('enhFail'); }
+    persist(); refreshOffice(); renderEnh(body);
+  };
+}
+
+function fillGearEnhGrid(body){
+  const gg=$('#enhGearGrid'); if(!gg) return;
+  const list=[...save.gear].sort((a,b)=>{ const ea=gearOn(a.slot)===a?1:0, eb=gearOn(b.slot)===b?1:0; return eb-ea||GEAR_SLOTS.indexOf(a.slot)-GEAR_SLOTS.indexOf(b.slot)||b.tier-a.tier||b.plus-a.plus; });
+  for(const x of list){ const on=gearOn(x.slot)===x, b=document.createElement('button'); b.type='button'; b.className='item'+(x.uid===enhItem?' sel':'')+(on?' eq':'');
+    b.appendChild(gearCanvas(x,40,40)); b.insertAdjacentHTML('beforeend',`<span class="nm">${gearName(x)} +${x.plus}</span><span class="sub">${on?'장착 중':'Lv '+GEAR_REQ[x.tier]}</span>`);
+    b.onclick=()=>{enhItem=x.uid; enhResult=''; renderEnh(body);}; gg.appendChild(b); }
+}
+function renderGearEnh(body,it){
+  const d=GEAR[it.slot], maxed=it.plus>=MAX_PLUS, cost=maxed?0:gearEnhCost(it), rate=maxed?0:ENH_RATE[it.plus], next=maxed?null:{...it,plus:it.plus+1};
+  body.innerHTML=`<div class="invwrap">
+    <div class="idetail"><div class="eyebrow">강화할 보호구 · ${d.name}</div><div id="enhIcon"></div>
+      <h3>${gearName(it)} <span style="color:var(--hazard)">+${it.plus}</span></h3>
+      ${maxed?'<p>최대 강화(+10)에 도달했습니다.</p>':`
+      <dl class="stats"><dt>${d.main.label}</dt><dd>+${gPct(gVal(it,'main'))} → <b style="color:var(--ok)">+${gPct(gVal(next,'main'))}</b></dd>
+        <dt>${d.sub.label}</dt><dd>+${gPct(gVal(it,'sub'))} → <b style="color:var(--ok)">+${gPct(gVal(next,'sub'))}</b></dd>
+        <dt>성공 확률</dt><dd><span class="rate">${Math.round(rate*100)}%</span></dd>
+        <dt>비용</dt><dd style="color:${save.gold>=cost?'#ffd84a':'#ff9d84'}">${fmt(cost)} G (보유 ${fmt(save.gold)} G)</dd></dl>
+      <p style="font-size:12px">실패해도 보호구는 파괴되지 않고 강화 단계도 내려가지 않습니다. 골드만 소모됩니다.</p>`}
+      <button class="btn" type="button" id="btnEnh" ${maxed||save.gold<cost?'disabled':''}>${maxed?'최대 강화':'강화하기'}</button>
+      <div class="result ${enhResult.startsWith('성공')?'ok':enhResult?'fail':''}" role="status">${enhResult}</div>
+    </div>
+    <div class="list"><h3>무기 선택</h3><div class="grid" id="enhGrid"></div><h3>보호구 선택</h3><div class="grid" id="enhGearGrid"></div>
+      <div class="note">강화 확률: ${ENH_RATE.map((r,i)=>`+${i+1} ${Math.round(r*100)}%`).join(' · ')}</div></div></div>`;
+  $('#enhIcon').appendChild(gearCanvas(it,96,96));
+  const g=$('#enhGrid'), eq=equipped();
+  for(const x of [...save.inv].sort((a,b)=>WEAPON[b.type].req-WEAPON[a.type].req||b.plus-a.plus)){
+    const b=document.createElement('button'); b.type='button'; b.className='item'+(x.uid===eq.uid?' eq':'');
+    b.appendChild(pipeCanvas(x.type,x.plus,96,32)); b.insertAdjacentHTML('beforeend',`<span class="nm">${WEAPON[x.type].name} +${x.plus}</span><span class="sub">${x.uid===eq.uid?'장착 중':'Lv '+WEAPON[x.type].req}</span>`);
+    b.onclick=()=>{enhItem=x.uid; enhResult=''; renderEnh(body);}; g.appendChild(b);
+  }
+  fillGearEnhGrid(body);
+  $('#btnEnh').onclick=()=>{
+    if(maxed||save.gold<cost) return;
+    save.gold-=cost;
+    if(Math.random()<rate){ it.plus++; enhResult=`성공! ${gearName(it)} +${it.plus}`; SND.play('enhOk'); } else { enhResult=`실패. +${it.plus} 유지 (골드 ${fmt(cost)} 소모)`; SND.play('enhFail'); }
     persist(); refreshOffice(); renderEnh(body);
   };
 }
@@ -2722,7 +2887,7 @@ function showClear(cleared,promos,last){
     promo=`<div class="promo" id="promoBox"><div><div class="eyebrow">인사 발령</div><div class="big">${RANKS[from].name} → ${RANKS[to].name}</div>
       <p>복장 변경: ${OUTFITS[to].desc}<br>승진 보너스: 파이프 대미지 +${Math.round(b.dmg*100)}%, 최대 체력 +${b.hp}</p></div></div>`;
   }
-  const found=run.weaponsFound.length?`<div class="note">획득한 무기: ${run.weaponsFound.map(w=>`${WEAPON[w.type].name}`).join(', ')} · 사무소 인벤토리에서 장착하세요.</div>`:'';
+  const found=(run.weaponsFound.length?`<div class="note">획득한 무기: ${run.weaponsFound.map(w=>`${WEAPON[w.type].name}`).join(', ')} · 사무소 인벤토리에서 장착하세요.</div>`:'')+(run.gearFound.length?`<div class="note">획득한 보호구: ${run.gearFound.map(g=>gearName(g)).join(', ')} · 사무소 장비 탭에서 장착하세요.</div>`:'');
   $('#clearBody').innerHTML=`
     <div class="eyebrow">작업일보 · STAGE ${cleared}${run.boss?' · 보스 처치':''}</div>
     <h2>${last?'준공 완료. 모든 공정을 마쳤습니다':`STAGE ${cleared} 공정 완료`}</h2>
@@ -2862,6 +3027,9 @@ Object.defineProperty(window,'__JOGONG_SIM__',{value:{
     autoSkills();
     const best=[...save.inv].filter(it=>WEAPON[it.type].req<=save.level).sort((a,b)=>tierIdx(b.type)-tierIdx(a.type)||b.plus-a.plus)[0]; if(best) save.equip.weapon=best.uid;
     let g=0; while(g++<40){const it=equipped(); if(it.plus>=MAX_PLUS||save.gold<enhCost(it)*1.5) break; save.gold-=enhCost(it); if(Math.random()<ENH_RATE[it.plus]) it.plus++;}
+    for(const sl of GEAR_SLOTS){ const b=bestGear(sl); if(b&&gearBetter(b,gearOn(sl))) save.equip[sl]=b.uid; }
+    let budget=save.gold*.3; g=0; while(g++<40){ const gs=GEAR_SLOTS.map(gearOn).filter(x=>x&&x.plus<MAX_PLUS).sort((a,b)=>gearEnhCost(a)-gearEnhCost(b)); const x=gs[0]; if(!x||budget<gearEnhCost(x)) break; budget-=gearEnhCost(x); save.gold-=gearEnhCost(x); if(Math.random()<ENH_RATE[x.plus]) x.plus++; }
+    for(const x of save.gear.filter(isJunkGear)) save.gold+=gearSell(x); save.gear=save.gear.filter(x=>!isJunkGear(x));
   },
   drawRay, bossDef, save:()=>save, stats:()=>stats(), xpToNext, CFG, XPC, FISH, setXPC(o){Object.assign(XPC,o);}, setCFG(o){Object.assign(CFG,o);},
   stop(){ SIM.on=false; SIM.bot=false; run=null; state='login'; show('#login'); },
@@ -2870,4 +3038,5 @@ Object.defineProperty(window,'__JOGONG_SIM__',{value:{
 })();
 </script>
 
-</body></html>
+</body>
+</html>
