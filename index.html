@@ -594,7 +594,7 @@ const SND=(()=>{
   };
 })();
 /* 화면 표시 설정 (브라우저에 저장): 일반 타격 피해 숫자 표시 — 다른 뱀서류처럼 타격마다 숫자가 튀어 성장이 눈에 보이게 */
-const UIP={dmgNum:true};
+const UIP={dmgNum:true,hpBar:true}; // hpBar: 플레이어 머리 위 체력바
 try{ Object.assign(UIP,JSON.parse(localStorage.getItem('jogong_ui')||'{}')); }catch(e){}
 const saveUIP=()=>{ try{ localStorage.setItem('jogong_ui',JSON.stringify(UIP)); }catch(e){} };
 const fmtTime=s=>`${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,'0')}`;
@@ -629,7 +629,7 @@ const CFG={
   MONSTER_DMG_MUL:2.0,       // 몬스터 접촉 대미지 배율 (1.5 → 2.0)
   BOSS_HP_GROWTH:1.5,        // 보스 1~4등급: 등급마다 체력 ×1.5
   BOSS_HP_GROWTH_LATE:1.7,   // 보스 5~10등급: 등급마다 체력 ×1.7
-  BOSS_HP_TUNE:[.8,1,1.3,1.35,1.6,1.3,1.35,1,1.9,1.25], // (S30 1.15→1.3, S40 1.2→1.35, S70 1.12→1.35: 17~20초 처치 회차 보정 / S90 .8→1.9·S100 1.1→1.25: 생존 스킬을 다 찍고 제자리에 선 봇이 16~21초 만에 잡던 것 보정) // 등급별 보정: 새 무기로 바뀐 직후(S30·S50·S60) 보스가 20초 안에 녹던 것을 보정 (회전 배관 강화 후 S60 1.12→1.3, S70 1→1.12, S40 21~25초 → 1.2)
+  BOSS_HP_TUNE:[.8,1,1.3,1.5,1.6,1.3,1.35,1,1.9,1.25], // (S30 1.15→1.3, S40 1.2→1.35, S70 1.12→1.35: 17~20초 처치 회차 보정 / S90 .8→1.9·S100 1.1→1.25: 생존 스킬을 다 찍고 제자리에 선 봇이 16~21초 만에 잡던 것 보정) // 등급별 보정: 새 무기로 바뀐 직후(S30·S50·S60) 보스가 20초 안에 녹던 것을 보정 (회전 배관 강화 후 S60 1.12→1.3, S70 1→1.12, S40 21~25초 → 1.2)
   SPIKE_WARN:.5,             // 가시 발사 예고 시간(초)
   ORBIT_R_BASE:66, ORBIT_R_RANGE:.2, // 회전 배관 반경 = 66 + 공격 범위×0.2 (범위 스킬과 함께 커짐)
   ORBIT_HIT_R:24, ORBIT_HIT_CD:.4, ORBIT_KNOCK:22, // 회전 배관 판정 반경·같은 적 재타격 간격(초)·밀어내기
@@ -653,12 +653,20 @@ const CFG={
   BOSS_GOLD_MUL:1.2,
   GOLD_TIER_MUL:.5,          // 어종 구간마다 잡몹 골드 +50%
   GOLD_MUL:2.0,              // 모든 골드 획득 배율 (보호구 강화 비용만큼 상향, 몬스터 2배와 합쳐 이전 대비 약 2.5배)
-  MOB_XP_MUL:.62,             // 일반 몬스터 경험치 배율 (몬스터 2배 → 마리당 경험치 줄임)
-  BOSS_DMG_TUNE:[1,1.25,1.25,1.25,1.25,1.2,1.15,1.1,1.6,1.7], // (S90·S100 1→1.6·1.7: 제자리 버티기 방지, 움직이는 봇 최저 체력 88~95%) // 등급별 보스 공격력 배율
+  MOB_XP_MUL:.6,             // 일반 몬스터 경험치 배율 (몬스터 2배 → 마리당 경험치 줄임)
+  BOSS_DMG_TUNE:[.95,1.6,2.4,3,2.6,4.4,5.8,5.5,4,3.6], // 등급별 보스 공격력 배율 (2026-11-13 사용자 요청으로 전 등급 상향: 후반으로 갈수록 플레이어 체력·피해 감소가 커져 보스 한 방이 최대 체력의 10% 미만이던 것 → 돌진 한 방 약 25~45%)
   WAVE_MUL:2,                // 포위 웨이브 마릿수 배율
   MOB_SPD_STAGE:.004,        // 스테이지당 몬스터 이동 속도 상승
   FRENZY_EVERY:150, FRENZY_T:4, FRENZY_RATE:.2, // 몰아치기: 연속 처치 150마다 4초 동안 투척 속도 +20% (처치가 이어질수록 더 빨리 쓸어 담는 성장감)
   BOSS_ENRAGE:.5, BOSS_ENRAGE_SPD:1.2, BOSS_ENRAGE_CD:.8, // 보스 격노: 체력 50% 이하에서 이동 속도 ×1.2, 돌진·냄새 파동 간격 ×0.8
+  STINK_R:[280,22],          // 냄새 파동 최대 반경 = 보스 반경 + 280 + 등급×22 (이전 +260 고정 — 멀리 떨어져 있으면 아무 공격도 닿지 않던 것 보완)
+  SPIKE_SPD:[250,9],         // 가시 속도 = 250 + 등급×9 (이전 260 고정)
+  BOSS_SHIELD_PIERCE:.5,     // 보스 공격이 보호막에 막혀도 피해의 50%는 들어옴 (보호막이 보스 공격을 전부 지워 보스전이 쉽던 것)
+  BOSS_SPD_K:3,
+  BOSS_MARK:[4,5,62,1.0],   // 해저 붕괴 장판: [등장 등급, 기본 간격(초, 등급마다 -0.15), 반경, 예고 시간(초)]              // 보스 이동 속도 = 54 + 등급×이 값
+  BOSS_DMG_ALL:1.6,          // 모든 보스 피해(박치기·돌진·가시·냄새 파동) 공통 배율 (2026-11-13 사용자 요청: 보스가 너무 약함)
+  MAGIC_MUL:.75,             // 무기 추가 마법 피해 공통 배율 (2026-11-13 사용자 요청: 마법 피해 너프)
+  GOLD_EARLY:[.6,70,95],      // 골드 추가 배율 [A, 전부 적용하는 마지막 스테이지, 0이 되는 스테이지]: S1~70 ×(1+A), S95까지 서서히 줄어듦 (다음 장비 직전 무기·보호구 평균 +8 목표, 사람처럼 4부위를 고르게 강화하는 기준)
 };
 const stageDuration=s=>40+Math.min(18,Math.floor((s-1)/10)*2);
 const isBossStage=s=>s%10===0;
@@ -691,17 +699,30 @@ function xpToNext(L){
    ===================================================================== */
 const FISH=[
   {id:'plankton',  name:'플랑크톤',   kind:'plankton', r:10, hp:6,  dmg:5,  spd:44,  xp:1,  gold:{p:.06,a:[1,3]}, glow:'#7fe3d4'},
+  {id:'shrimp',    name:'새우',       kind:'shrimp', move:'dart', r:10, hp:7.5,dmg:5.5,spd:58, xp:1.5,gold:{p:.065,a:[1,3]}, len:1.55,ht:.42, back:'#e0785a', mid:'#f2a184', belly:'#ffd9c4', fin:'#ffb08f'},
   {id:'smallfish', name:'작은 물고기',r:11, hp:9,  dmg:6,  spd:72,  xp:2,  gold:{p:.07,a:[1,3]}, len:1.5, ht:.42, back:'#3f7aa6', mid:'#9cc3dd', belly:'#eef5f9', fin:'#a8c8dc', pattern:'silver', tail:'fork'},
+  {id:'jack',      name:'전갱이',     move:'school', r:13, hp:11.5,dmg:6.5,spd:67, xp:2.5,gold:{p:.075,a:[1,3]}, len:1.55,ht:.46, back:'#4b6a5a', mid:'#b7c4a0', belly:'#f2f0dc', fin:'#d8c25a', mark:'#e7e2c4', pattern:'scutes', tail:'fork', tailColor:'#cdb64a', iris:'#e8d27a'},
   {id:'bass',      name:'배스',       r:16, hp:14, dmg:7,  spd:62,  xp:3,  gold:{p:.08,a:[1,3]}, len:1.35,ht:.6, back:'#3e5a22', mid:'#7d9645', belly:'#e2dfb4', fin:'#6d7f3c', mark:'#26350f', pattern:'blotch', spiny:true, bigMouth:true, tail:'round', iris:'#d7a02a'},
+  {id:'filefish',  name:'쥐치',       move:'hover', r:16, hp:15, dmg:7,  spd:77,  xp:3.5,gold:{p:.085,a:[1,3]}, len:1.12,ht:.9, back:'#7b7a62', mid:'#b5ae86', belly:'#ddd6b4', fin:'#c9b36a', mark:'#4a4834', pattern:'filedots', filespine:true, smallMouth:true, tail:'round', iris:'#9fd0c0'},
   {id:'mackerel',  name:'고등어',     r:16, hp:16, dmg:7,  spd:92,  xp:4,  gold:{p:.09,a:[1,3]}, len:1.55,ht:.46, back:'#1b6a86', mid:'#6fa9b9', belly:'#edf2f3', fin:'#5d8e9c', mark:'#0b2a36', pattern:'wave', finlets:'#7fa6ae', tail:'fork'},
+  {id:'hairtail',  name:'갈치',       kind:'eel', move:'eel', r:16, hp:18, dmg:7.5,spd:88, xp:4.5,gold:{p:.095,a:[1,3]}, len:2.7, ht:.2, back:'#c9d6e2', mid:'#eef4fa', belly:'#ffffff', fin:'#b9d4ea'},
   {id:'salmon',    name:'연어',       r:19, hp:20, dmg:8,  spd:84,  xp:5,  gold:{p:.10,a:[1,3]}, len:1.5, ht:.5, back:'#46677c', mid:'#c3ccd2', belly:'#f3dad2', fin:'#8c9aa3', mark:'#1c252b', pattern:'spots', blush:'#e9876f', adipose:true, tail:'fork'},
+  {id:'rockfish2', name:'볼락',       r:19, hp:23, dmg:8,  spd:71,  xp:5.5,gold:{p:.105,a:[1,3]}, len:1.35,ht:.58, back:'#6b3a2c', mid:'#a8664a', belly:'#e7c3a6', fin:'#8a4a36', mark:'#3a1a12', pattern:'vbars', spiny:true, bigEye:true, tail:'round', iris:'#ffd36a'},
   {id:'rockfish',  name:'우럭',       r:20, hp:26, dmg:8,  spd:58,  xp:6,  gold:{p:.11,a:[1,3]}, len:1.3, ht:.64, back:'#2f2c2a', mid:'#57504a', belly:'#a39889', fin:'#3d3835', mark:'#1a1817', pattern:'mottle', spiny:true, bigMouth:true, bigEye:true, tail:'round', iris:'#c9a75a'},
+  {id:'scorpion',  name:'쏨뱅이',     move:'lunge', r:21, hp:28, dmg:8.5,spd:56, xp:6.5,gold:{p:.115,a:[1,3]}, len:1.25,ht:.66, back:'#8a2c1e', mid:'#c4553a', belly:'#efb08e', fin:'#d0643f', mark:'#4a1208', pattern:'mottle', spiny:true, headSpikes:true, bigPec:true, bigMouth:true, tail:'round', iris:'#ffcf4a'},
   {id:'flatfish',  name:'광어',       kind:'flat', r:22, hp:30, dmg:9,  spd:55,  xp:7,  gold:{p:.12,a:[1,3]}, back:'#6f5338', mid:'#8a6a4a', mark:'#3e2d1c'},
+  {id:'angler',    name:'아귀',       kind:'angler', move:'lunge', r:23, hp:31, dmg:9,  spd:62,  xp:7.5,gold:{p:.125,a:[1,3]}, len:1.15,ht:.78, back:'#4a3a30', mid:'#6e5848', belly:'#a08a72', fin:'#5a463a', mark:'#2a1e16'},
   {id:'seabream',  name:'참돔',       r:21, hp:32, dmg:9,  spd:74,  xp:8,  gold:{p:.13,a:[1,3]}, len:1.28,ht:.76, back:'#c93b55', mid:'#e8768a', belly:'#f8d3d6', fin:'#e06a80', mark:'#74d0ff', pattern:'dots', spiny:true, hump:1.08, tail:'fork', iris:'#e8b04a'},
+  {id:'amberjack', name:'부시리',     r:23, hp:35, dmg:9.5,spd:86,  xp:8.5,gold:{p:.135,a:[1,3]}, len:1.75,ht:.42, back:'#3f6a2e', mid:'#a8c27e', belly:'#f4f2dc', fin:'#f0d030', mark:'#ffe03a', pattern:'stripe', eyeBand:'#24361c', tail:'fork', tailColor:'#e8c636'},
   {id:'yellowtail',name:'방어',       r:24, hp:38, dmg:10, spd:98,  xp:9,  gold:{p:.14,a:[1,3]}, len:1.6, ht:.5, back:'#24507a', mid:'#7c97ad', belly:'#e9eff3', fin:'#c9a93a', mark:'#f2c935', pattern:'stripe', tail:'fork', tailColor:'#d6b130'},
+  {id:'marlin',    name:'청새치',     move:'dash', r:26, hp:41.5,dmg:10,spd:107, xp:9.5,gold:{p:.145,a:[1,3]}, len:1.55,ht:.42, back:'#1b3f8a', mid:'#4f86c8', belly:'#e3edf6', fin:'#2a5aa8', mark:'#8fd2ff', pattern:'vstripe', bill:true, sail:true, tail:'crescent', tailColor:'#1b3f8a'},
   {id:'tuna',      name:'참치',       r:28, hp:45, dmg:10, spd:116, xp:10, gold:{p:.15,a:[1,3]}, len:1.55,ht:.6, back:'#0f2a47', mid:'#4c6684', belly:'#d6dee5', fin:'#33506f', mark:'#9fb2c4', pattern:'bars', finlets:'#f2c935', tail:'crescent', tailColor:'#16304f', snout:1},
+  {id:'shark',     name:'상어',       kind:'shark', move:'circle', r:31, hp:50, dmg:11, spd:112, xp:11, gold:{p:.16,a:[1,3]}, len:1.75,ht:.4, back:'#4c5964', mid:'#7d8a95', belly:'#e8ecef', fin:'#56636e'},
 ];
-const tierOf=stage=>clamp(Math.floor((stage-1)/10),0,FISH.length-1);
+/* 단계 구분: run.tier(10스테이지마다, 골드·배경음·밸런스 기준 — 기존 10단계 값 유지)와
+   speciesOf(5스테이지마다 새 어종, 20종 — 2026-11-13 사용자 요청: 몬스터 종류 2배)를 따로 씀 */
+const tierOf=stage=>clamp(Math.floor((stage-1)/10),0,9);
+const speciesOf=stage=>clamp(Math.floor((stage-1)/5),0,FISH.length-1);
 
 const BOSS_NAMES=['새끼 홍어','아기 홍어','작은 홍어','일반 홍어','성체 홍어','완성체 홍어','대왕 홍어','마왕 홍어','대마왕 홍어','홍어텍 홍어'];
 const BOSS_COLORS=[['#c9a0a4','#8e6a70'],['#c09097','#86606a'],['#b58288','#7a545d'],['#a87479','#6c4850'],['#9a6670','#5f3c46'],['#8d5a67','#52323f'],['#83526d','#4a2c40'],['#6c3150','#3b1830'],['#4f2a5e','#2a1336'],['#55707f','#26343e']];
@@ -709,7 +730,7 @@ function bossDef(k){
   const st=k*10, sc=monsterScale(st);
   return {name:BOSS_NAMES[k-1],k,color:BOSS_COLORS[k-1],r:46+k*6,
     hp:Math.round(520*(k<=4?Math.pow(CFG.BOSS_HP_GROWTH,k-1):Math.pow(CFG.BOSS_HP_GROWTH,3)*Math.pow(CFG.BOSS_HP_GROWTH_LATE,k-4))*sc*CFG.BOSS_HP_MUL*(CFG.BOSS_HP_TUNE[k-1]||1)),
-    dmg:Math.round(14*sc*(CFG.BOSS_DMG_TUNE[k-1]||1)), spd:54+k*3, gold:Math.round((500*k+150*k*k)*CFG.BOSS_GOLD_MUL), xp:Math.round(xpToNext(Math.round(st*CFG.EXPECTED_LV_PER_STAGE))*1.2)};
+    dmg:Math.round(14*sc*(CFG.BOSS_DMG_TUNE[k-1]||1)*CFG.BOSS_DMG_ALL), spd:54+k*CFG.BOSS_SPD_K, gold:Math.round((500*k+150*k*k)*CFG.BOSS_GOLD_MUL), xp:Math.round(xpToNext(Math.round(st*CFG.EXPECTED_LV_PER_STAGE))*1.2)};
 }
 
 /* =====================================================================
@@ -805,7 +826,7 @@ const MAX_PLUS=10;
 const enhCost=it=>Math.round(WEAPON[it.type].cost*Math.pow(it.plus+1,1.3));
 const sellPrice=it=>Math.round(WEAPON[it.type].cost*.6*(1+it.plus*.6));
 const wCoef=it=>WEAPON[it.type].coef*(1+.06*it.plus);
-const wMagic=it=>WEAPON[it.type].magicPct*(1+.06*it.plus);
+const wMagic=it=>WEAPON[it.type].magicPct*(1+.06*it.plus)*CFG.MAGIC_MUL; // MAGIC_MUL: 마법 피해 공통 너프 배율
 
 const EQUIP_SLOTS=[{id:'weapon',name:'무기'},{id:'helmet',name:'안전모'},{id:'gloves',name:'장갑'},{id:'shoes',name:'작업화'}];
 
@@ -856,7 +877,7 @@ function dropGear(x,y){
   const it={uid:'g'+(save.nextGid++),slot:r.slot,tier:r.tier,plus:0}; save.gear.push(it); run.gearFound.push(it);
   if(SIM.on) return;
   SND.play('weapon'); floater(x,y-48,gearName(it),GEAR_COLOR[it.tier],18);
-  const d=GEAR[it.slot]; toast(`${d.name} 획득 · ${gearName(it)}`,`착용 레벨 ${GEAR_REQ[it.tier]} · ${d.main.label} +${gPct(gVal(it,'main'))} · 사무소 장비 탭에서 장착`,GEAR_COLOR[it.tier]);
+  const d=GEAR[it.slot]; toast(`${d.name} 획득 · ${gearName(it)}`,`착용 레벨 ${GEAR_REQ[it.tier]} · ${d.main.label} +${gPct(gVal(it,'main'))} · 사무소 장비 탭에서 장착`,GEAR_COLOR[it.tier],null,true);
 }
 /* 보호구 아이콘 (등급 색 + 강화 반짝임) */
 function gearCanvas(g,w,h){
@@ -1152,6 +1173,10 @@ function bodyPath(c,L,H,f){
 function paintFish(c,f,ph){
   if(f.kind==='plankton') return paintPlankton(c,f,ph);
   if(f.kind==='flat') return paintFlatfish(c,f,ph);
+  if(f.kind==='shrimp') return paintShrimp(c,f,ph);
+  if(f.kind==='eel') return paintHairtail(c,f,ph);
+  if(f.kind==='angler') return paintAngler(c,f,ph);
+  if(f.kind==='shark') return paintShark(c,f,ph);
   const r=f.r, L=r*f.len, H=r*f.ht, hb=H*(f.hump||1), sw=Math.sin(ph);
   // 꼬리
   c.save(); c.translate(-L*.88,0); c.rotate(sw*.3);
@@ -1166,7 +1191,12 @@ function paintFish(c,f,ph){
   c.restore();
   // 등지느러미
   c.fillStyle=f.fin; c.globalAlpha=.9; c.beginPath();
-  if(f.spiny){
+  if(f.sail){ // 청새치: 등에 높은 돛 지느러미 (가시 줄무늬)
+    c.moveTo(L*.5,-hb*.85); c.quadraticCurveTo(L*.35,-hb*2.6-Math.sin(ph)*hb*.15,L*.05,-hb*2.4); c.quadraticCurveTo(-L*.35,-hb*1.7,-L*.55,-hb*.8); c.closePath(); c.fill();
+    c.strokeStyle='rgba(10,20,50,.45)'; c.lineWidth=.7; for(let i=0;i<8;i++){ const x=L*.45-i*L*.13; c.moveTo(x,-hb*.85); c.lineTo(x-L*.05,-hb*(2.3-i*.18)); } c.stroke();
+    c.fillStyle='rgba(120,190,255,.35)'; for(let i=0;i<6;i++){ c.beginPath(); c.arc(L*.3-i*L*.13,-hb*(1.7-i*.12),1.1,0,TAU); c.fill(); }
+    c.fillStyle=f.fin; c.beginPath();
+  }else if(f.spiny){
     c.moveTo(-L*.5,-hb*.82);
     for(let i=0;i<=7;i++){const x=-L*.45+i*L*.11; c.lineTo(x+L*.03,-hb*(1.32+(i%2)*.06-i*.015)); c.lineTo(x+L*.06,-hb*.95);}
     c.lineTo(L*.35,-hb*.9);
@@ -1198,7 +1228,17 @@ function paintFish(c,f,ph){
     case 'dots': c.fillStyle=f.mark; for(let i=0;i<26;i++){c.globalAlpha=.85; c.beginPath(); c.arc(-L*.75+pr()*L*1.45,-hb*.9+pr()*hb*.95,Math.max(.6,r*.03),0,TAU); c.fill();} break;
     case 'stripe': {const yg=c.createLinearGradient(0,-H*.18,0,H*.06); yg.addColorStop(0,'rgba(242,201,53,0)'); yg.addColorStop(.5,f.mark); yg.addColorStop(1,'rgba(242,201,53,0)'); c.fillStyle=yg; c.fillRect(-L,-H*.18,L*2,H*.24); break;}
     case 'bars': c.fillStyle=f.mark; c.globalAlpha=.25; for(let i=0;i<10;i++){c.fillRect(-L*.7+i*L*.14,H*.15,L*.035,H*.7);} break;
+    case 'scutes': { // 전갱이: 옆줄을 따라 뼈 비늘(모비늘)이 꼬리 쪽으로 이어짐 + 노란 띠
+      const yb=c.createLinearGradient(0,-H*.32,0,-H*.02); yb.addColorStop(0,'rgba(232,210,90,0)'); yb.addColorStop(.5,'rgba(232,210,90,.55)'); yb.addColorStop(1,'rgba(232,210,90,0)'); c.fillStyle=yb; c.fillRect(-L,-H*.32,L*2,H*.3);
+      c.fillStyle=f.mark; c.strokeStyle='rgba(60,70,60,.6)'; c.lineWidth=.5;
+      for(let i=0;i<14;i++){ const t=i/13, x=L*.35-t*L*1.2, y=-H*.05+Math.sin(t*2.6)*H*.12*(1-t); c.beginPath(); c.moveTo(x+r*.07,y); c.lineTo(x,y-r*.06*(1+t)); c.lineTo(x-r*.07,y); c.lineTo(x,y+r*.06*(1+t)); c.closePath(); c.fill(); c.stroke(); }
+      c.fillStyle='rgba(20,30,30,.75)'; c.beginPath(); c.arc(L*.42,-H*.32,r*.07,0,TAU); c.fill(); break; } // 아가미 뒤 검은 점
+    case 'filedots': c.fillStyle=f.mark; for(let i=0;i<30;i++){ c.globalAlpha=.35+pr()*.35; c.beginPath(); c.arc(-L*.8+pr()*L*1.6,-hb*.9+pr()*hb*1.7,r*(.04+pr()*.05),0,TAU); c.fill(); }
+      c.globalAlpha=.25; c.strokeStyle='#2a2818'; c.lineWidth=.5; for(let y=-hb;y<H;y+=r*.09){ c.beginPath(); c.moveTo(-L,y); c.lineTo(L,y+r*.05); c.stroke(); } break; // 꺼끌한 줄 피부
+    case 'vbars': c.fillStyle=f.mark; c.globalAlpha=.45; for(let i=0;i<5;i++){ const x=L*.3-i*L*.26; c.beginPath(); c.moveTo(x,-hb); c.quadraticCurveTo(x-L*.06,0,x+L*.02,H*.6); c.lineTo(x-L*.1,H*.6); c.quadraticCurveTo(x-L*.17,0,x-L*.1,-hb); c.fill(); } break;
+    case 'vstripe': c.strokeStyle=f.mark; c.lineWidth=Math.max(1,r*.06); c.globalAlpha=.7; for(let i=0;i<11;i++){ const x=L*.45-i*L*.12; c.beginPath(); c.moveTo(x,-hb*.9); c.lineTo(x-L*.02,H*.25); c.stroke(); } break; // 청새치: 하늘색 세로줄
   }
+  if(f.eyeBand){ c.globalAlpha=.6; c.strokeStyle=f.eyeBand; c.lineWidth=r*.12; c.beginPath(); c.moveTo(L*.95,-H*.05); c.lineTo(L*.45,-hb*.75); c.stroke(); c.globalAlpha=1; } // 부시리: 눈을 지나는 어두운 띠
   c.globalAlpha=.07; c.strokeStyle='#fff'; c.lineWidth=.5;
   for(let y=-hb;y<H;y+=r*.16) for(let x=-L;x<L;x+=r*.16){c.beginPath(); c.arc(x+((y/r*6|0)%2)*r*.08,y,r*.08,Math.PI*.15,Math.PI*.85); c.stroke();}
   c.globalAlpha=.35; c.strokeStyle=f.belly; c.lineWidth=.7; c.beginPath(); c.moveTo(L*.4,-H*.25); c.quadraticCurveTo(0,-H*.32,-L*.85,-H*.02); c.stroke();
@@ -1207,9 +1247,20 @@ function paintFish(c,f,ph){
   c.strokeStyle='rgba(255,255,255,.18)'; c.beginPath(); c.moveTo(L*.6,-hb*.62); c.quadraticCurveTo(L*.1,-hb*.98,-L*.4,-hb*.78); c.stroke();
   // 아가미, 가슴지느러미
   c.strokeStyle='rgba(0,0,0,.35)'; c.lineWidth=1; c.beginPath(); c.arc(L*.3,0,H*.66,-1.0,1.0); c.stroke();
-  c.save(); c.translate(L*.18,H*.22); c.rotate(.5+sw*.15); c.fillStyle=f.fin; c.globalAlpha=.6; c.beginPath(); c.ellipse(-L*.12,0,L*.16,H*.12,0,0,TAU); c.fill(); c.restore();
+  if(f.bigPec){ // 쏨뱅이: 부채처럼 넓게 펼친 가슴지느러미 (가시살 무늬)
+    c.save(); c.translate(L*.2,H*.25); c.rotate(.35+sw*.2); c.fillStyle=f.fin; c.globalAlpha=.85; c.beginPath(); c.moveTo(0,0);
+    for(let i=0;i<=8;i++){ const a=-.2+i*.22, rr2=L*(.42+(i%2)*.05); c.lineTo(-Math.cos(a)*rr2,Math.sin(a)*rr2); } c.closePath(); c.fill();
+    c.strokeStyle='rgba(60,10,5,.5)'; c.lineWidth=.6; for(let i=0;i<=8;i+=2){ const a=-.2+i*.22; c.beginPath(); c.moveTo(0,0); c.lineTo(-Math.cos(a)*L*.45,Math.sin(a)*L*.45); c.stroke(); } c.restore(); }
+  else{ c.save(); c.translate(L*.18,H*.22); c.rotate(.5+sw*.15); c.fillStyle=f.fin; c.globalAlpha=.6; c.beginPath(); c.ellipse(-L*.12,0,L*.16,H*.12,0,0,TAU); c.fill(); c.restore(); }
   // 입
-  c.strokeStyle='rgba(0,0,0,.55)'; c.lineWidth=1; c.beginPath(); c.moveTo(L*.99,H*.08); c.lineTo(L*(f.bigMouth?.72:.86),H*(f.bigMouth?.2:.14)); c.stroke();
+  c.strokeStyle='rgba(0,0,0,.55)'; c.lineWidth=1; c.beginPath(); c.moveTo(L*.99,H*.08); c.lineTo(L*(f.bigMouth?.72:f.smallMouth?.93:.86),H*(f.bigMouth?.2:.14)); c.stroke();
+  if(f.bill){ // 청새치: 창처럼 긴 주둥이
+    const bg=c.createLinearGradient(L*.9,0,L*1.38,0); bg.addColorStop(0,f.back); bg.addColorStop(1,'#0c1a3a'); c.fillStyle=bg; c.beginPath(); c.moveTo(L*.9,-H*.2); c.lineTo(L*1.7,-H*.04); c.lineTo(L*.92,H*.08); c.closePath(); c.fill(); c.strokeStyle='rgba(255,255,255,.45)'; c.lineWidth=.6; c.beginPath(); c.moveTo(L*.95,-H*.13); c.lineTo(L*1.6,-H*.05); c.stroke(); }
+  if(f.filespine){ // 쥐치: 머리 위로 솟은 굵은 가시 하나
+    c.fillStyle='#3e3a28'; c.beginPath(); c.moveTo(L*.32,-hb*.86); c.lineTo(L*.18,-hb*1.75+Math.sin(ph)*hb*.05); c.lineTo(L*.12,-hb*.9); c.closePath(); c.fill();
+    c.strokeStyle='rgba(255,240,200,.5)'; c.lineWidth=.5; c.beginPath(); c.moveTo(L*.24,-hb*.95); c.lineTo(L*.18,-hb*1.65); c.stroke(); }
+  if(f.headSpikes){ c.fillStyle='#5a1a10'; for(let i=0;i<5;i++){ const x=L*(.78-i*.11), y=-hb*(.62+i*.07); c.beginPath(); c.moveTo(x+r*.05,y+r*.04); c.lineTo(x,y-r*.17); c.lineTo(x-r*.05,y+r*.04); c.fill(); }
+    c.fillStyle='rgba(255,200,170,.6)'; for(let i=0;i<4;i++){ c.beginPath(); c.arc(L*(.85-i*.12),-H*.02+i*H*.08,r*.03,0,TAU); c.fill(); } } // 쏨뱅이: 머리 가시·돌기
   // 눈
   const er=Math.max(1.8,r*(f.bigEye?.17:.13)), ex=L*.62, ey=-H*.2;
   c.fillStyle=f.iris||'#d8d2b8'; c.beginPath(); c.arc(ex,ey,er,0,TAU); c.fill();
@@ -1229,6 +1280,97 @@ function paintPlankton(c,f,ph){
   c.fillStyle='rgba(255,170,90,.95)'; c.beginPath(); c.arc(r*.45,0,r*.13,0,TAU); c.fill();
   c.fillStyle='rgba(255,255,255,.8)'; c.beginPath(); c.arc(r*.1,-r*.15,r*.12,0,TAU); c.fill();
 }
+/* 새우: 등이 굽은 마디 몸통, 긴 더듬이 두 가닥, 부채 꼬리를 튕김 (머리가 +x) */
+function paintShrimp(c,f,ph){
+  const r=f.r, L=r*f.len, H=r*f.ht, flick=Math.sin(ph), cu=.25+.12*Math.max(0,flick);
+  // 더듬이
+  c.strokeStyle='rgba(255,190,160,.85)'; c.lineWidth=.7; c.lineCap='round';
+  for(const s of [-1,1]){ c.beginPath(); c.moveTo(L*.7,-H*.3); c.bezierCurveTo(L*1.0,-H*(1.2+s*.3),L*1.15,-H*(.3+s*.8)+flick*H*.2,L*1.32,H*(s*.9)+flick*H*.3); c.stroke(); }
+  // 다리
+  c.strokeStyle='rgba(240,150,120,.8)'; c.lineWidth=.8; for(let i=0;i<5;i++){ const x=L*(.45-i*.16), sw=Math.sin(ph*2+i)*.15; c.beginPath(); c.moveTo(x,H*.45); c.lineTo(x-L*(.06-sw*.1),H*1.05); c.stroke(); }
+  // 몸통 마디 (머리→꼬리로 작아지며 굽음)
+  const segs=6; let px=L*.35, py=0;
+  for(let i=0;i<segs;i++){ const t=i/(segs-1), x=L*(.35-t*1.05), y=Math.sin(t*Math.PI*.9)*H*cu*2.2, rw=L*.17*(1-t*.35), rh=H*(1-t*.4);
+    const g=c.createLinearGradient(0,y-rh,0,y+rh); g.addColorStop(0,f.back); g.addColorStop(.55,f.mid); g.addColorStop(1,f.belly);
+    c.fillStyle=g; c.beginPath(); c.ellipse(x,y,rw,rh,-.25*t,0,TAU); c.fill(); c.strokeStyle='rgba(120,40,20,.45)'; c.lineWidth=.6; c.stroke(); px=x; py=y; }
+  // 꼬리 부채 (튕길 때 펼쳐짐)
+  c.save(); c.translate(px-L*.12,py); c.rotate(-.5-flick*.5); c.fillStyle=f.fin;
+  for(const s of [-1,0,1]){ c.beginPath(); c.moveTo(0,0); c.lineTo(-L*.3,s*H*.7-H*.25); c.lineTo(-L*.34,s*H*.7+H*.25); c.closePath(); c.fill(); } c.restore();
+  // 머리 갑각 + 뿔
+  const hg=c.createLinearGradient(0,-H,0,H); hg.addColorStop(0,f.back); hg.addColorStop(1,f.belly); c.fillStyle=hg;
+  c.beginPath(); c.moveTo(L*.95,-H*.15); c.quadraticCurveTo(L*.7,-H*1.15,L*.2,-H*.85); c.lineTo(L*.2,H*.7); c.quadraticCurveTo(L*.7,H*.8,L*.95,-H*.15); c.fill(); c.strokeStyle='rgba(120,40,20,.5)'; c.lineWidth=.7; c.stroke();
+  c.strokeStyle=f.back; c.lineWidth=1; c.beginPath(); c.moveTo(L*.85,-H*.45); c.lineTo(L*1.12,-H*.6); c.stroke();
+  c.fillStyle='rgba(255,255,255,.45)'; c.beginPath(); c.ellipse(L*.5,-H*.55,L*.18,H*.12,-.2,0,TAU); c.fill();
+  c.fillStyle='#120a08'; c.beginPath(); c.arc(L*.82,-H*.42,Math.max(1.4,r*.12),0,TAU); c.fill(); c.fillStyle='#fff'; c.beginPath(); c.arc(L*.8,-H*.48,.5,0,TAU); c.fill();
+}
+/* 갈치: 리본처럼 길고 은빛, 꼬리지느러미 없이 가늘어지고 등지느러미가 몸 전체를 따라 물결침, 날카로운 이빨 */
+function paintHairtail(c,f,ph){
+  const r=f.r, L=r*f.len, H=r*f.ht*1.6, N=26, pts=[];
+  for(let i=0;i<=N;i++){ const t=i/N, x=L*(1-2*t), y=Math.sin(ph-t*5.5)*r*.32*t, h=H*(t<.12?.6+t*3.3:1-(t-.12)*1.05); pts.push([x,y,Math.max(.35,h)]); }
+  // 등지느러미 (물결)
+  c.fillStyle='rgba(190,215,240,.55)'; c.beginPath(); c.moveTo(pts[3][0],pts[3][1]-pts[3][2]);
+  for(let i=3;i<=N-2;i++){ const p=pts[i]; c.lineTo(p[0],p[1]-p[2]-r*.18*(1+.3*Math.sin(ph*2-i))); }
+  for(let i=N-2;i>=3;i--){ const p=pts[i]; c.lineTo(p[0],p[1]-p[2]*.7); } c.closePath(); c.fill();
+  // 몸통
+  c.beginPath(); c.moveTo(pts[0][0],pts[0][1]); for(const p of pts) c.lineTo(p[0],p[1]-p[2]); for(let i=N;i>=0;i--) c.lineTo(pts[i][0],pts[i][1]+pts[i][2]*.9); c.closePath();
+  const g=c.createLinearGradient(0,-H,0,H); g.addColorStop(0,f.back); g.addColorStop(.45,f.mid); g.addColorStop(.55,'#ffffff'); g.addColorStop(1,f.back); c.fillStyle=g; c.fill();
+  c.strokeStyle='rgba(60,80,100,.5)'; c.lineWidth=.6; c.stroke();
+  c.strokeStyle='rgba(255,255,255,.85)'; c.lineWidth=.8; c.beginPath(); for(let i=2;i<N;i++){ const p=pts[i]; i===2?c.moveTo(p[0],p[1]-p[2]*.3):c.lineTo(p[0],p[1]-p[2]*.3); } c.stroke(); // 은빛 광택
+  // 머리: 큰 눈, 아래턱이 튀어나온 입과 송곳니
+  c.fillStyle='#e8f0f8'; c.beginPath(); c.moveTo(L*1.08,H*.1); c.lineTo(L*.92,-H*.5); c.lineTo(L*.85,H*.6); c.closePath(); c.fill();
+  c.fillStyle='#fff'; for(let i=0;i<3;i++){ c.beginPath(); c.moveTo(L*(.98-i*.04),H*.05); c.lineTo(L*(.97-i*.04),-H*.25); c.lineTo(L*(.96-i*.04),H*.05); c.fill(); }
+  c.fillStyle='#d8e4ee'; c.beginPath(); c.arc(L*.84,-H*.15,Math.max(1.6,r*.13),0,TAU); c.fill(); c.fillStyle='#0a0f18'; c.beginPath(); c.arc(L*.85,-H*.15,Math.max(1,r*.08),0,TAU); c.fill();
+}
+/* 아귀: 넓적하고 울퉁불퉁한 몸, 몸통만 한 입과 송곳니, 이마의 빛나는 초롱(미끼) */
+function paintAngler(c,f,ph){
+  const r=f.r, L=r*f.len, H=r*f.ht, sw=Math.sin(ph), pr=rng(6610);
+  // 꼬리
+  c.save(); c.translate(-L*.82,0); c.rotate(sw*.25); c.fillStyle=f.fin; c.beginPath(); c.moveTo(0,-H*.2); c.quadraticCurveTo(-L*.4,-H*.8,-L*.42,0); c.quadraticCurveTo(-L*.4,H*.8,0,H*.2); c.fill(); c.restore();
+  // 몸 (머리 쪽이 크고 둥근 올챙이 모양)
+  c.beginPath(); c.moveTo(L*.95,0); c.bezierCurveTo(L*.95,-H*1.25,-L*.2,-H*1.15,-L*.85,-H*.2); c.lineTo(-L*.85,H*.2); c.bezierCurveTo(-L*.2,H*1.1,L*.95,H*1.2,L*.95,0); c.closePath();
+  const g=c.createRadialGradient(L*.15,-H*.3,r*.1,0,0,L*1.05); g.addColorStop(0,f.mid); g.addColorStop(1,f.back); c.fillStyle=g; c.fill();
+  c.save(); c.clip(); for(let i=0;i<26;i++){ c.fillStyle=pr()<.5?'rgba(30,20,12,.45)':'rgba(190,160,130,.3)'; c.beginPath(); c.arc(-L*.8+pr()*L*1.7,-H+pr()*H*2,r*(.04+pr()*.07),0,TAU); c.fill(); } c.restore();
+  c.strokeStyle='rgba(0,0,0,.5)'; c.lineWidth=1; c.stroke();
+  // 몸 가장자리 술 장식
+  c.strokeStyle='rgba(120,95,70,.8)'; c.lineWidth=.8; for(let i=0;i<9;i++){ const x=L*(.6-i*.17), y=H*(.95-Math.abs(i-3)*.06); c.beginPath(); c.moveTo(x,y); c.lineTo(x-r*.06,y+r*.16+Math.sin(ph+i)*r*.04); c.stroke(); }
+  // 큰 입 + 이빨 (벌렸다 닫힘)
+  const op=.25+.15*Math.max(0,sw);
+  c.fillStyle='#1a0c08'; c.beginPath(); c.moveTo(L*1.0,-H*.05); c.quadraticCurveTo(L*.55,-H*op*1.6,L*.25,H*.05); c.quadraticCurveTo(L*.55,H*(.5+op),L*1.02,H*.35); c.closePath(); c.fill();
+  c.fillStyle='#f4ead6'; for(let i=0;i<6;i++){ const t=i/5, x=L*(.95-t*.6); c.beginPath(); c.moveTo(x-r*.04,-H*.02-t*H*op*.5); c.lineTo(x,H*.18); c.lineTo(x+r*.04,-H*.02-t*H*op*.5); c.fill();
+    c.beginPath(); c.moveTo(x-r*.04,H*.33); c.lineTo(x,H*.1); c.lineTo(x+r*.04,H*.33); c.fill(); }
+  // 눈
+  c.fillStyle='#d8c890'; c.beginPath(); c.arc(L*.45,-H*.62,r*.1,0,TAU); c.fill(); c.fillStyle='#0a0806'; c.beginPath(); c.arc(L*.47,-H*.62,r*.06,0,TAU); c.fill();
+  // 초롱(미끼): 이마에서 휘어진 줄기 끝에서 빛남
+  const lx=L*1.15, ly=-H*1.55+sw*H*.12;
+  c.strokeStyle='#5a463a'; c.lineWidth=1.2; c.beginPath(); c.moveTo(L*.55,-H*.9); c.quadraticCurveTo(L*.8,-H*1.9,lx,ly); c.stroke();
+  const lg=c.createRadialGradient(lx,ly,0,lx,ly,r*.45); lg.addColorStop(0,'rgba(220,255,200,.95)'); lg.addColorStop(.35,'rgba(140,255,190,.55)'); lg.addColorStop(1,'rgba(140,255,190,0)'); c.fillStyle=lg; c.beginPath(); c.arc(lx,ly,r*.45,0,TAU); c.fill();
+  c.fillStyle='#f0ffe0'; c.beginPath(); c.arc(lx,ly,r*.09,0,TAU); c.fill();
+}
+/* 상어: 마지막 어종. 날렵한 회색 몸(등 어둡고 배 흰색), 큰 세모 등지느러미, 위가 긴 꼬리, 아가미 틈 5줄, 이빨이 드러난 입 */
+function paintShark(c,f,ph){
+  const r=f.r, L=r*f.len, H=r*f.ht, sw=Math.sin(ph);
+  // 꼬리 (위 엽이 길다)
+  c.save(); c.translate(-L*.85,0); c.rotate(sw*.22); c.fillStyle=f.fin; c.beginPath(); c.moveTo(0,-H*.25); c.quadraticCurveTo(-L*.2,-H*.9,-L*.42,-H*1.9); c.quadraticCurveTo(-L*.3,-H*.5,-L*.2,0); c.quadraticCurveTo(-L*.26,H*.5,-L*.3,H*1.15); c.quadraticCurveTo(-L*.12,H*.5,0,H*.25); c.closePath(); c.fill(); c.restore();
+  // 가슴지느러미 (크고 뒤로 젖혀짐)
+  c.fillStyle=shade(f.fin,-15); c.beginPath(); c.moveTo(L*.3,H*.55); c.lineTo(-L*.05,H*(2.0+sw*.1)); c.lineTo(L*.08,H*.6); c.closePath(); c.fill();
+  // 몸통
+  c.beginPath(); c.moveTo(L*1.05,H*.05); c.bezierCurveTo(L*.9,-H*1.0,L*.2,-H*1.15,-L*.4,-H*.75); c.bezierCurveTo(-L*.7,-H*.5,-L*.85,-H*.3,-L*.9,-H*.2); c.lineTo(-L*.9,H*.2);
+  c.bezierCurveTo(-L*.6,H*.6,L*.1,H*1.05,L*.7,H*.75); c.quadraticCurveTo(L*1.0,H*.5,L*1.05,H*.05); c.closePath();
+  const g=c.createLinearGradient(0,-H,0,H); g.addColorStop(0,f.back); g.addColorStop(.45,f.mid); g.addColorStop(.6,f.belly); g.addColorStop(1,f.belly); c.fillStyle=g; c.fill();
+  c.strokeStyle='rgba(0,0,0,.5)'; c.lineWidth=1; c.stroke();
+  c.strokeStyle='rgba(255,255,255,.2)'; c.beginPath(); c.moveTo(L*.8,-H*.6); c.quadraticCurveTo(L*.2,-H*1.0,-L*.5,-H*.6); c.stroke();
+  // 등지느러미 (큰 세모) + 작은 두 번째 지느러미
+  c.fillStyle=f.fin; c.beginPath(); c.moveTo(L*.25,-H*.95); c.lineTo(-L*.02,-H*2.6); c.quadraticCurveTo(-L*.05,-H*1.4,-L*.25,-H*.85); c.closePath(); c.fill(); c.strokeStyle='rgba(0,0,0,.35)'; c.stroke();
+  c.beginPath(); c.moveTo(-L*.55,-H*.6); c.lineTo(-L*.65,-H*1.15); c.lineTo(-L*.72,-H*.5); c.fill();
+  // 아가미 틈
+  c.strokeStyle='rgba(20,25,30,.55)'; c.lineWidth=1; for(let i=0;i<5;i++){ const x=L*(.52-i*.06); c.beginPath(); c.moveTo(x,-H*.25); c.quadraticCurveTo(x-L*.03,H*.05,x,H*.35); c.stroke(); }
+  // 입 + 이빨
+  c.fillStyle='#3a0c10'; c.beginPath(); c.moveTo(L*.98,H*.32); c.quadraticCurveTo(L*.82,H*.62,L*.62,H*.42); c.quadraticCurveTo(L*.82,H*.42,L*.98,H*.32); c.fill();
+  c.fillStyle='#fff'; for(let i=0;i<5;i++){ const x=L*(.93-i*.065); c.beginPath(); c.moveTo(x-r*.03,H*.4); c.lineTo(x,H*.53); c.lineTo(x+r*.03,H*.4); c.fill(); }
+  // 눈 (작고 검고 차가움)
+  c.fillStyle='#0a0c10'; c.beginPath(); c.arc(L*.74,-H*.22,Math.max(1.6,r*.08),0,TAU); c.fill(); c.fillStyle='rgba(255,255,255,.7)'; c.beginPath(); c.arc(L*.72,-H*.27,r*.025,0,TAU); c.fill();
+  c.strokeStyle='rgba(30,30,40,.35)'; c.lineWidth=.8; c.beginPath(); c.moveTo(L*.82,-H*.42); c.lineTo(L*.66,-H*.32); c.stroke(); // 찌푸린 눈썹 능선
+}
 function paintFlatfish(c,f,ph){
   const r=f.r, L=r*1.25, H=r*.82, pr=rng(4242);
   c.fillStyle='rgba(120,92,62,.85)'; c.beginPath();
@@ -1247,7 +1389,7 @@ function paintFlatfish(c,f,ph){
 function getSprites(f){
   let s=spriteCache.get(f.id); if(s) return s;
   const r=f.r, L=r*(f.len||1.3);
-  const w=Math.ceil((Math.max(L*2.8,r*4.4)+10)*SPR), h=Math.ceil((r*(f.kind==='flat'?2.2:f.kind==='plankton'?4.4:Math.max(3,f.ht*4.2))+10)*SPR);
+  const w=Math.ceil((Math.max(L*(f.bill?3.5:2.8),r*4.4)+10)*SPR), h=Math.ceil((r*(f.kind==='flat'?2.2:f.kind==='plankton'?4.4:Math.max(3,f.ht*4.2))+10)*SPR);
   s={w,h,normal:[],white:[]};
   for(let i=0;i<FRAMES;i++){
     const cv1=document.createElement('canvas'); cv1.width=w; cv1.height=h;
@@ -1797,7 +1939,7 @@ function newRun(stage){
   ST=stats();
   P={x:0,y:0,hp:ST.maxHp,inv:0,atk:.4,face:1,moving:false,walk:0,throwT:0,orbitA:0,bubbleT:0,shield:ST.shield>0,shieldT:0};
   run={dmg:{},boons:{},crates:[],items:[],eshots:[],combo:0,comboT:0,bestCombo:0,throwN:0,boltT:2,freezeT:0,eliteT:CFG.ELITE_FIRST,crateT:2,elitesKilled:0,stage,boss:isBossStage(stage),t:0,duration:isBossStage(stage)?0:stageDuration(stage),
-    scale:monsterScale(stage),tier:tierOf(stage),enemies:[],shots:[],fx:[],floaters:[],
+    scale:monsterScale(stage),tier:tierOf(stage),spc:speciesOf(stage),enemies:[],shots:[],fx:[],floaters:[],
     kills:0,goldEarned:0,xpEarned:0,levelsGained:0,weaponsFound:[],gearFound:[],spawnAcc:0,waveT:12,
     ending:false,endT:0,dead:false,deadT:0,revived:false,bossRef:null,shake:0,banner:null,shadowT:rand(8,20),shadow:null};
 }
@@ -1813,13 +1955,13 @@ function startStage(n){
     run.enemies.push(e); run.bossRef=e;
     run.banner={title:`STAGE ${n}`,sub:`보스 출현 — ${b.name}`,t:3,boss:true};
     SND.play('bossIntro');
-  }else run.banner={title:`STAGE ${n}`,sub:`${FISH[run.tier].name} 무리 접근 중 · ${run.duration}초 버티기`,t:2.6};
+  }else run.banner={title:`STAGE ${n}`,sub:(n%5===1&&n>1?`새 어종 출현 — ${FISH[run.spc].name} · `:`${FISH[run.spc].name} 무리 접근 중 · `)+`${run.duration}초 버티기`,t:2.6};
 }
 function spawnRadius(){ return Math.hypot(V.w,V.h)/2/V.zoom+50; }
 // 몬스터 체력 배율: 직선 상승 + 30스테이지 이후 지수 상승 (후반 무기·스킬 성장 속도에 맞춤)
 const mobHpMul=st=>CFG.MONSTER_HP_MUL*(1+CFG.MONSTER_HP_STAGE*(st-1)+CFG.MONSTER_HP_STAGE2*Math.max(0,st-25))*Math.pow(CFG.MONSTER_HP_EXP,Math.max(0,st-30))*Math.pow(CFG.MONSTER_HP_LATE_DAMP,clamp(st-CFG.MONSTER_HP_LATE_FROM,0,CFG.MONSTER_HP_LATE_N))*(isBossStage(st)?CFG.BOSS_ADD_HP:1);
 const spitChance=st=>st>=CFG.SPIT_LATE[0]?Math.min(CFG.SPIT_LATE[2],CFG.SPIT_CHANCE[2]+CFG.SPIT_LATE[1]*(st-CFG.SPIT_LATE[0]+1)):Math.min(CFG.SPIT_CHANCE[2],CFG.SPIT_CHANCE[0]+CFG.SPIT_CHANCE[1]*st);
-function pickType(){ const t=run.tier; return (t>0&&Math.random()<.25)?t-1:t; }
+function pickType(){ const t=run.spc; return (t>0&&Math.random()<.25)?t-1:t; } // 이전 어종을 25% 섞음
 function spawnEnemy(ti,ang){
   if(run.enemies.length>=(run.boss?CFG.BOSS_ADD_MAX:CFG.MAX_ENEMIES)) return;
   const f=FISH[ti], a=ang??rand(0,TAU), R=spawnRadius()+rand(0,60), hp=f.hp*run.scale*mobHpMul(run.stage);
@@ -1829,7 +1971,7 @@ function spawnEnemy(ti,ang){
 }
 function spawnElite(){
   if(run.boss) return;
-  const f=FISH[run.tier], a=rand(0,TAU), R=spawnRadius()*.9;
+  const f=FISH[run.spc], a=rand(0,TAU), R=spawnRadius()*.9;
   const hp=f.hp*run.scale*mobHpMul(run.stage)*CFG.ELITE_HP;
   run.enemies.push({f,elite:true,x:P.x+Math.cos(a)*R,y:P.y+Math.sin(a)*R,hp,maxHp:hp,r:f.r*1.7,spd:f.spd*.85,
     dmg:Math.round(f.dmg*run.scale*CFG.MONSTER_DMG_MUL*1.5),xp:f.xp*15,flash:0,ang:a+Math.PI,wob:0,slowT:0,dotT:0,dotDps:0,orbitCd:0});
@@ -1865,11 +2007,13 @@ function collectItem(it){
     case 'chest': SND.play('chest'); openBoon(); break;
   }
 }
-function spawnWave(){ const n=Math.min(Math.round(50*CFG.WAVE_MUL),Math.round((12+run.stage*.4)*CFG.WAVE_MUL)), off=rand(0,TAU); for(let i=0;i<n;i++) spawnEnemy(run.tier,off+i/n*TAU); }
+function spawnWave(){ const n=Math.min(Math.round(50*CFG.WAVE_MUL),Math.round((12+run.stage*.4)*CFG.WAVE_MUL)), off=rand(0,TAU); for(let i=0;i<n;i++) spawnEnemy(run.spc,off+i/n*TAU); }
 
 function toScreen(x,y){ return {x:(x-P.x)*V.zoom+V.w/2,y:(y-P.y)*V.zoom+V.h/2}; }
 function floater(x,y,text,color,size,life){ if(SIM.on) return; run.floaters.push({x,y,text,color,size:size||14,t:0,life:life||(size>18?1.6:.9)}); }
-function toast(text,sub,color,icon){ if(SIM.on) return; toasts.push({text,sub,color:color||'#ffc21a',icon,t:0,life:3.2}); if(toasts.length>4) toasts.shift(); }
+// 알림: 일반 알림은 화면 왼쪽 위 가장자리에 작게 최대 2개, 무기·보호구 획득 같은 중요한 알림(big)만 위쪽 가운데에 크게 1개 (플레이어 주변을 가리지 않도록)
+function toast(text,sub,color,icon,big){ if(SIM.on) return; big=!!(big||icon); toasts.push({text,sub,color:color||'#ffc21a',icon,big,t:0,life:big?3.2:2.8});
+  const same=toasts.filter(t=>t.big===big); if(same.length>(big?1:2)) toasts.splice(toasts.indexOf(same[0]),1); }
 
 function gainXp(n){
   if(save.level>=CFG.MAX_LEVEL){save.xp=0; return;}
@@ -1891,13 +2035,15 @@ function levelShock(){ // 레벨업 충격파: 주변 적을 밀어내고 피해
     if(d<170+e.r){ if(!e.boss){e.x+=dx/d*60; e.y+=dy/d*60;} damage(e,ST.dmg*.6,false,'lvl'); } }
 }
 function addGold(amount,wx,wy,nCoins){
-  amount=Math.round(amount*CFG.GOLD_MUL);
+  const st=run?run.stage:1, GE=CFG.GOLD_EARLY, early=1+GE[0]*clamp((GE[2]-st)/Math.max(1,GE[2]-GE[1]),0,1); // 초반·중반 골드 보정
+  amount=Math.round(amount*CFG.GOLD_MUL*early);
   save.gold+=amount; run.goldEarned+=amount;
   if(SIM.on) return;
   SND.play((nCoins||1)>=10?'coins':'coin');
   const s=toScreen(wx,wy), n=nCoins||1;
-  for(let i=0;i<n;i++) coins.push({sx:s.x+(n>1?rand(-30,30):0),sy:s.y+(n>1?rand(-30,30):0),t:0,dur:rand(.55,.9),delay:n>1?i*.03:0,arc:rand(-120,120)});
-  floater(wx,wy-20,`+${fmt(amount)} G`,'#ffd84a',n>1?26:14);
+  for(let i=0;i<Math.min(n,14);i++) coins.push({sx:s.x+(n>1?rand(-30,30):0),sy:s.y+(n>1?rand(-30,30):0),t:0,dur:rand(.55,.9),delay:n>1?i*.03:0,arc:rand(-120,120)});
+  // 골드 숫자는 화면 가운데에 띄우지 않고 우측 상단 골드 표시 옆에 '+n'으로 합쳐서 잠깐 표시 (화면 중앙 가림 줄이기)
+  hud.gain=(hud.gainT>0?hud.gain:0)+amount; hud.gainT=1.6;
 }
 function dropWeapon(x,y){
   const type=rollWeaponType(run.stage);
@@ -1940,9 +2086,9 @@ function killEnemy(e){
   if(!SIM.on&&run.fx.length<260) run.fx.push({type:'xp',x:e.x,y:e.y,t:0,life:.5,sx:e.x,sy:e.y});
   if(ST.lifeOnKill>0&&(run.lokN||0)<CFG.LOK_PER_SEC){ run.lokN=(run.lokN||0)+1; P.hp=Math.min(ST.maxHp,P.hp+ST.maxHp*ST.lifeOnKill); }
   run.combo++; run.comboT=2; run.bestCombo=Math.max(run.bestCombo,run.combo);
-  if(run.combo%50===0){ const bonus=Math.round(run.combo/20*(1+run.tier*CFG.GOLD_TIER_MUL)*ST.goldMul); SND.play('combo'); addGold(bonus,P.x,P.y-40,6); toast(`${run.combo} 콤보!`,`연속 처치 보너스 +${fmt(bonus)}G`,'#ff9d5c'); }
+  if(run.combo%50===0){ const bonus=Math.round(run.combo/20*(1+run.tier*CFG.GOLD_TIER_MUL)*ST.goldMul); SND.play('combo'); addGold(bonus,P.x,P.y-40,6); run.comboMsg={text:`보너스 +${fmt(bonus)}G`,t:2.2}; } // 콤보 보너스: 중앙 토스트 대신 콤보 표시 옆 작은 한 줄
   if(run.combo%CFG.FRENZY_EVERY===0){ const was=run.frenzyT>0; run.frenzyT=CFG.FRENZY_T; run.frenzies=(run.frenzies||0)+1;
-    if(!SIM.on){ if(!was){ SND.play('level'); toast('몰아치기!',`${CFG.FRENZY_T}초 동안 투척 속도 +${Math.round(CFG.FRENZY_RATE*100)}% · 처치를 이어 가면 연장`,'#ffb347'); } run.fx.push({type:'ring',x:P.x,y:P.y,t:0,life:.4,r:120,color:'#ffb347'}); } }
+    if(!SIM.on){ if(!was){ SND.play('level'); run.frenzyPop=1; } run.fx.push({type:'ring',x:P.x,y:P.y,t:0,life:.4,r:120,color:'#ffb347'}); } } // 몰아치기 안내도 콤보 표시 쪽(가장자리)에서
   const g=e.f.gold, tier=run.tier+1, gt=1+run.tier*CFG.GOLD_TIER_MUL;
   if(e.elite){
     run.elitesKilled++; dropChest(e.x,e.y);
@@ -2021,10 +2167,11 @@ function onPipeHit(e,s){
     case 'burst': {SND.play('boom'); for(const t of enemiesNear(e.x,e.y,80)) damage(t,m,false,'magic'); if(!SIM.on) run.fx.push({type:'boom',x:e.x,y:e.y,t:0,life:.45});} break;
   }
 }
-function hurtPlayer(dmg){
+function hurtPlayer(dmg,fromBoss){
   if(P.inv>0||run.ending||run.dead) return;
   if(ST.dodge>0&&Math.random()<ST.dodge){ P.inv=.25; SND.play('dodge'); floater(P.x,P.y-40,'회피','#ffd24d',15); return; }
-  if(P.shield){ P.shield=false; SND.play('shield'); P.shieldT=14-1.5*ST.shield; P.inv=.4; floater(P.x,P.y-40,'보호막','#9fe8ff',15); if(!SIM.on) run.fx.push({type:'ring',x:P.x,y:P.y,t:0,life:.3,r:40,color:'#9fe8ff'}); return; }
+  if(P.shield){ P.shield=false; SND.play('shield'); P.shieldT=14-1.5*ST.shield; P.inv=.4; floater(P.x,P.y-40,fromBoss?'보호막 관통':'보호막','#9fe8ff',15); if(!SIM.on) run.fx.push({type:'ring',x:P.x,y:P.y,t:0,life:.3,r:40,color:'#9fe8ff'});
+    if(!fromBoss) return; dmg*=CFG.BOSS_SHIELD_PIERCE; } // 보스의 강한 공격은 보호막을 깨고 일부 피해가 들어옴
   dmg=Math.max(1,Math.round(dmg*(1-ST.armor)));
   P.hp-=dmg; P.inv=ST.iframe; SND.play('hurt'); run.dmgTaken=(run.dmgTaken||0)+dmg; run.minHp=Math.min(run.minHp??1,P.hp/ST.maxHp);
   floater(P.x+rand(-10,10),P.y-34,`-${dmg}`,'#ff7a5a',15);
@@ -2046,6 +2193,7 @@ function botInput(){
     const lim=e.boss?(e.mode==='chase'?e.r+90:e.r+170):(danger+e.r); if(d2<lim*lim&&d2>1){const w=(e.boss?5:1)/d2; fx+=dx*w; fy+=dy*w;}
   }
   for(const f of run.fx) if(f.type==='stink'){const d=Math.hypot(P.x-f.x,P.y-f.y); if(Math.abs(d-f.r)<60){fx+=(P.x-f.x)/d*.02; fy+=(P.y-f.y)/d*.02;}}
+  for(const f of run.fx) if(f.type==='mark'&&!f.done&&f.t>.25){const d=Math.hypot(P.x-f.x,P.y-f.y)||1; if(d<f.r+30){fx+=(P.x-f.x)/d*.02; fy+=(P.y-f.y)/d*.02;}} // 장판은 보이면(0.25초 뒤) 피함
   let x=0,y=0;
   const l=Math.hypot(fx,fy);
   if(l>1e-7){ x=fx/l; y=fy/l; const tx=-y, ty=x; x=x*.75+tx*.5; y=y*.75+ty*.5; }
@@ -2110,7 +2258,7 @@ function update(dt){
   }
   run.crates=run.crates.filter(c=>!c.dead); run.items=run.items.filter(i=>!i.dead);
   // 보스 투사체
-  for(const b of run.eshots){ b.x+=b.vx*dt; b.y+=b.vy*dt; b.life-=dt; if((b.x-P.x)**2+(b.y-P.y)**2<(b.r+CFG.PLAYER_R*.8)**2){ b.life=0; hurtPlayer(b.dmg); } }
+  for(const b of run.eshots){ b.x+=b.vx*dt; b.y+=b.vy*dt; b.life-=dt; if((b.x-P.x)**2+(b.y-P.y)**2<(b.r+CFG.PLAYER_R*.8)**2){ b.life=0; hurtPlayer(b.dmg,!b.water); } }
   run.eshots=run.eshots.filter(b=>b.life>0);
   if(run.dead) return;
 
@@ -2140,8 +2288,17 @@ function update(dt){
     if(e.spitter){ const sr=Math.max(CFG.SPIT_RANGE,ST.range+110); e.spitT-=dt*(slow>0?1:0); if(d>=sr) e.spitT=Math.max(e.spitT,.6); else slow*=.5; }
     if(e.spitter&&d<Math.max(CFG.SPIT_RANGE,ST.range+110)){
       if(e.spitT<=0){ e.spitT=rand(CFG.SPIT_CD[0],CFG.SPIT_CD[1]); const sp=230+run.stage*.8; run.eshots.push({x:e.x+dx/d*e.r,y:e.y+dy/d*e.r,vx:dx/d*sp,vy:dy/d*sp,r:6,life:Math.max(CFG.SPIT_RANGE,ST.range+110)/sp+.4,dmg:Math.round(e.dmg*(CFG.SPIT_DMG+CFG.SPIT_DMG_LATE[1]*Math.max(0,run.stage-CFG.SPIT_DMG_LATE[0]))),water:true}); if(!SIM.on) SND.play('spit'); } }
-    const ux=dx/d, uy=dy/d, w=Math.sin(e.wob*.5)*.22;
-    const vx=(ux-uy*w)*e.spd*slow, vy=(uy+ux*w)*e.spd*slow;
+    const ux=dx/d, uy=dy/d; let w=Math.sin(e.wob*.5)*.22, mv=1;
+    switch(e.f.move){ // 어종별 움직임 (평균 속도는 비슷하게 유지)
+      case 'dart': { const s=Math.max(0,Math.sin(e.wob*.4)); mv=.4+2.4*s*s; break; }              // 새우: 꼬리를 튕기며 톡톡 튀어 나감
+      case 'school': w=Math.sin(e.wob*.35+e.x*.004)*.3; break;                                      // 전갱이: 무리 지어 크게 출렁이며 접근
+      case 'hover': w=Math.sin(e.wob*.3)*.45; mv=.85+.3*Math.sin(e.wob*.9); break;                // 쥐치: 좌우로 흔들리며 머뭇거림
+      case 'eel': w=Math.sin(e.wob*.6)*.55; mv=1.08; break;                                          // 갈치: 길게 S자로 헤엄
+      case 'lunge': mv=d<170?1.75:.8; break;                                                         // 쏨뱅이·아귀: 느릿하다가 가까우면 덮침
+      case 'dash': { const s=Math.max(0,Math.sin(e.wob*.28)); mv=.6+2*s*s*s*s; w*=.4; break; }       // 청새치: 창처럼 일직선 돌진
+      case 'circle': if(d<300){ if(e.cw==null) e.cw=Math.random()<.5?1:-1; w=.75*e.cw; mv=.85; } break; // 상어: 가까이 오면 주위를 돌며 조여 옴
+    }
+    const vx=(ux-uy*w)*e.spd*slow*mv, vy=(uy+ux*w)*e.spd*slow*mv;
     e.x+=vx*dt; e.y+=vy*dt; e.ang=Math.atan2(vy,vx);
     const key=gk(Math.floor(e.x/64),Math.floor(e.y/64));
     let c=grid.get(key); if(!c){c=[]; grid.set(key,c);} c.push(e);
@@ -2158,7 +2315,7 @@ function update(dt){
   for(const e of run.enemies){
     if(e.dead) continue;
     const rr2=e.r*(e.boss?.75:.8)+CFG.PLAYER_R;
-    if((e.x-P.x)**2+(e.y-P.y)**2<rr2*rr2){ hurtPlayer(e.boss&&e.mode==='dash'?Math.round(e.dmg*1.5):e.dmg); if(run.dead) return; }
+    if((e.x-P.x)**2+(e.y-P.y)**2<rr2*rr2){ hurtPlayer(e.boss&&e.mode==='dash'?Math.round(e.dmg*1.5):e.dmg,!!e.boss); if(run.dead) return; }
   }
   // 회전 배관
   if(ST.orbit>0){
@@ -2229,12 +2386,16 @@ function updateBoss(b,dt){
   const k=b.def.k;
   b.stinkCd-=dt/eCd;
   if(b.stinkCd<=0){b.stinkCd=7-Math.min(3,k*.3);
-    SND.play('stink'); const n=k>=9?2:1; for(let i=0;i<n;i++) run.fx.push({type:'stink',x:b.x,y:b.y,r:b.r*.6-i*120,maxR:b.r+260,hit:false,dmg:Math.round(b.dmg*.7),t:0,life:9});}
-  if(k>=3){ b.summonCd=(b.summonCd??8)-dt; if(b.summonCd<=0){ b.summonCd=12; SND.play('summon'); const n=6+k; for(let i=0;i<n;i++){const a=i/n*TAU; spawnEnemy(run.tier,0); const e=run.enemies[run.enemies.length-1]; if(e){e.x=b.x+Math.cos(a)*(b.r+30); e.y=b.y+Math.sin(a)*(b.r+30);}} if(!SIM.on) run.fx.push({type:'ring',x:b.x,y:b.y,t:0,life:.5,r:b.r+60,color:'#d77bff'}); } }
+    SND.play('stink'); const n=k>=9?2:1; for(let i=0;i<n;i++) run.fx.push({type:'stink',x:b.x,y:b.y,r:b.r*.6-i*120,maxR:b.r+CFG.STINK_R[0]+k*CFG.STINK_R[1],hit:false,dmg:Math.round(b.dmg*.7),t:0,life:9});}
+  if(k>=3){ b.summonCd=(b.summonCd??8)-dt; if(b.summonCd<=0){ b.summonCd=12; SND.play('summon'); const n=6+k; for(let i=0;i<n;i++){const a=i/n*TAU; spawnEnemy(run.spc,0); const e=run.enemies[run.enemies.length-1]; if(e){e.x=b.x+Math.cos(a)*(b.r+30); e.y=b.y+Math.sin(a)*(b.r+30);}} if(!SIM.on) run.fx.push({type:'ring',x:b.x,y:b.y,t:0,life:.5,r:b.r+60,color:'#d77bff'}); } }
   if(k>=5){ // 가시 발사: 부채꼴 예고선을 먼저 보여 주고(SPIKE_WARN초) 그 방향으로 발사 — 피할 수 있는 패턴
     if(b.spikeWarn>0){ b.spikeWarn-=dt; if(b.spikeWarn<=0){ const n=b.spikeN, a0=b.spikeA;
-      for(let i=0;i<n;i++){const a=a0+(i-(n-1)/2)*.22; run.eshots.push({x:b.x+Math.cos(a)*b.r*.8,y:b.y+Math.sin(a)*b.r*.8,vx:Math.cos(a)*260,vy:Math.sin(a)*260,r:7,life:2.6,dmg:Math.round(b.dmg*.6),k});} } }
+      for(let i=0;i<n;i++){const a=a0+(i-(n-1)/2)*.22; run.eshots.push({x:b.x+Math.cos(a)*b.r*.8,y:b.y+Math.sin(a)*b.r*.8,vx:Math.cos(a)*(CFG.SPIKE_SPD[0]+k*CFG.SPIKE_SPD[1]),vy:Math.sin(a)*(CFG.SPIKE_SPD[0]+k*CFG.SPIKE_SPD[1]),r:7,life:2.6,dmg:Math.round(b.dmg*.6),k});} } }
     else{ b.spikeCd=(b.spikeCd??4)-dt; if(b.spikeCd<=0){ b.spikeCd=Math.max(3,6-k*.25); b.spikeN=5+(k-5); b.spikeA=Math.atan2(dy,dx); b.spikeWarn=CFG.SPIKE_WARN; SND.play('spike'); } } }
+  if(k>=CFG.BOSS_MARK[0]){ // 해저 붕괴(장판): 플레이어 발밑과 주변에 붉은 예고 원 → 잠시 뒤 터짐. 멀리서 도망만 다녀도 피할 수 없게, 보고 비키면 피할 수 있게
+    b.markCd=(b.markCd??3.5)-dt/eCd; if(b.markCd<=0){ b.markCd=CFG.BOSS_MARK[1]-k*.15; const n=2+Math.floor(k/2);
+      for(let i=0;i<n;i++){ const a=rand(0,TAU), rr=i?rand(70,230):0; run.fx.push({type:'mark',x:P.x+Math.cos(a)*rr,y:P.y+Math.sin(a)*rr,r:CFG.BOSS_MARK[2],t:0,life:CFG.BOSS_MARK[3]+.25,warn:CFG.BOSS_MARK[3],dmg:Math.round(b.dmg*.8),done:false}); }
+      SND.play('spike'); } }
   if(d>spawnRadius()*1.6){b.x=P.x-dx/d*spawnRadius(); b.y=P.y-dy/d*spawnRadius();}
 }
 function updateFx(dt){
@@ -2242,9 +2403,10 @@ function updateFx(dt){
     f.t+=dt;
     if(f.type==='bub'){f.x+=f.vx*dt; f.y+=f.vy*dt; f.vx*=.92; f.vy=f.vy*.92-30*dt;}
     else if(f.type==='breath'){f.y-=40*dt; f.x+=Math.sin(f.t*6)*10*dt;}
+    else if(f.type==='mark'){ if(!f.done&&f.t>=f.warn){ f.done=true; if(!run.ending&&(P.x-f.x)**2+(P.y-f.y)**2<(f.r+CFG.PLAYER_R*.6)**2) hurtPlayer(f.dmg,true); if(!SIM.on){ SND.play('boom'); run.fx.push({type:'ring',x:f.x,y:f.y,t:0,life:.3,r:f.r+10,color:'#ff6a4d'}); } } }
     else if(f.type==='stink'){
       f.r+=240*dt;
-      if(!f.hit&&!run.ending&&f.r>0){const d=Math.hypot(P.x-f.x,P.y-f.y); if(Math.abs(d-f.r)<16){f.hit=true; hurtPlayer(f.dmg);}}
+      if(!f.hit&&!run.ending&&f.r>0){const d=Math.hypot(P.x-f.x,P.y-f.y); if(Math.abs(d-f.r)<16){f.hit=true; hurtPlayer(f.dmg,true);}}
       if(f.r>=f.maxR) f.t=f.life;
     }
   }
@@ -2259,7 +2421,7 @@ function updateFx(dt){
    12. 렌더링
    ===================================================================== */
 const FD='"Black Han Sans","Noto Sans KR",sans-serif', FB='"Noto Sans KR",system-ui,sans-serif';
-const hud={goldX:0,goldY:0};
+const hud={goldX:0,goldY:0,gain:0,gainT:0,comboBottom:0};
 
 function drawBackground(cx,cy,time){
   ctx.setTransform(V.dpr,0,0,V.dpr,0,0);
@@ -2376,6 +2538,27 @@ function drawPlayer(time){
   drawWorker(ctx,save.rank,{moving:P.moving,walk:P.walk,throwT:P.throwT,face:P.face,weapon:ST.weapon,t:time});
   ctx.restore();
 }
+/* 플레이어 머리 위 체력바: 화면 좌표로 그려 화면 배율과 상관없이 같은 크기 (폭 44px·높이 5px)
+   체력 비율에 따라 초록→노랑→빨강, 맞으면 잠깐 하얗게 번쩍이고 깎인 부분이 잔상으로 남았다 줄어듦, 보호막이 있으면 위에 하늘색 줄 */
+function drawPlayerHpBar(dt,cx,cy){
+  const f=clamp(P.hp/ST.maxHp,0,1);
+  if(P.hbTrail==null||P.hbTrail<f) P.hbTrail=f;
+  if(P.hbLast!=null&&f<P.hbLast-1e-4){ P.hbFlash=.14; P.hbHold=.4; }
+  P.hbLast=f;
+  if(P.hbHold>0) P.hbHold-=dt; else P.hbTrail=Math.max(f,P.hbTrail-Math.max(.25,(P.hbTrail-f)*4)*dt);
+  if(P.hbFlash>0) P.hbFlash-=dt;
+  const z=V.zoom, ps=playerScale(), W=44, H=5;
+  const x=Math.round((P.x-cx)*z+V.w/2-W/2), y=Math.round((P.y-cy+PX.OY*ps)*z+V.h/2-H-9);
+  ctx.save(); ctx.setTransform(V.dpr,0,0,V.dpr,0,0);
+  ctx.fillStyle='rgba(0,0,0,.72)'; ctx.fillRect(x-1.5,y-1.5,W+3,H+3);
+  if(P.hbTrail>f){ ctx.fillStyle='rgba(255,240,215,.85)'; ctx.fillRect(x+W*f,y,W*(P.hbTrail-f),H); }
+  const col=f>.6?[95,211,154]:f>.3?[255,194,26]:[240,70,45];
+  ctx.fillStyle=P.hbFlash>0?'#ffffff':`rgb(${col})`; ctx.fillRect(x,y,W*f,H);
+  ctx.fillStyle='rgba(255,255,255,.28)'; ctx.fillRect(x,y,W*f,1.5);
+  ctx.strokeStyle='rgba(233,242,247,.55)'; ctx.lineWidth=1; ctx.strokeRect(x-1.5,y-1.5,W+3,H+3);
+  if(P.shield){ ctx.fillStyle='#9fe8ff'; ctx.fillRect(x,y-4.5,W,2); }
+  ctx.restore();
+}
 function drawShot(s,time){
   if(s.kind==='bounce'){if(s.trail.length>=4){ctx.strokeStyle='rgba(90,168,255,.45)'; ctx.lineWidth=4; ctx.beginPath(); ctx.moveTo(s.trail[0],s.trail[1]); for(let i=2;i<s.trail.length;i+=2) ctx.lineTo(s.trail[i],s.trail[i+1]); ctx.lineTo(s.x,s.y); ctx.stroke();}
     const q=1+.18*Math.sin(time*30); ctx.fillStyle='#5aa8ff'; ctx.beginPath(); ctx.ellipse(s.x,s.y,6*q,6/q,s.rot,0,TAU); ctx.fill(); ctx.fillStyle='rgba(225,240,255,.9)'; ctx.beginPath(); ctx.arc(s.x-1.5,s.y-1.5,2,0,TAU); ctx.fill(); return;}
@@ -2444,9 +2627,18 @@ function drawHUD(time){
   ctx.fillStyle=goldPulse>0?'#fff4c2':'#ffd84a'; ctx.fillText(gtxt,V.w-14,32);
   drawCoinIcon(V.w-14-gw-14,31,9+goldPulse*3);
   hud.goldX=V.w-14-gw-14; hud.goldY=31;
-  if(run.combo>=10){ ctx.textAlign='right'; ctx.font=`${18+Math.min(10,run.combo/40)}px ${FD}`; ctx.fillStyle=run.combo>=100?'#ff9d5c':'#ffe9b0'; ctx.fillText(`${run.combo} 콤보`,V.w-62,72); ctx.fillStyle=`rgba(255,157,92,.8)`; ctx.fillRect(V.w-62-80,82,80*clamp(run.comboT/2,0,1),3);
-    const nx=Math.ceil((run.combo+1)/CFG.FRENZY_EVERY)*CFG.FRENZY_EVERY; ctx.font=`600 11px ${FB}`; ctx.fillStyle='rgba(255,200,140,.75)';
-    ctx.fillText(run.frenzyT>0?`몰아치기 ${run.frenzyT.toFixed(1)}초`:`몰아치기까지 ${nx-run.combo}`,V.w-62,96); }
+  if(hud.gainT>0&&hud.gain>0){ // 골드 획득: 골드 표시 옆에 합산 '+n'
+    ctx.globalAlpha=clamp(hud.gainT/.5,0,1); ctx.font=`700 13px ${FB}`; ctx.fillStyle='#ffe58a'; ctx.lineWidth=3; ctx.strokeStyle='rgba(0,0,0,.6)';
+    const gx=hud.goldX-20-goldPulse*3; ctx.strokeText(`+${fmt(hud.gain)}`,gx,32); ctx.fillText(`+${fmt(hud.gain)}`,gx,32); ctx.globalAlpha=1; }
+  const bAlive=run.bossRef&&!run.bossRef.dead;
+  // 콤보 표시: 데스크톱은 오른쪽 버튼 줄 왼쪽, 모바일은 버튼 아래 (보스전은 보스 체력바 아래) — 콤보 보너스·몰아치기 안내도 이 옆에 작게
+  const cX=narrow?V.w-14:V.w-72, cY=narrow?(bAlive?178:106):72;
+  hud.comboBottom=0;
+  if(run.combo>=10){ ctx.textAlign='right'; ctx.font=`${(narrow?16:18)+Math.min(8,run.combo/50)}px ${FD}`; ctx.fillStyle=run.combo>=100?'#ff9d5c':'#ffe9b0'; ctx.fillText(`${run.combo} 콤보`,cX,cY); ctx.fillStyle=`rgba(255,157,92,.8)`; ctx.fillRect(cX-80,cY+10,80*clamp(run.comboT/2,0,1),3);
+    const nx=Math.ceil((run.combo+1)/CFG.FRENZY_EVERY)*CFG.FRENZY_EVERY; ctx.font=`600 11px ${FB}`; ctx.fillStyle=run.frenzyT>0?'#ffb347':'rgba(255,200,140,.75)';
+    if(run.frenzyT>0&&run.frenzyPop){ run.frenzyPop=Math.max(0,run.frenzyPop-1/60); ctx.font=`700 ${11+Math.round(run.frenzyPop*5)}px ${FB}`; }
+    ctx.fillText(run.frenzyT>0?`몰아치기! 투척 +${Math.round(CFG.FRENZY_RATE*100)}% · ${run.frenzyT.toFixed(1)}초`:`몰아치기까지 ${nx-run.combo}`,cX,cY+24); hud.comboBottom=cY+24; }
+  if(run.comboMsg&&run.comboMsg.t>0){ run.comboMsg.t-=1/60; ctx.textAlign='right'; ctx.globalAlpha=clamp(run.comboMsg.t/.4,0,1); ctx.font=`700 12px ${FB}`; ctx.fillStyle='#ffd84a'; ctx.fillText(run.comboMsg.text,cX,cY+40); ctx.globalAlpha=1; }
   const sy=narrow?110:30;
   ctx.textAlign='center'; ctx.fillStyle='#e9f2f7'; ctx.font=`${narrow?16:18}px ${FD}`;
   ctx.fillText(run.boss?`STAGE ${run.stage} · BOSS`:`STAGE ${run.stage}`,V.w/2,sy-(narrow?0:6));
@@ -2464,17 +2656,28 @@ function drawHUD(time){
     if(!b.enraged&&b.def.k>=2){ ctx.fillStyle='rgba(255,90,90,.8)'; ctx.fillRect(x+w*CFG.BOSS_ENRAGE-1,y-3,2,20); } // 격노 시작 지점 표시
   }
   // 토스트
-  let ty=narrow?(b&&!b.dead?186:140):(b&&!b.dead?110:70);
-  for(const t of toasts){
+  // 중요한 알림(무기·보호구 획득): 위쪽 가운데, 1개
+  const fit=(s,maxW)=>{ if(ctx.measureText(s).width<=maxW) return s; while(s.length>1&&ctx.measureText(s+'…').width>maxW) s=s.slice(0,-1); return s+'…'; };
+  for(const t of toasts){ if(!t.big) continue;
+    const ty=narrow?V.h-112:(bAlive?104:64); // 모바일은 화면 아래 가장자리(콤보·보스 체력바와 겹치지 않게)
     const a=clamp(Math.min(t.t*5,(t.life-t.t)*3),0,1); ctx.globalAlpha=a;
     ctx.font=`15px ${FD}`; const w1=ctx.measureText(t.text).width; ctx.font=`500 11px ${FB}`; const w2=ctx.measureText(t.sub).width;
-    const w=Math.max(w1,w2)+(t.icon?78:28), x=V.w/2-w/2;
+    const w=Math.min(V.w-28,Math.max(w1,w2)+(t.icon?78:28)), x=V.w/2-w/2;
     ctx.fillStyle='rgba(4,16,26,.88)'; rrect(x,ty,w,44,5); ctx.fill(); ctx.fillStyle=t.color; ctx.fillRect(x,ty,3,44);
     let tx=x+14;
     if(t.icon){ctx.save(); ctx.translate(x+36,ty+22); drawPipeArt(ctx,t.icon.type,t.icon.plus,20,5.5,time,false); ctx.restore(); tx=x+64;}
-    ctx.textAlign='left'; ctx.fillStyle=t.color; ctx.font=`15px ${FD}`; ctx.fillText(t.text,tx,ty+15);
-    ctx.fillStyle='rgba(233,242,247,.75)'; ctx.font=`500 11px ${FB}`; ctx.fillText(t.sub,tx,ty+32);
-    ctx.globalAlpha=1; ty+=50;
+    ctx.textAlign='left'; ctx.fillStyle=t.color; ctx.font=`15px ${FD}`; ctx.fillText(fit(t.text,x+w-8-tx),tx,ty+15);
+    ctx.fillStyle='rgba(233,242,247,.75)'; ctx.font=`500 11px ${FB}`; ctx.fillText(fit(t.sub,x+w-8-tx),tx,ty+32);
+    ctx.globalAlpha=1;
+  }
+  // 일반 알림: 왼쪽 가장자리(체력·처치 표시 아래)에 작게, 최대 2개
+  let ly=narrow?(bAlive?196:144):96; const lw=narrow?Math.min(V.w-28,V.w-130):Math.min(300,V.w*.3);
+  for(const t of toasts){ if(t.big) continue;
+    const a=clamp(Math.min(t.t*5,(t.life-t.t)*3),0,1); ctx.globalAlpha=a*.95;
+    ctx.fillStyle='rgba(4,16,26,.8)'; rrect(14,ly,lw,34,4); ctx.fill(); ctx.fillStyle=t.color; ctx.fillRect(14,ly,3,34);
+    ctx.textAlign='left'; ctx.fillStyle=t.color; ctx.font=`700 12px ${FB}`; ctx.fillText(fit(t.text,lw-16),22,ly+11);
+    ctx.fillStyle='rgba(233,242,247,.7)'; ctx.font=`500 10px ${FB}`; ctx.fillText(fit(t.sub,lw-16),22,ly+25);
+    ctx.globalAlpha=1; ly+=38;
   }
   ctx.textAlign='center';
   if(run.banner){
@@ -2488,7 +2691,7 @@ function drawHUD(time){
   ctx.textAlign='left';
 }
 function updateCoins(dt){
-  goldPulse=Math.max(0,goldPulse-dt*3);
+  goldPulse=Math.max(0,goldPulse-dt*3); if(hud.gainT>0) hud.gainT-=dt;
   displayGold+=(save.gold-displayGold)*Math.min(1,dt*8); if(Math.abs(save.gold-displayGold)<.5) displayGold=save.gold;
   for(const c of coins){ if(c.delay>0){c.delay-=dt; continue;} c.t+=dt; if(c.t>=c.dur&&!c.done){c.done=true; goldPulse=Math.min(1,goldPulse+.25);} }
   for(let i=coins.length-1;i>=0;i--) if(coins[i].done) coins.splice(i,1);
@@ -2536,6 +2739,10 @@ function render(dt,time){
   // 공격 범위
   ctx.strokeStyle='rgba(255,194,26,.18)'; ctx.lineWidth=2/z; ctx.setLineDash([10,10]); ctx.lineDashOffset=-time*20;
   ctx.beginPath(); ctx.arc(P.x,P.y,ST.range,0,TAU); ctx.stroke(); ctx.setLineDash([]);
+  for(const f of run.fx) if(f.type==='mark'&&!f.done){ const p=clamp(f.t/f.warn,0,1); // 장판 예고: 바깥 원 + 안쪽에서 차오르는 원
+    ctx.fillStyle=`rgba(255,70,50,${.1+.12*p})`; ctx.beginPath(); ctx.arc(f.x,f.y,f.r,0,TAU); ctx.fill();
+    ctx.strokeStyle=`rgba(255,110,80,${.5+.4*p})`; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(f.x,f.y,f.r,0,TAU); ctx.stroke();
+    ctx.fillStyle=`rgba(255,90,60,${.25+.2*p})`; ctx.beginPath(); ctx.arc(f.x,f.y,f.r*p,0,TAU); ctx.fill(); }
   for(const f of run.fx) if(f.type==='stink'&&f.r>0){ // 두 번째 파동은 반지름이 음수에서 출발(지연) — 음수 반지름으로 arc를 부르면 오류
     const a=1-f.r/f.maxR;
     ctx.strokeStyle=`rgba(190,230,90,${.55*a+.1})`; ctx.lineWidth=14; ctx.beginPath(); ctx.arc(f.x,f.y,f.r,0,TAU); ctx.stroke();
@@ -2614,6 +2821,7 @@ function render(dt,time){
     g.addColorStop(0,'rgba(255,170,60,0)'); g.addColorStop(1,`rgba(255,170,60,${(.12+.08*p)*k})`); ctx.fillStyle=g; ctx.fillRect(0,0,V.w,V.h); }
   for(const f of run.fx) if(f.type==='flash'){ctx.fillStyle=`rgba(255,220,180,${.6*(1-f.t/f.life)})`; ctx.fillRect(0,0,V.w,V.h);}
   if(run.freezeT>0){ctx.fillStyle='rgba(140,210,255,.08)'; ctx.fillRect(0,0,V.w,V.h);}
+  if(UIP.hpBar&&!run.dead) drawPlayerHpBar(dt,cx,cy);
   ctx.setTransform(V.dpr*z,0,0,V.dpr*z,V.dpr*(V.w/2-cx*z),V.dpr*(V.h/2-cy*z));
   drawHpBars(vis);
   ctx.textAlign='center'; ctx.textBaseline='middle';
@@ -2735,7 +2943,7 @@ function refreshOffice(){
   const b=$('#spBadge'); b.hidden=!save.sp; b.textContent=save.sp;
   const next=save.stage;
   $('#btnGo').textContent=`STAGE ${next} 출근하기`;
-  $('#goInfo').innerHTML=isBossStage(next)?`보스 <b style="color:#ff9d84">${BOSS_NAMES[next/10-1]}</b> 출현 공정입니다.`:`${FISH[tierOf(next)].name} 구간 · ${stageDuration(next)}초 버티기`+(save.sp?` · 스킬 포인트 ${save.sp}개를 먼저 사용하세요`:'');
+  $('#goInfo').innerHTML=isBossStage(next)?`보스 <b style="color:#ff9d84">${BOSS_NAMES[next/10-1]}</b> 출현 공정입니다.`:`${FISH[speciesOf(next)].name} 구간 · ${stageDuration(next)}초 버티기`+(save.sp?` · 스킬 포인트 ${save.sp}개를 먼저 사용하세요`:'');
   paintAvatar($('#officeAvatar'),save.rank);
   updateSaveInfo();
 }
@@ -3211,8 +3419,9 @@ function togglePause(){
       ${save.sp?`<div class="note">사용하지 않은 스킬 포인트 ${save.sp}개가 있습니다. 스테이지를 마친 뒤 사무소에서 사용하세요.</div>`:''}
       ${buildSummary(st)}
       <label class="vol" style="grid-template-columns:auto 1fr;cursor:pointer"><input type="checkbox" id="optDmgNum" ${UIP.dmgNum?'checked':''} style="width:18px;height:18px;margin:0"><span>타격 피해 숫자 표시 (치명타 숫자는 항상 표시)</span></label>
+      <label class="vol" style="grid-template-columns:auto 1fr;cursor:pointer;margin-top:-4px"><input type="checkbox" id="optHpBar" ${UIP.hpBar?'checked':''} style="width:18px;height:18px;margin:0"><span>머리 위 체력바 표시</span></label>
       ${volHtml()}`;
-    show('#pause'); bindVol($('#pauseBody')); $('#optDmgNum').onchange=e=>{ UIP.dmgNum=e.target.checked; saveUIP(); }; SND.duck(true); $('#pIcon').appendChild(pipeCanvas(w.type,w.plus,72,28));
+    show('#pause'); bindVol($('#pauseBody')); $('#optDmgNum').onchange=e=>{ UIP.dmgNum=e.target.checked; saveUIP(); }; $('#optHpBar').onchange=e=>{ UIP.hpBar=e.target.checked; saveUIP(); }; SND.duck(true); $('#pIcon').appendChild(pipeCanvas(w.type,w.plus,72,28));
     $('#btnResume').onclick=togglePause; $('#btnResume').focus({preventScroll:true});
     $('#btnPsFull').onclick=()=>toggleFull(); syncFull();
     let armed=false; $('#btnQuit').onclick=e=>{ if(!armed){armed=true; e.target.textContent='한 번 더 누르면 포기합니다'; return;} persist(); openOffice(); };
@@ -3299,9 +3508,10 @@ Object.defineProperty(window,'__JOGONG_SIM__',{value:{
   spendAndGear(){
     autoSkills();
     const best=[...save.inv].filter(it=>WEAPON[it.type].req<=save.level).sort((a,b)=>tierIdx(b.type)-tierIdx(a.type)||b.plus-a.plus)[0]; if(best) save.equip.weapon=best.uid;
-    let g=0; while(g++<40){const it=equipped(); if(it.plus>=MAX_PLUS||save.gold<enhCost(it)*1.5) break; save.gold-=enhCost(it); if(Math.random()<ENH_RATE[it.plus]) it.plus++;}
     for(const sl of GEAR_SLOTS){ const b=bestGear(sl); if(b&&gearBetter(b,gearOn(sl))) save.equip[sl]=b.uid; }
-    let budget=save.gold*.3; g=0; while(g++<40){ const gs=GEAR_SLOTS.map(gearOn).filter(x=>x&&x.plus<MAX_PLUS).sort((a,b)=>gearEnhCost(a)-gearEnhCost(b)); const x=gs[0]; if(!x||budget<gearEnhCost(x)) break; budget-=gearEnhCost(x); save.gold-=gearEnhCost(x); if(Math.random()<ENH_RATE[x.plus]) x.plus++; }
+    // 사람처럼 강화: 무기·안전모·장갑·작업화 중 강화 수치가 가장 낮은 것부터 고르게 (같으면 싼 것부터), 골드가 모자라면 멈춤
+    let g=0; while(g++<400){ const list=[equipped(),...GEAR_SLOTS.map(gearOn)].filter(x=>x&&x.uid!=='_'&&x.plus<MAX_PLUS).sort((a,b)=>a.plus-b.plus||enhCostOf(a)-enhCostOf(b)); const x=list[0];
+      if(!x||save.gold<enhCostOf(x)) break; save.gold-=enhCostOf(x); if(Math.random()<ENH_RATE[x.plus]) x.plus++; }
     for(const x of save.gear.filter(isJunkGear)) save.gold+=gearSell(x); save.gear=save.gear.filter(x=>!isJunkGear(x));
   },
   drawRay, bossDef, save:()=>save, stats:()=>stats(), xpToNext, CFG, XPC, FISH, setXPC(o){Object.assign(XPC,o);}, setCFG(o){Object.assign(CFG,o);},
