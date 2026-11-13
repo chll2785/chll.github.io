@@ -292,6 +292,8 @@ details.dev summary{cursor:pointer}
 @media (prefers-reduced-motion:reduce){.btn{transition:none}}
 </style></head><body>
 
+
+
 <div id="wrap">
   <canvas id="cv" aria-label="게임 화면"></canvas>
   <button id="btnPause" type="button" aria-label="일시정지" hidden><span></span></button>
@@ -619,7 +621,7 @@ const CFG={
   SPIT_CHANCE:[.07,.0016,.16], // 등장 확률: 기본 + 스테이지당, 최대
   SPIT_LATE:[70,.008,.36],    // 70스테이지부터 물총 물고기 비율 스테이지당 +0.8%p (최대 36%) — 후반 몬스터 체력 완화로 제자리 클리어가 쉬워지지 않도록
   SPIT_DMG:.75,               // 물대포 피해 = 몸통 박치기 피해 × 배율
-  SPIT_DMG_LATE:[70,.015],    // 70스테이지부터 물대포 피해 배율 스테이지당 +0.015 (S90 1.05·S100 1.2) — 생존 스킬을 다 찍고 제자리에 서 있어도 후반을 버티지 못하도록
+  SPIT_DMG_LATE:[70,.022],    // 70스테이지부터 물대포 피해 배율 스테이지당 +0.022 (S90 1.19·S100 1.41, 2026-11-13 .015→.022: 생존 스킬 제자리 봇이 S75·S85·S95를 간신히 버티던 것) — 생존 스킬을 다 찍고 제자리에 서 있어도 후반을 버티지 못하도록
   SPIT_CD:[2.6,3.6],          // 발사 간격(초)
   SPIT_RANGE:430,             // 이 거리 안에서 발사, 다가오는 속도 절반
   BOSS_ADD_HP:.35,           // 보스전 잡몹 체력 배율 (잡몹이 보스를 가리는 벽이 되지 않도록)
@@ -629,7 +631,7 @@ const CFG={
   MONSTER_DMG_MUL:2.0,       // 몬스터 접촉 대미지 배율 (1.5 → 2.0)
   BOSS_HP_GROWTH:1.5,        // 보스 1~4등급: 등급마다 체력 ×1.5
   BOSS_HP_GROWTH_LATE:1.7,   // 보스 5~10등급: 등급마다 체력 ×1.7
-  BOSS_HP_TUNE:[.8,1,1.3,1.5,1.6,1.3,1.35,1,1.9,1.25], // (S30 1.15→1.3, S40 1.2→1.35, S70 1.12→1.35: 17~20초 처치 회차 보정 / S90 .8→1.9·S100 1.1→1.25: 생존 스킬을 다 찍고 제자리에 선 봇이 16~21초 만에 잡던 것 보정) // 등급별 보정: 새 무기로 바뀐 직후(S30·S50·S60) 보스가 20초 안에 녹던 것을 보정 (회전 배관 강화 후 S60 1.12→1.3, S70 1→1.12, S40 21~25초 → 1.2)
+  BOSS_HP_TUNE:[.8,1.35,1.75,1.5,1.6,1.3,1.35,1,1.9,1.25], // (S30 1.15→1.3, S40 1.2→1.35, S70 1.12→1.35: 17~20초 처치 회차 보정 / S90 .8→1.9·S100 1.1→1.25: 생존 스킬을 다 찍고 제자리에 선 봇이 16~21초 만에 잡던 것 보정) // 등급별 보정: 새 무기로 바뀐 직후(S30·S50·S60) 보스가 20초 안에 녹던 것을 보정 (회전 배관 강화 후 S60 1.12→1.3, S70 1→1.12, S40 21~25초 → 1.2)
   SPIKE_WARN:.5,             // 가시 발사 예고 시간(초)
   ORBIT_R_BASE:66, ORBIT_R_RANGE:.2, // 회전 배관 반경 = 66 + 공격 범위×0.2 (범위 스킬과 함께 커짐)
   ORBIT_HIT_R:24, ORBIT_HIT_CD:.4, ORBIT_KNOCK:22, // 회전 배관 판정 반경·같은 적 재타격 간격(초)·밀어내기
@@ -666,6 +668,9 @@ const CFG={
   BOSS_MARK:[4,5,62,1.0],   // 해저 붕괴 장판: [등장 등급, 기본 간격(초, 등급마다 -0.15), 반경, 예고 시간(초)]              // 보스 이동 속도 = 54 + 등급×이 값
   BOSS_DMG_ALL:1.6,          // 모든 보스 피해(박치기·돌진·가시·냄새 파동) 공통 배율 (2026-11-13 사용자 요청: 보스가 너무 약함)
   MAGIC_MUL:.75,             // 무기 추가 마법 피해 공통 배율 (2026-11-13 사용자 요청: 마법 피해 너프)
+  FROST_SPREAD:[45,.35],     // 서스 냉각 확산: 맞은 적 주변 반경 45 안의 적에게 냉기 피해 35%·감속 (서스 구간 처치 수가 갈바의 2/3로 떨어져 레벨이 멈추던 것 보정)
+  GOLDFISH:[3,12,30,14,30,1.12], // 황금 물고기: [등장 스테이지, 등장 시각 최소·최대(초), 머무는 시간(초), 체력 배율, 도망 속도 = 플레이어 기본 속도×값]
+  ELITE_AFFIX:{swift:{name:'신속',hp:.8,spd:1.45,col:'#7fe3ff'},armor:{name:'갑각',hp:1.6,spd:.9,col:'#c9cfd4'},split:{name:'분열',hp:1,spd:1,col:'#ff9de0'}}, // 정예 변이 (S8부터)
   GOLD_EARLY:[.6,70,95],      // 골드 추가 배율 [A, 전부 적용하는 마지막 스테이지, 0이 되는 스테이지]: S1~70 ×(1+A), S95까지 서서히 줄어듦 (다음 장비 직전 무기·보호구 평균 +8 목표, 사람처럼 4부위를 고르게 강화하는 기준)
 };
 const stageDuration=s=>40+Math.min(18,Math.floor((s-1)/10)*2);
@@ -676,7 +681,7 @@ function monsterScale(stage){
 }
 
 /* 필요 경험치: 4구간 단계별 함수 (최대 레벨 300, 레벨 ≈ 스테이지 × 3.2 가 되도록 시뮬레이션으로 조정) */
-const XPC={a:14,s1:1.3, s2:5, g3:1.0125, s4:30};
+const XPC={a:14,s1:1.3, s2:5, g3:1.0135, s4:60}; // 2026-11-13: 서스 냉기 확산으로 S70~89 처치 수가 약 2배 → 구간3·4 필요 경험치 상향 (S90 도달 레벨 ~290 유지)
 const XP_SEGMENTS=[
   {from:1,  to:60,  name:'빠른 성장'},
   {from:61, to:150, name:'빌드 구축'},
@@ -817,7 +822,7 @@ const WEAPONS=[
   {id:'glass',  name:'유리 파이프',    req:45, coef:1.35,magicPct:.35, magic:'shard',  mName:'파편 비산', mDesc:p=>`25% 확률로 유리 파편 3개가 튀어 각각 공격력의 ${p}% 마법 피해`, cost:80, color:'#9fe8ff'},
   {id:'plastic',name:'플라스틱 파이프',req:90, coef:1.8, magicPct:.6,  magic:'bounce', mName:'탄성 반동', mDesc:p=>`적중할 때마다 탄성 고무 조각이 근처 적에게 튕겨 공격력의 ${p}% 마법 피해 (연쇄 확장만큼 더 튕김)`, cost:250, color:'#5aa8ff'},
   {id:'galva',  name:'갈바 파이프',    req:150,coef:2.5, magicPct:.45, magic:'chain',  mName:'아연 전류', mDesc:p=>`근처 적 2마리에게 전류가 이어져 공격력의 ${p}% 마법 피해`, cost:600, color:'#e9f27a'},
-  {id:'sus',    name:'서스 파이프',    req:210,coef:3.4, magicPct:.3,  magic:'frost',  mName:'스테인리스 냉각', mDesc:p=>`적중 시 공격력의 ${p}% 추가 마법 피해, 1.5초간 45% 감속`, cost:1500, color:'#bfe9ff'},
+  {id:'sus',    name:'서스 파이프',    req:210,coef:3.4, magicPct:.3,  magic:'frost',  mName:'스테인리스 냉각', mDesc:p=>`적중 시 공격력의 ${p}% 추가 마법 피해, 1.5초간 45% 감속 · 냉기가 주변 적에게 퍼져 그 1/3 정도의 피해와 감속`, cost:1500, color:'#bfe9ff'},
   {id:'tube',   name:'튜브 파이프',    req:270,coef:4.6, magicPct:.6,  magic:'burst',  mName:'수압 폭발', mDesc:p=>`적중 지점 반경 80 폭발, 범위 내 모든 적에게 공격력의 ${p}% 마법 피해`, cost:3500, color:'#5ff0ff'},
 ];
 const WEAPON=Object.fromEntries(WEAPONS.map(w=>[w.id,w]));
@@ -1941,7 +1946,8 @@ function newRun(stage){
   run={dmg:{},boons:{},crates:[],items:[],eshots:[],combo:0,comboT:0,bestCombo:0,throwN:0,boltT:2,freezeT:0,eliteT:CFG.ELITE_FIRST,crateT:2,elitesKilled:0,stage,boss:isBossStage(stage),t:0,duration:isBossStage(stage)?0:stageDuration(stage),
     scale:monsterScale(stage),tier:tierOf(stage),spc:speciesOf(stage),enemies:[],shots:[],fx:[],floaters:[],
     kills:0,goldEarned:0,xpEarned:0,levelsGained:0,weaponsFound:[],gearFound:[],spawnAcc:0,waveT:12,
-    ending:false,endT:0,dead:false,deadT:0,revived:false,bossRef:null,shake:0,banner:null,shadowT:rand(8,20),shadow:null};
+    ending:false,endT:0,dead:false,deadT:0,revived:false,bossRef:null,shake:0,banner:null,shadowT:rand(8,20),shadow:null,
+    goldT:(!isBossStage(stage)&&stage>=CFG.GOLDFISH[0])?rand(CFG.GOLDFISH[1],CFG.GOLDFISH[2]):-1};
 }
 function startStage(n){
   hideAll(); newRun(n); save.stage=n; state='play';
@@ -1972,11 +1978,20 @@ function spawnEnemy(ti,ang){
 function spawnElite(){
   if(run.boss) return;
   const f=FISH[run.spc], a=rand(0,TAU), R=spawnRadius()*.9;
-  const hp=f.hp*run.scale*mobHpMul(run.stage)*CFG.ELITE_HP;
-  run.enemies.push({f,elite:true,x:P.x+Math.cos(a)*R,y:P.y+Math.sin(a)*R,hp,maxHp:hp,r:f.r*1.7,spd:f.spd*.85,
+  // 정예 변이 (S8부터): 신속(빠르고 약함)·갑각(단단하고 밀리지 않음)·분열(죽으면 새끼 무리) — 다른 뱀서류 정예의 무작위 특성에서 착안
+  const ks=Object.keys(CFG.ELITE_AFFIX), afx=run.stage>=8?ks[Math.floor(Math.random()*ks.length)]:null, A=afx?CFG.ELITE_AFFIX[afx]:{hp:1,spd:1};
+  const hp=f.hp*run.scale*mobHpMul(run.stage)*CFG.ELITE_HP*A.hp;
+  run.enemies.push({f,elite:true,afx,x:P.x+Math.cos(a)*R,y:P.y+Math.sin(a)*R,hp,maxHp:hp,r:f.r*1.7,spd:f.spd*.85*A.spd,
     dmg:Math.round(f.dmg*run.scale*CFG.MONSTER_DMG_MUL*1.5),xp:f.xp*15,flash:0,ang:a+Math.PI,wob:0,slowT:0,dotT:0,dotDps:0,orbitCd:0});
   SND.play('elite');
-  toast('정예 몬스터 출현',`정예 ${f.name}을(를) 잡으면 현장 지원 상자가 나옵니다`,'#ffd84a');
+  toast(afx?`정예 몬스터 출현 · ${A.name}`:'정예 몬스터 출현',afx==='split'?`죽으면 새끼 무리로 갈라집니다 · 잡으면 현장 지원 상자`:afx==='armor'?`단단하고 밀리지 않습니다 · 잡으면 현장 지원 상자`:afx==='swift'?`빠르게 덮쳐 옵니다 · 잡으면 현장 지원 상자`:`정예 ${f.name}을(를) 잡으면 현장 지원 상자가 나옵니다`,afx?A.col:'#ffd84a');
+}
+/* 황금 물고기: 공정마다 한 번, 플레이어를 피해 도망다니다 잠시 뒤 사라짐. 잡으면 골드 주머니 — 쫓아가게 만드는 '보물 벌레'류 구조 (제자리 플레이보다 움직이는 쪽이 이득) */
+function spawnGoldfish(){
+  const G=CFG.GOLDFISH, f=FISH[run.spc], a=rand(0,TAU), d=Math.min(V.w,V.h)/2/V.zoom*.75;
+  const hp=f.hp*run.scale*mobHpMul(run.stage)*G[4];
+  run.enemies.push({f,gold:true,x:P.x+Math.cos(a)*d,y:P.y+Math.sin(a)*d,hp,maxHp:hp,r:f.r*1.3,spd:CFG.PLAYER_SPEED*G[5],dmg:0,xp:f.xp*6,flash:0,ang:a,wob:0,slowT:0,dotT:0,dotDps:0,orbitCd:0,life:G[3]});
+  SND.play('coins'); toast('황금 물고기 출현',`${G[3]}초 안에 쫓아가 잡으면 골드 주머니`,'#ffd84a');
 }
 function spawnCrate(){
   if(run.crates.length>=CFG.CRATE_MAX) return;
@@ -2032,7 +2047,7 @@ function gainXp(n){
 function levelShock(){ // 레벨업 충격파: 주변 적을 밀어내고 피해
   if(!SIM.on) run.fx.push({type:'ring',x:P.x,y:P.y,t:0,life:.45,r:170,color:'#ffc21a'});
   for(const e of run.enemies){ if(e.dead) continue; const dx=e.x-P.x, dy=e.y-P.y, d=Math.hypot(dx,dy)||1;
-    if(d<170+e.r){ if(!e.boss){e.x+=dx/d*60; e.y+=dy/d*60;} damage(e,ST.dmg*.6,false,'lvl'); } }
+    if(d<170+e.r){ if(!e.boss&&e.afx!=='armor'){e.x+=dx/d*60; e.y+=dy/d*60;} damage(e,ST.dmg*.6,false,'lvl'); } }
 }
 function addGold(amount,wx,wy,nCoins){
   const st=run?run.stage:1, GE=CFG.GOLD_EARLY, early=1+GE[0]*clamp((GE[2]-st)/Math.max(1,GE[2]-GE[1]),0,1); // 초반·중반 골드 보정
@@ -2092,10 +2107,18 @@ function killEnemy(e){
   const g=e.f.gold, tier=run.tier+1, gt=1+run.tier*CFG.GOLD_TIER_MUL;
   if(e.elite){
     run.elitesKilled++; dropChest(e.x,e.y);
+    if(e.afx==='split'){ const n=6, ti=Math.max(0,run.spc-1); for(let i=0;i<n;i++){ spawnEnemy(ti,0); const m=run.enemies[run.enemies.length-1]; if(m&&!m.elite&&!m.boss){ const a=i/n*TAU; m.x=e.x+Math.cos(a)*(e.r+14); m.y=e.y+Math.sin(a)*(e.r+14); } } if(!SIM.on) run.fx.push({type:'ring',x:e.x,y:e.y,t:0,life:.4,r:e.r+40,color:'#ff9de0'}); }
     addGold(Math.round(20*Math.pow(tier,1.3)*ST.goldMul*ST.bonusGold),e.x,e.y,12);
     if(Math.random()<CFG.ELITE_WEAPON_DROP*ST.dropMul) dropWeapon(e.x,e.y);
     if(Math.random()<CFG.ELITE_GEAR_DROP*ST.dropMul) dropGear(e.x,e.y);
     if(!SIM.on) burst(e.x,e.y,'#ffd84a',18,e.r);
+    return;
+  }
+  if(e.gold){ // 황금 물고기 처치: 골드 + 바닥에 골드 주머니 2개
+    run.goldfish=(run.goldfish||0)+1;
+    addGold(Math.round(30*Math.pow(tier,1.3)*ST.goldMul*ST.bonusGold),e.x,e.y,14);
+    for(let i=0;i<2;i++) run.items.push({x:e.x+rand(-20,20),y:e.y+rand(-20,20),kind:'bag',t:0});
+    if(!SIM.on){ burst(e.x,e.y,'#ffd84a',24,e.r); toast('황금 물고기 포획','골드 주머니를 떨어뜨렸습니다','#ffd84a'); }
     return;
   }
   if(Math.random()<g.p*(1+.1*sk('f1'))) addGold(Math.round((g.a[0]+Math.floor(Math.random()*(g.a[1]-g.a[0]+1)))*gt*(1+.5*(run.boons.gold||0))),e.x,e.y,1);
@@ -2163,7 +2186,10 @@ function onPipeHit(e,s){
     case 'shard': if(Math.random()<.25){const a0=Math.atan2(s.vy,s.vx), k=3+ST.extraTargets; for(let i=0;i<k;i++){const a=a0+(i-(k-1)/2)*.6+rand(-.2,.2); run.shots.push({kind:'shard',x:e.x,y:e.y,vx:Math.cos(a)*420,vy:Math.sin(a)*420,rot:a,dmg:m,pierce:0,bounce:0,life:.35,r:6,hit:new Set([e]),crit:false,trail:[]});}} break;
     case 'bounce': {const nx=nearestK(1,220,e.x,e.y,new Set([e]))[0]; if(nx){const a=Math.atan2(nx.y-e.y,nx.x-e.x); run.shots.push({kind:'bounce',x:e.x,y:e.y,vx:Math.cos(a)*460,vy:Math.sin(a)*460,rot:a,dmg:m,pierce:0,bounce:ST.extraTargets,life:.6,r:8,hit:new Set([e]),crit:false,trail:[]});}} break;
     case 'chain': {const ts=nearestK(2+ST.extraTargets,160,e.x,e.y,new Set([e])); if(ts.length) SND.play('zap'); for(const t of ts){damage(t,m,false,'magic'); if(!SIM.on) run.fx.push({type:'bolt',x1:e.x,y1:e.y,x2:t.x,y2:t.y,t:0,life:.18});}} break;
-    case 'frost': if(!e.dead) {e.slowT=1.5*ST.elemDur;} damage(e,m,false,'magic'); break;
+    case 'frost': { // 냉기 확산: 맞은 적과 주변(반경 FROST_SPREAD) 적 모두 냉기 피해 + 감속
+      if(!e.dead) e.slowT=1.5*ST.elemDur; damage(e,m,false,'magic');
+      for(const t of enemiesNear(e.x,e.y,CFG.FROST_SPREAD[0])){ if(t===e||t.dead) continue; t.slowT=1.5*ST.elemDur; damage(t,m*CFG.FROST_SPREAD[1],false,'magic'); }
+      if(!SIM.on&&run.fx.length<240) run.fx.push({type:'ring',x:e.x,y:e.y,t:0,life:.3,r:CFG.FROST_SPREAD[0],color:'#bfe9ff'}); } break;
     case 'burst': {SND.play('boom'); for(const t of enemiesNear(e.x,e.y,80)) damage(t,m,false,'magic'); if(!SIM.on) run.fx.push({type:'boom',x:e.x,y:e.y,t:0,life:.45});} break;
   }
 }
@@ -2249,6 +2275,7 @@ function update(dt){
   if(!run.ending){
     run.eliteT-=dt; if(run.eliteT<=0){ run.eliteT=CFG.ELITE_EVERY; spawnElite(); }
     run.crateT-=dt; if(run.crateT<=0){ run.crateT=CFG.CRATE_EVERY/ST.crateMul; spawnCrate(); }
+    if(run.goldT>0){ run.goldT-=dt; if(run.goldT<=0){ run.goldT=-1; spawnGoldfish(); } }
   }
   for(const c of run.crates){ c.t+=dt; if((c.x-P.x)**2+(c.y-P.y)**2<(c.r+CFG.PLAYER_R)**2) breakCrate(c); if(Math.hypot(c.x-P.x,c.y-P.y)>spawnRadius()*1.8) c.dead=true; }
   for(const it of run.items){
@@ -2283,6 +2310,11 @@ function update(dt){
     if(e.boss){updateBoss(e,dt*slow); continue;}
     const dx=P.x-e.x, dy=P.y-e.y, d=Math.hypot(dx,dy)||1;
     if(ST.aura>0&&d<130) slow*=1-ST.aura;
+    if(e.gold){ // 황금 물고기: 플레이어 반대쪽으로 지그재그 도망, 시간이 다 되면 사라짐
+      e.life-=dt; e.wob+=dt*8; if(e.life<=0||d>R*1.6){ e.dead=true; if(!SIM.on){ burst(e.x,e.y,'#ffd84a',8,e.r); toast('황금 물고기가 달아났습니다','다음 공정에서 다시 노려 보세요','#c9a64a'); } continue; }
+      const w=Math.sin(e.wob*.6)*.6, ux=-dx/d, uy=-dy/d, sp=e.spd*(slow>0?Math.max(.45,slow):.45)*(d<220?1:.75);
+      const vx=(ux-uy*w)*sp, vy=(uy+ux*w)*sp; e.x+=vx*dt; e.y+=vy*dt; e.ang=Math.atan2(vy,vx);
+      const key=gk(Math.floor(e.x/64),Math.floor(e.y/64)); let c=grid.get(key); if(!c){c=[]; grid.set(key,c);} c.push(e); continue; }
     if(d>R*1.7){const a=Math.atan2(dy,dx)+rand(-.6,.6); e.x=P.x+Math.cos(a)*R; e.y=P.y+Math.sin(a)*R; continue;}
     e.wob+=dt*(e.f.kind==='plankton'?3:8)*slow;
     if(e.spitter){ const sr=Math.max(CFG.SPIT_RANGE,ST.range+110); e.spitT-=dt*(slow>0?1:0); if(d>=sr) e.spitT=Math.max(e.spitT,.6); else slow*=.5; }
@@ -2315,7 +2347,7 @@ function update(dt){
   for(const e of run.enemies){
     if(e.dead) continue;
     const rr2=e.r*(e.boss?.75:.8)+CFG.PLAYER_R;
-    if((e.x-P.x)**2+(e.y-P.y)**2<rr2*rr2){ hurtPlayer(e.boss&&e.mode==='dash'?Math.round(e.dmg*1.5):e.dmg,!!e.boss); if(run.dead) return; }
+    if(!e.gold&&(e.x-P.x)**2+(e.y-P.y)**2<rr2*rr2){ hurtPlayer(e.boss&&e.mode==='dash'?Math.round(e.dmg*1.5):e.dmg,!!e.boss); if(run.dead) return; }
   }
   // 회전 배관
   if(ST.orbit>0){
@@ -2323,7 +2355,7 @@ function update(dt){
     const orR=orbitRadius();
     for(let i=0;i<ST.orbit;i++){const a=P.orbitA+i/ST.orbit*TAU, ox=P.x+Math.cos(a)*orR, oy=P.y+Math.sin(a)*orR;
       for(const e of enemiesNear(ox,oy,CFG.ORBIT_HIT_R)) if(e.orbitCd<=0){e.orbitCd=CFG.ORBIT_HIT_CD; damage(e,ST.dmg*ST.orbitMul,false,'orbit'); SND.play('orbit');
-        if(!e.dead&&!e.boss){const kx=e.x-P.x, ky=e.y-P.y, kd=Math.hypot(kx,ky)||1, kn=e.elite?CFG.ORBIT_KNOCK*.4:CFG.ORBIT_KNOCK; e.x+=kx/kd*kn; e.y+=ky/kd*kn;}
+        if(!e.dead&&!e.boss){const kx=e.x-P.x, ky=e.y-P.y, kd=Math.hypot(kx,ky)||1, kn=e.afx==='armor'?0:e.elite?CFG.ORBIT_KNOCK*.4:CFG.ORBIT_KNOCK; e.x+=kx/kd*kn; e.y+=ky/kd*kn;}
         if(!SIM.on&&run.fx.length<260) run.fx.push({type:'spark',x:e.x,y:e.y,t:0,life:.22,a:a+Math.PI/2});}
       for(const c of run.crates) if((c.x-ox)**2+(c.y-oy)**2<(c.r+12)**2) breakCrate(c);}
   }
@@ -2477,16 +2509,24 @@ function drawFishEnemy(e){
   ctx.save(); ctx.translate(e.x,e.y);
   if(e.spitter){ const ch=e.spitT<.45?1-e.spitT/.45:0; ctx.strokeStyle=`rgba(90,220,255,${.35+.5*ch})`; ctx.lineWidth=1.6+ch*2; ctx.setLineDash([4,4]); ctx.beginPath(); ctx.arc(0,0,e.r*1.25+ch*4,0,TAU); ctx.stroke(); ctx.setLineDash([]);
     if(ch>0){ ctx.fillStyle=`rgba(140,235,255,${.35*ch})`; ctx.beginPath(); ctx.arc(0,0,e.r*1.1,0,TAU); ctx.fill(); } } // 물총 물고기: 하늘색 점선 고리, 발사 직전 밝아짐
+  if(e.gold){ const p=.6+.4*Math.sin(e.wob*1.5), g=ctx.createRadialGradient(0,0,e.r*.2,0,0,e.r*2); g.addColorStop(0,`rgba(255,220,90,${.55*p})`); g.addColorStop(1,'rgba(255,220,90,0)'); ctx.fillStyle=g; ctx.beginPath(); ctx.arc(0,0,e.r*2,0,TAU); ctx.fill();
+    ctx.strokeStyle='rgba(255,216,74,.85)'; ctx.lineWidth=2.5; ctx.beginPath(); ctx.arc(0,0,e.r*1.45,-Math.PI/2,-Math.PI/2+TAU*clamp(e.life/CFG.GOLDFISH[3],0,1)); ctx.stroke(); } // 남은 시간 고리
   if(e.elite){ const g=ctx.createRadialGradient(0,0,e.r*.3,0,0,e.r*1.6); g.addColorStop(0,'rgba(255,214,74,.35)'); g.addColorStop(1,'rgba(255,214,74,0)'); ctx.fillStyle=g; ctx.beginPath(); ctx.arc(0,0,e.r*1.6,0,TAU); ctx.fill(); }
   ctx.rotate(e.ang); if(Math.cos(e.ang)<0) ctx.scale(1,-1);
   const sc=e.r/e.f.r; if(sc!==1) ctx.scale(sc,sc);
   ctx.drawImage(img,-S.w/2/SPR,-S.h/2/SPR,S.w/SPR,S.h/SPR);
+  if(e.gold&&e.flash<=0){ ctx.globalAlpha=.6; ctx.drawImage(goldTint(S,fr),-S.w/2/SPR,-S.h/2/SPR,S.w/SPR,S.h/SPR); ctx.globalAlpha=1; } // 금색 덧칠 (물고기 모양에만)
   ctx.restore();
+  if(e.afx){ const A=CFG.ELITE_AFFIX[e.afx]; ctx.font=`700 11px ${FB}`; ctx.textAlign='center'; ctx.lineWidth=3; ctx.strokeStyle='rgba(0,0,0,.7)'; const ty=e.y-e.r-34; ctx.strokeText(A.name,e.x,ty); ctx.fillStyle=A.col; ctx.fillText(A.name,e.x,ty);
+    if(e.afx==='armor'){ ctx.strokeStyle='rgba(201,207,212,.7)'; ctx.lineWidth=3; ctx.beginPath(); ctx.arc(e.x,e.y,e.r*1.15,0,TAU); ctx.stroke(); } }
   if(e.elite){ ctx.fillStyle='#ffd84a'; ctx.beginPath(); const cy=e.y-e.r-22; ctx.moveTo(e.x-9,cy+6); ctx.lineTo(e.x-9,cy-2); ctx.lineTo(e.x-4,cy+2); ctx.lineTo(e.x,cy-5); ctx.lineTo(e.x+4,cy+2); ctx.lineTo(e.x+9,cy-2); ctx.lineTo(e.x+9,cy+6); ctx.fill(); }
   if(run.freezeT>0){ ctx.fillStyle='rgba(170,230,255,.35)'; ctx.beginPath(); ctx.arc(e.x,e.y,e.r*1.05,0,TAU); ctx.fill(); }
   if(e.slowT>0){ctx.fillStyle='rgba(150,220,255,.28)'; ctx.beginPath(); ctx.arc(e.x,e.y,e.r*1.1,0,TAU); ctx.fill();}
   if(e.dotT>0&&Math.random()<.15) run.fx.push({type:'bub',x:e.x+rand(-e.r,e.r),y:e.y,vx:0,vy:-20,r:1.5,t:0,life:.5,color:'#b5683a'});
 }
+/* 황금 물고기 색: 물고기 그림 위에 금색을 덧칠한 프레임 (어종별로 한 번만 만듦) */
+const goldCache=new Map();
+function goldTint(S,fr){ let a=goldCache.get(S); if(!a){ a=S.normal.map(cv=>{ const c2=document.createElement('canvas'); c2.width=cv.width; c2.height=cv.height; const x=c2.getContext('2d'); x.drawImage(cv,0,0); x.globalCompositeOperation='source-atop'; const g=x.createLinearGradient(0,0,0,cv.height); g.addColorStop(0,'#fff2a8'); g.addColorStop(.5,'#ffc828'); g.addColorStop(1,'#b8860b'); x.fillStyle=g; x.fillRect(0,0,cv.width,cv.height); return c2; }); goldCache.set(S,a); } return a[fr]; }
 function drawCrate(c){
   ctx.save(); ctx.translate(c.x,c.y); ctx.rotate(c.rot);
   ctx.fillStyle='rgba(0,0,0,.35)'; ctx.fillRect(-15,-9,34,26);
@@ -2582,6 +2622,7 @@ function drawOffscreen(time){ // 화면 밖 보스·정예·지원 상자 방향
   const b=run.bossRef; if(b&&!b.dead) list.push({x:b.x,y:b.y,c:'#ff5d6c',lb:'보스',big:1});
   for(const e of run.enemies) if(e.elite&&!e.dead) list.push({x:e.x,y:e.y,c:'#ffd84a',lb:'정예'});
   for(const it of run.items) if(it.kind==='chest') list.push({x:it.x,y:it.y,c:'#ffc21a',lb:'지원'});
+  for(const e of run.enemies) if(e.gold&&!e.dead) list.push({x:e.x,y:e.y,c:'#ffe066',lb:'황금'});
   if(!list.length) return;
   const narrow=V.w<640, top=narrow?(b&&!b.dead?168:118):(b&&!b.dead?92:84), m=22, cx=V.w/2, cy=V.h/2;
   ctx.setTransform(V.dpr,0,0,V.dpr,0,0); ctx.textAlign='center'; ctx.textBaseline='middle';
@@ -3346,7 +3387,7 @@ function showClear(cleared,promos,last){
     <h2>${last?'준공 완료. 모든 공정을 마쳤습니다':`STAGE ${cleared} 공정 완료`}</h2>
     <div class="report"><div><small>작업 시간</small><b>${fmtTime(run.t)}</b></div><div><small>처치 수</small><b>${fmt(run.kills)}</b></div>
       <div><small>골드</small><b>+${fmt(run.goldEarned)}</b></div><div><small>레벨</small><b>Lv ${save.level}${run.levelsGained?` <span style="font-size:13px;color:var(--ok)">+${run.levelsGained}</span>`:''}</b></div></div>
-    <p style="font-size:13px">최고 콤보 ${run.bestCombo}${run.frenzies?` · 몰아치기 ${run.frenzies}회`:''} · 정예 처치 ${run.elitesKilled}${Object.keys(run.boons).length?` · 받은 현장 지원 ${Object.values(run.boons).reduce((a,b)=>a+b,0)}개`:''}</p>
+    <p style="font-size:13px">최고 콤보 ${run.bestCombo}${run.frenzies?` · 몰아치기 ${run.frenzies}회`:''}${run.goldfish?` · 황금 물고기 ${run.goldfish}마리`:''} · 정예 처치 ${run.elitesKilled}${Object.keys(run.boons).length?` · 받은 현장 지원 ${Object.values(run.boons).reduce((a,b)=>a+b,0)}개`:''}</p>
     ${dmgReport()}
     ${promo}${found}
     ${run.levelsGained?`<div class="note">스킬 포인트 ${run.levelsGained}개를 얻었습니다. 현장 사무소의 스킬 트리에서 사용하세요. (보유 ${save.sp})</div>`:''}
@@ -3501,7 +3542,7 @@ Object.defineProperty(window,'__JOGONG_SIM__',{value:{
     SIM.on=true; SIM.bot=true; SIM.result=null; startStage(stage); hideAll();
     const dt=1/30; let n=0; const lim=(maxSec||200)*30;
     while(!SIM.result&&n++<lim) update(dt);
-    const r=SIM.result||{cleared:false,timeout:true,stage,level:save.level}; r.elites=run.elitesKilled; r.combo=run.bestCombo; r.frenzies=run.frenzies||0; r.goldRun=run.goldEarned;
+    const r=SIM.result||{cleared:false,timeout:true,stage,level:save.level}; r.elites=run.elitesKilled; r.combo=run.bestCombo; r.frenzies=run.frenzies||0; r.goldfish=run.goldfish||0; r.goldRun=run.goldEarned;
     r.src=Object.fromEntries(Object.entries(run.dmg).map(([k,v])=>[k,Math.round(v)])); r.lvAfter=save.level; r.gold=save.gold; r.sp=save.sp; r.spent=SKILLS.reduce((a,x)=>a+sk(x.id),0); r.weapon=equipped().type+'+'+equipped().plus; r.hp=P?Math.round(P.hp):0; r.maxHp=stats().maxHp;
     return r;
   },
