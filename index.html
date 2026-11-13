@@ -352,6 +352,7 @@ details.dev summary{cursor:pointer}
         <button type="button" role="tab" data-tab="skills" aria-selected="true"><span class="long">스킬 트리</span><span class="short">스킬</span><span class="badge" id="spBadge" hidden></span></button>
         <button type="button" role="tab" data-tab="inv" aria-selected="false"><span class="long">인벤토리 · 장비</span><span class="short">장비</span></button>
         <button type="button" role="tab" data-tab="enh" aria-selected="false"><span class="long">장비 강화</span><span class="short">강화</span></button>
+        <button type="button" role="tab" data-tab="invest" aria-selected="false"><span class="long">본사 투자</span><span class="short">투자</span></button>
         <button type="button" role="tab" data-tab="rank" aria-selected="false"><span class="long">직급 · 복장</span><span class="short">직급</span></button>
         <button type="button" role="tab" data-tab="code" aria-selected="false"><span class="long">세이브 코드</span><span class="short">코드</span></button>
       </div>
@@ -673,6 +674,7 @@ const CFG={
   SPIT_EARLY:[11,21,.55],    // 물총 물고기가 처음 나오는 구간(S11~20) 물대포 피해를 0.55배에서 1배까지 서서히 (폐 파이프로 버티던 S11~14 최저 체력 5~17%·사망이 몰리던 것)
   SUBSIDE:[25,5,2.4,58,.9,.15,.05,70], // 지반 침하: [시작 스테이지, 한자리에 머문 시간(초), 간격(초), 반경, 예고(초), 첫 피해(최대 체력 비율), 연속될 때마다 추가, 이 거리 안이면 '제자리'] — 일반 공정에서 오래 서 있으면 발밑이 무너짐
   SPLIT_FROM:15,             // 정예 변이 '분열'은 15스테이지부터 (S8~14 초반에 새끼 무리가 너무 위협적이던 것)
+  XP_OVER_GOLD:1,            // 최대 레벨(300) 이후 얻는 경험치 1당 골드 (골드 배율 적용 전) — 만렙 뒤에도 처치가 보상으로 이어지게
   GOLD_EARLY:[.6,70,95],      // 골드 추가 배율 [A, 전부 적용하는 마지막 스테이지, 0이 되는 스테이지]: S1~70 ×(1+A), S95까지 서서히 줄어듦 (다음 장비 직전 무기·보호구 평균 +8 목표, 사람처럼 4부위를 고르게 강화하는 기준)
 };
 const stageDuration=s=>40+Math.min(18,Math.floor((s-1)/10)*2);
@@ -737,7 +739,7 @@ function bossDef(k){
   const st=k*10, sc=monsterScale(st);
   return {name:BOSS_NAMES[k-1],k,color:BOSS_COLORS[k-1],r:46+k*6,
     hp:Math.round(520*(k<=4?Math.pow(CFG.BOSS_HP_GROWTH,k-1):Math.pow(CFG.BOSS_HP_GROWTH,3)*Math.pow(CFG.BOSS_HP_GROWTH_LATE,k-4))*sc*CFG.BOSS_HP_MUL*(CFG.BOSS_HP_TUNE[k-1]||1)),
-    dmg:Math.round(14*sc*(CFG.BOSS_DMG_TUNE[k-1]||1)*CFG.BOSS_DMG_ALL), spd:54+k*CFG.BOSS_SPD_K, gold:Math.round((500*k+150*k*k)*CFG.BOSS_GOLD_MUL), xp:Math.round(xpToNext(Math.round(st*CFG.EXPECTED_LV_PER_STAGE))*1.2)};
+    dmg:Math.round(14*sc*(CFG.BOSS_DMG_TUNE[k-1]||1)*CFG.BOSS_DMG_ALL), spd:54+k*CFG.BOSS_SPD_K, gold:Math.round((500*k+150*k*k)*CFG.BOSS_GOLD_MUL), xp:Math.round(xpToNext(Math.min(CFG.MAX_LEVEL-1,Math.round(st*CFG.EXPECTED_LV_PER_STAGE)))*1.2)}; // S100 기대 레벨 320 → 299로 제한 (최대 레벨의 필요 경험치는 무한대라 경험치가 Infinity가 되던 것)
 }
 
 /* =====================================================================
@@ -815,6 +817,17 @@ const SKILLS=[
   {id:'f5',br:'frt',d:3,off:.2,   name:'성과급',      max:10,req:['f3',5],  eff:l=>`보스·정예 골드 +${l*10}%`},
 ];
 const SKILL=Object.fromEntries(SKILLS.map(s=>[s.id,s]));
+/* 본사 투자: 강화를 다 끝내고 남는 후반 골드의 쓸모 — 골드로 사는 영구 강화 (뱀서류의 골드 상점·축복처럼 런 밖에서 쌓이는 성장).
+   비용이 단계마다 1.6배로 올라 중반에는 장비 강화가 먼저, 후반 남는 골드가 여기로 흘러가도록 함. 레벨·스킬·강화 규칙과는 별개 */
+const INVEST=[
+  {id:'atk',  name:'현장 장비 지원', max:10, base:20000, eff:l=>`공격력 +${l*2}%`},
+  {id:'hp',   name:'안전 교육',       max:10, base:16000, eff:l=>`최대 체력 +${l*2}%`},
+  {id:'gold', name:'협력업체 단가',   max:10, base:12000, eff:l=>`골드 획득 +${l*3}%`},
+  {id:'reroll',name:'지원 상자 재심사',max:2, base:60000, eff:l=>`현장 지원 '다시 뽑기' 공정마다 +${l}회`},
+];
+const INV_GROWTH=1.6;
+const invLv=id=>(save.invest&&save.invest[id])||0;
+const investCost=d=>Math.round(d.base*Math.pow(INV_GROWTH,invLv(d.id))/100)*100;
 
 /* =====================================================================
    5. 무기 — 레벨 제한, 공격력 계수, 추가 마법 공격
@@ -943,7 +956,7 @@ const PICKUPS=[
    6. 세이브 데이터 / 계정 / 저장소
    ===================================================================== */
 const freshSave=()=>({v:3,stage:1,maxCleared:0,level:1,xp:0,gold:0,rank:0,sp:0,skills:{},
-  inv:[{uid:'w1',type:'scrap',plus:0}],equip:{weapon:'w1',helmet:'g1',gloves:'g2',shoes:'g3'},nextUid:2,gear:starterGear(),nextGid:4,totalKills:0,bossKills:0});
+  inv:[{uid:'w1',type:'scrap',plus:0}],equip:{weapon:'w1',helmet:'g1',gloves:'g2',shoes:'g3'},nextUid:2,gear:starterGear(),nextGid:4,totalKills:0,bossKills:0,invest:{},bossBest:{}});
 let save=freshSave();
 let session=null;      // {id, key, salt, hash}
 let guest=false, testMode=false;
@@ -1069,6 +1082,9 @@ function normalizeSave(s){
   if(!s||!s.v||s.v<3){ // v2(최대 레벨 100) → v3(최대 레벨 300): 레벨을 3배로 옮기고 스킬은 포인트로 돌려줌
     d.v=3; d.level=clamp(Math.round((d.level||1)*3)-2,1,CFG.MAX_LEVEL); d.xp=0; d.skills={}; d.sp=d.level-1;
   }
+  if(!d.invest||typeof d.invest!=='object') d.invest={};
+  for(const k in d.invest){ const I=INVEST.find(x=>x.id===k); if(!I) delete d.invest[k]; else d.invest[k]=clamp(d.invest[k]|0,0,I.max); }
+  if(!d.bossBest||typeof d.bossBest!=='object') d.bossBest={};
   for(const k in d.skills) if(!SKILL[k]){ d.sp+=d.skills[k]; delete d.skills[k]; }
   for(const k in d.skills) if(d.skills[k]>SKILL[k].max){ d.sp+=d.skills[k]-SKILL[k].max; d.skills[k]=SKILL[k].max; }
   return d;
@@ -1116,7 +1132,7 @@ function stats(){
   const B=(typeof run!=='undefined'&&run&&run.boons)||{}, bn=k=>B[k]||0;
   const base=CFG.BASE_DMG*(1+CFG.DMG_PER_LEVEL*(lv-1))*(1+rb.dmg);
   const postB=(typeof run!=='undefined'&&run&&run.postBuff>0)?1+CFG.OUTPOST[6]:1; // 작업 거점 확보 버프
-  const dmg=base*wCoef(w)*(1+.03*sk('a1'))*(1+.2*bn('dmg'))*postB, GB=gearBonus();
+  const dmg=base*wCoef(w)*(1+.03*sk('a1'))*(1+.2*bn('dmg'))*postB*(1+.02*invLv('atk')), GB=gearBonus();
   return {
     weapon:w, wdef:wd, dmg,
     magicDmg:dmg*wMagic(w)*(1+.05*sk('g1'))*(1+.4*bn('magic')),
@@ -1128,7 +1144,7 @@ function stats(){
     orbit:sk('r3')+bn('orbit'), orbitMul:1.0*(1+.15*sk('r4')), orbitSpd:3.2*(1+.06*sk('r4')),
     knock:5+4*sk('r5'),
     elemDur:1+.1*sk('g2'), extraTargets:sk('g3'), shock:sk('g4'), bolt:sk('g5'),
-    maxHp:Math.round((CFG.BASE_HP+CFG.HP_PER_LEVEL*(lv-1)+rb.hp)*(1+.03*sk('s1'))*(1+.15*bn('heal'))*(1+GB.hp)),
+    maxHp:Math.round((CFG.BASE_HP+CFG.HP_PER_LEVEL*(lv-1)+rb.hp)*(1+.03*sk('s1'))*(1+.15*bn('heal'))*(1+GB.hp)*(1+.02*invLv('hp'))),
     regen:.001*sk('s2'), armor:Math.min(.6,.02*sk('s3')+GB.armor), revive:sk('s4'), lifeOnKill:.001*sk('s5'), shield:sk('s6'),
     speed:CFG.PLAYER_SPEED*(1+.025*sk('m1'))*(1+.15*bn('speed'))*(1+GB.speed), iframe:CFG.IFRAME+.05*sk('m2'),
     dodge:.02*sk('m3')+GB.dodge, aura:.03*sk('m4'),
@@ -2087,7 +2103,8 @@ function toast(text,sub,color,icon,big){ if(SIM.on) return; big=!!(big||icon); t
   const same=toasts.filter(t=>t.big===big); if(same.length>(big?1:2)) toasts.splice(toasts.indexOf(same[0]),1); }
 
 function gainXp(n){
-  if(save.level>=CFG.MAX_LEVEL){save.xp=0; return;}
+  if(!isFinite(n)||n<0) return;
+  if(save.level>=CFG.MAX_LEVEL){save.xp=0; run.xpOver=(run.xpOver||0)+n; return;} // 만렙 이후 경험치는 공정이 끝날 때 골드로 환산
   save.xp+=n; run.xpEarned+=n;
   let need=xpToNext(save.level);
   while(save.xp>=need&&save.level<CFG.MAX_LEVEL){
@@ -2107,7 +2124,7 @@ function levelShock(){ // 레벨업 충격파: 주변 적을 밀어내고 피해
 }
 function addGold(amount,wx,wy,nCoins){
   const st=run?run.stage:1, GE=CFG.GOLD_EARLY, early=1+GE[0]*clamp((GE[2]-st)/Math.max(1,GE[2]-GE[1]),0,1); // 초반·중반 골드 보정
-  amount=Math.round(amount*CFG.GOLD_MUL*early);
+  amount=Math.round(amount*CFG.GOLD_MUL*early*(1+.03*invLv('gold'))); // 본사 투자 '협력업체 단가'는 모든 골드에 적용
   save.gold+=amount; run.goldEarned+=amount;
   if(SIM.on) return;
   SND.play((nCoins||1)>=10?'coins':'coin');
@@ -2249,8 +2266,12 @@ function onPipeHit(e,s){
     case 'burst': {SND.play('boom'); for(const t of enemiesNear(e.x,e.y,80)) damage(t,m,false,'magic'); if(!SIM.on) run.fx.push({type:'boom',x:e.x,y:e.y,t:0,life:.45});} break;
   }
 }
-function hurtPlayer(dmg,fromBoss){
-  if(P.inv>0||run.ending||run.dead) return;
+function hurtPlayer(dmg,fromBoss,ground){ // ground: 지반 침하 — 발밑이 무너지는 것이라 피격 무적·회피·보호막으로 막지 못함 (제자리에서 다른 몹에게 계속 맞아 무적이 이어지면 침하가 전부 무시되던 것)
+  if(run.ending||run.dead) return;
+  if(ground){ dmg=Math.max(1,Math.round(dmg*(1-ST.armor))); P.hp-=dmg; P.inv=Math.max(P.inv,ST.iframe); SND.play('hurt'); run.dmgTaken=(run.dmgTaken||0)+dmg; run.minHp=Math.min(run.minHp??1,P.hp/ST.maxHp);
+    floater(P.x+rand(-10,10),P.y-34,`-${dmg}`,'#ff7a5a',15); run.shake=reduceMotion?0:6; }
+  else{
+  if(P.inv>0) return;
   if(ST.dodge>0&&Math.random()<ST.dodge){ P.inv=.25; SND.play('dodge'); floater(P.x,P.y-40,'회피','#ffd24d',15); return; }
   if(P.shield){ P.shield=false; SND.play('shield'); P.shieldT=14-1.5*ST.shield; P.inv=.4; floater(P.x,P.y-40,fromBoss?'보호막 관통':'보호막','#9fe8ff',15); if(!SIM.on) run.fx.push({type:'ring',x:P.x,y:P.y,t:0,life:.3,r:40,color:'#9fe8ff'});
     if(!fromBoss) return; dmg*=CFG.BOSS_SHIELD_PIERCE; } // 보스의 강한 공격은 보호막을 깨고 일부 피해가 들어옴
@@ -2258,6 +2279,7 @@ function hurtPlayer(dmg,fromBoss){
   P.hp-=dmg; P.inv=ST.iframe; SND.play('hurt'); run.dmgTaken=(run.dmgTaken||0)+dmg; run.minHp=Math.min(run.minHp??1,P.hp/ST.maxHp);
   floater(P.x+rand(-10,10),P.y-34,`-${dmg}`,'#ff7a5a',15);
   run.shake=reduceMotion?0:6;
+  }
   if(P.hp<=0){
     if(ST.revive>0&&!run.revived){run.revived=true; SND.play('revive'); P.hp=ST.maxHp*(.2+.1*ST.revive); P.inv=2; floater(P.x,P.y-50,'불굴의 의지!','#5fd39a',22); if(!SIM.on) burst(P.x,P.y,'#5fd39a',24,16); return;}
     P.hp=0; run.dead=true; run.deadT=1; SND.play('die'); SND.mood('calm'); if(!SIM.on) burst(P.x,P.y,'#ffc21a',20,14);
@@ -2495,7 +2517,7 @@ function updateFx(dt){
     f.t+=dt;
     if(f.type==='bub'){f.x+=f.vx*dt; f.y+=f.vy*dt; f.vx*=.92; f.vy=f.vy*.92-30*dt;}
     else if(f.type==='breath'){f.y-=40*dt; f.x+=Math.sin(f.t*6)*10*dt;}
-    else if(f.type==='mark'){ if(!f.done&&f.t>=f.warn){ f.done=true; if(!run.ending&&(P.x-f.x)**2+(P.y-f.y)**2<(f.r+CFG.PLAYER_R*.6)**2) hurtPlayer(f.dmg,true); if(!SIM.on){ SND.play('boom'); run.fx.push({type:'ring',x:f.x,y:f.y,t:0,life:.3,r:f.r+10,color:'#ff6a4d'}); } } }
+    else if(f.type==='mark'){ if(!f.done&&f.t>=f.warn){ f.done=true; if(!run.ending&&(P.x-f.x)**2+(P.y-f.y)**2<(f.r+CFG.PLAYER_R*.6)**2) hurtPlayer(f.dmg,true,!!f.sub); if(!SIM.on){ SND.play('boom'); run.fx.push({type:'ring',x:f.x,y:f.y,t:0,life:.3,r:f.r+10,color:'#ff6a4d'}); } } }
     else if(f.type==='stink'){
       f.r+=240*dt;
       if(!f.hit&&!run.ending&&f.r>0){const d=Math.hypot(P.x-f.x,P.y-f.y); if(Math.abs(d-f.r)<16){f.hit=true; hurtPlayer(f.dmg,true);}}
@@ -2724,7 +2746,7 @@ function drawHUD(time){
   ctx.fillStyle='#f0612d'; rrect(14,52,bw*clamp(P.hp/ST.maxHp,0,1),16,3); ctx.fill();
   ctx.fillStyle='#fff'; ctx.font=`700 11px ${FB}`; ctx.fillText(`${Math.ceil(P.hp)} / ${ST.maxHp}`,20,60.5);
   ctx.fillStyle='rgba(233,242,247,.7)'; ctx.font=`500 12px ${FB}`;
-  ctx.fillText(`처치 ${fmt(run.kills)} · XP ${save.level>=CFG.MAX_LEVEL?'MAX':fmt(save.xp)+'/'+fmt(need)}`,14,82);
+  ctx.fillText(`처치 ${fmt(run.kills)} · XP ${save.level>=CFG.MAX_LEVEL?`MAX → 골드 ${fmt((run.xpOver||0)*CFG.XP_OVER_GOLD*CFG.GOLD_MUL)}`:fmt(save.xp)+'/'+fmt(need)}`,14,82);
   const gtxt=fmt(displayGold);
   ctx.font=`${22+goldPulse*14}px ${FD}`; ctx.textAlign='right';
   const gw=ctx.measureText(gtxt).width;
@@ -3062,6 +3084,7 @@ function renderTab(){
   else if(tab==='inv') renderInv(body);
   else if(tab==='enh') renderEnh(body);
   else if(tab==='code') renderCode(body);
+  else if(tab==='invest') renderInvest(body);
   else renderRanks(body);
 }
 
@@ -3329,6 +3352,19 @@ function renderGearEnh(body,it){
   };
 }
 
+/* 본사 투자 (골드로 사는 영구 강화) */
+function buyInvest(id){ const d=INVEST.find(x=>x.id===id); if(!d||invLv(id)>=d.max) return false; const c=investCost(d); if(save.gold<c) return false;
+  save.gold-=c; save.invest=save.invest||{}; save.invest[id]=invLv(id)+1; return true; }
+function renderInvest(body){
+  const rows=INVEST.map(d=>{ const lv=invLv(d.id), max=lv>=d.max, c=max?0:investCost(d), can=!max&&save.gold>=c;
+    return `<div class="skrow${max?' maxed':''}" style="--c:#ffc21a"><div class="skinfo"><div class="sktop"><b>${d.name}</b><span class="sklv">Lv ${lv} / ${d.max}</span></div>${pips(lv,d.max)}
+      <div class="skeff">${max?`${d.eff(lv)} · 최대`:lv?`${d.eff(lv)} → <span>${d.eff(lv+1)}</span>`:`투자하면 <span>${d.eff(1)}</span>`}</div></div>
+      <div class="skbtns"><button class="btn small" type="button" data-inv="${d.id}" ${can?'':'disabled'} style="min-width:96px">${max?'완료':fmt(c)+' G'}</button></div></div>`; }).join('');
+  body.innerHTML=`<div class="note" style="margin-bottom:12px">장비 강화를 마치고 남는 골드로 사는 <b style="color:var(--ink)">영구 강화</b>입니다. 단계마다 비용이 ${INV_GROWTH}배로 오르니, 중반에는 장비 강화를 먼저 하는 편이 좋습니다. 최대 레벨(300)에 닿으면 이후 얻는 경험치는 공정이 끝날 때 골드로 바뀝니다.</div>
+    <div class="list">${rows}</div><p style="font-size:12px;margin-top:10px">보유 골드 ${fmt(save.gold)} G</p>`;
+  body.querySelectorAll('[data-inv]').forEach(b=>b.onclick=()=>{ if(buyInvest(b.dataset.inv)){ SND.play('enhOk'); persist(); refreshOffice(); renderInvest(body); toastOffice(`${INVEST.find(x=>x.id===b.dataset.inv).name} Lv ${invLv(b.dataset.inv)} 투자 완료`); } });
+}
+
 /* 세이브 코드 (기기·사이트 간 진행 옮기기) */
 function renderCode(body){
   const code=exportCode();
@@ -3394,7 +3430,7 @@ function rollBoons(exclude){
 function openBoon(){
   const opts=rollBoons();
   if(SIM.on){ applyBoon(opts[0].id); return; }
-  if(run.rerolls==null) run.rerolls=run.boss?2:1;
+  if(run.rerolls==null) run.rerolls=(run.boss?2:1)+invLv('reroll');
   SND.duck(true);
   state='boon'; keys.clear(); joy.id=null;
   renderBoon(opts);
@@ -3419,6 +3455,8 @@ function applyBoon(id){
 function stageCleared(){
   state='clear';
   const cleared=run.stage;
+  convertXpOver();
+  if(run.boss){ const k=String(cleared), pb=save.bossBest[k]; run.bossRec={t:run.t,prev:pb??null,best:pb==null||run.t<pb}; if(run.bossRec.best&&!testMode) save.bossBest[k]=Math.round(run.t*10)/10; } // 보스 처치 최고 기록 (다시 도전할 이유)
   save.maxCleared=Math.max(save.maxCleared,cleared);
   const promos=checkPromotion(), last=cleared>=CFG.MAX_STAGE;
   save.stage=last?CFG.MAX_STAGE:cleared+1;
@@ -3453,6 +3491,8 @@ function showClear(cleared,promos,last){
     <div class="report"><div><small>작업 시간</small><b>${fmtTime(run.t)}</b></div><div><small>처치 수</small><b>${fmt(run.kills)}</b></div>
       <div><small>골드</small><b>+${fmt(run.goldEarned)}</b></div><div><small>레벨</small><b>Lv ${save.level}${run.levelsGained?` <span style="font-size:13px;color:var(--ok)">+${run.levelsGained}</span>`:''}</b></div></div>
     <p style="font-size:13px">최고 콤보 ${run.bestCombo}${run.frenzies?` · 몰아치기 ${run.frenzies}회`:''}${run.goldfish?` · 황금 물고기 ${run.goldfish}마리`:''}${run.posts?` · 작업 거점 확보 ${run.posts}`:''}${run.subs?` · 지반 침하 ${run.subs}회`:''} · 정예 처치 ${run.elitesKilled}${Object.keys(run.boons).length?` · 받은 현장 지원 ${Object.values(run.boons).reduce((a,b)=>a+b,0)}개`:''}</p>
+    ${run.bossRec?`<div class="note" style="${run.bossRec.best?'border-color:var(--hazard);color:var(--ink)':''}">보스 처치 시간 <b>${fmtTime(run.bossRec.t)}</b>${run.bossRec.best?(run.bossRec.prev!=null?` · <b style="color:var(--hazard)">최고 기록 갱신!</b> (이전 ${fmtTime(run.bossRec.prev)})`:' · 첫 기록'):` · 최고 기록 ${fmtTime(run.bossRec.prev)}`}</div>`:''}
+    ${run.xpGold?`<div class="note">최대 레벨 이후 얻은 경험치 ${fmt(run.xpOver)} → <b style="color:#ffd84a">+${fmt(run.xpGold)} G</b> (사무소 '본사 투자'에서 쓸 수 있습니다)</div>`:''}
     ${dmgReport()}
     ${promo}${found}
     ${run.levelsGained?`<div class="note">스킬 포인트 ${run.levelsGained}개를 얻었습니다. 현장 사무소의 스킬 트리에서 사용하세요. (보유 ${save.sp})</div>`:''}
@@ -3469,14 +3509,19 @@ function showClear(cleared,promos,last){
   const qs=$('#btnQuickSp'); if(qs) qs.onclick=()=>{ const n=autoSpend(); qs.disabled=true; qs.textContent=n?`스킬 ${n}개 배분 완료`:'배울 스킬 없음'; };
   const qw=$('#btnQuickW'); if(qw) qw.onclick=()=>{ const b=betterWeapon(); if(b){ save.equip.weapon=b.uid; SND.play('weapon'); persist(); } qw.disabled=true; qw.textContent='장착 완료'; };
 }
+function convertXpOver(){ // 만렙 이후 쌓인 경험치 → 골드 (공정 종료·사고 모두)
+  if(!run||!(run.xpOver>0)||run.xpGold) return;
+  const before=save.gold; addGold(run.xpOver*CFG.XP_OVER_GOLD,P.x,P.y,1); run.xpGold=save.gold-before;
+}
 function showDead(){
-  state='dead'; persist();
+  state='dead'; convertXpOver(); persist();
   if(SIM.on){ SIM.result={cleared:false,stage:run.stage,t:run.t,kills:run.kills,xp:run.xpEarned,level:save.level,dmgTaken:Math.round(run.dmgTaken||0),minHp:0}; return; }
   $('#btnPause').hidden=true;
   $('#deadBody').innerHTML=`
     <div class="eyebrow" style="color:var(--rust)">안전사고 발생</div><h2>STAGE ${run.stage} 작업 중단</h2>
     <div class="report"><div><small>버틴 시간</small><b>${fmtTime(run.t)}</b></div><div><small>처치 수</small><b>${fmt(run.kills)}</b></div>
       <div><small>골드</small><b>+${fmt(run.goldEarned)}</b></div><div><small>레벨</small><b>Lv ${save.level}</b></div></div>
+    ${run.xpGold?`<div class="note">최대 레벨 이후 경험치 → <b style="color:#ffd84a">+${fmt(run.xpGold)} G</b></div>`:''}
     ${dmgReport()}
     <p>레벨, 스킬 포인트, 골드, 얻은 무기는 그대로 유지됩니다. 사무소에서 스킬을 찍고 장비를 정비한 뒤 다시 도전하세요.</p>
     <div class="row"><button class="btn" id="btnRetry" type="button">STAGE ${run.stage} 다시 도전</button>
@@ -3619,6 +3664,8 @@ Object.defineProperty(window,'__JOGONG_SIM__',{value:{
     let g=0; while(g++<400){ const list=[equipped(),...GEAR_SLOTS.map(gearOn)].filter(x=>x&&x.uid!=='_'&&x.plus<MAX_PLUS).sort((a,b)=>a.plus-b.plus||enhCostOf(a)-enhCostOf(b)); const x=list[0];
       if(!x||save.gold<enhCostOf(x)) break; save.gold-=enhCostOf(x); if(Math.random()<ENH_RATE[x.plus]) x.plus++; }
     for(const x of save.gear.filter(isJunkGear)) save.gold+=gearSell(x); save.gear=save.gear.filter(x=>!isJunkGear(x));
+    // 사람처럼 남는 골드로 본사 투자 (강화가 막힌 뒤 남은 골드만, 싼 것부터)
+    let h=0; while(h++<60){ const c=INVEST.filter(d=>d.id!=='reroll'&&invLv(d.id)<d.max).sort((a,b)=>investCost(a)-investCost(b))[0]; if(!c||!buyInvest(c.id)) break; }
   },
   drawRay, bossDef, save:()=>save, stats:()=>stats(), xpToNext, CFG, XPC, FISH, setXPC(o){Object.assign(XPC,o);}, setCFG(o){Object.assign(CFG,o);},
   stop(){ SIM.on=false; SIM.bot=false; run=null; state='login'; show('#login'); },
