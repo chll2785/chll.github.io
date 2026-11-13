@@ -629,7 +629,7 @@ const CFG={
   MONSTER_DMG_MUL:2.0,       // 몬스터 접촉 대미지 배율 (1.5 → 2.0)
   BOSS_HP_GROWTH:1.5,        // 보스 1~4등급: 등급마다 체력 ×1.5
   BOSS_HP_GROWTH_LATE:1.7,   // 보스 5~10등급: 등급마다 체력 ×1.7
-  BOSS_HP_TUNE:[.8,1.35,1.75,1.6,1.85,1.4,1.35,1,1.9,1.25], // (S30 1.15→1.3, S40 1.2→1.35, S70 1.12→1.35: 17~20초 처치 회차 보정 / S90 .8→1.9·S100 1.1→1.25: 생존 스킬을 다 찍고 제자리에 선 봇이 16~21초 만에 잡던 것 보정) // 등급별 보정: 새 무기로 바뀐 직후(S30·S50·S60) 보스가 20초 안에 녹던 것을 보정 (회전 배관 강화 후 S60 1.12→1.3, S70 1→1.12, S40 21~25초 → 1.2)
+  BOSS_HP_TUNE:[.8,1.35,1.75,1.75,1.85,1.6,1.35,1,1.9,1.25], // (2026-11-13 S40 1.6→1.75·S60 1.4→1.6: 봇 회차에 따라 17~26초로 짧던 것) // (S30 1.15→1.3, S40 1.2→1.35, S70 1.12→1.35: 17~20초 처치 회차 보정 / S90 .8→1.9·S100 1.1→1.25: 생존 스킬을 다 찍고 제자리에 선 봇이 16~21초 만에 잡던 것 보정) // 등급별 보정: 새 무기로 바뀐 직후(S30·S50·S60) 보스가 20초 안에 녹던 것을 보정 (회전 배관 강화 후 S60 1.12→1.3, S70 1→1.12, S40 21~25초 → 1.2)
   SPIKE_WARN:.5,             // 가시 발사 예고 시간(초)
   ORBIT_R_BASE:66, ORBIT_R_RANGE:.2, // 회전 배관 반경 = 66 + 공격 범위×0.2 (범위 스킬과 함께 커짐)
   ORBIT_HIT_R:24, ORBIT_HIT_CD:.4, ORBIT_KNOCK:22, // 회전 배관 판정 반경·같은 적 재타격 간격(초)·밀어내기
@@ -670,6 +670,8 @@ const CFG={
   GOLDFISH:[3,12,30,14,30,1.12], // 황금 물고기: [등장 스테이지, 등장 시각 최소·최대(초), 머무는 시간(초), 체력 배율, 도망 속도 = 플레이어 기본 속도×값]
   ELITE_AFFIX:{swift:{name:'신속',hp:.8,spd:1.45,col:'#7fe3ff'},armor:{name:'갑각',hp:1.6,spd:.9,col:'#c9cfd4'},split:{name:'분열',hp:1,spd:1,col:'#ff9de0'}}, // 정예 변이 (S8부터)
   OUTPOST:[5,10,22,3,110,10,.3,28], // 작업 거점: [등장 스테이지, 등장 시각 최소·최대(초), 확보에 필요한 시간(초), 반경, 버프 시간(초), 공격력 버프, 거점이 남아 있는 시간(초)] — 원 안에 머물러 확보하면 체력 회복·공격력 버프·주변 충격파 (제자리보다 움직이는 쪽이 이득)
+  SPIT_EARLY:[11,21,.55],    // 물총 물고기가 처음 나오는 구간(S11~20) 물대포 피해를 0.55배에서 1배까지 서서히 (폐 파이프로 버티던 S11~14 최저 체력 5~17%·사망이 몰리던 것)
+  SUBSIDE:[25,5,2.4,58,.9,.15,.05,70], // 지반 침하: [시작 스테이지, 한자리에 머문 시간(초), 간격(초), 반경, 예고(초), 첫 피해(최대 체력 비율), 연속될 때마다 추가, 이 거리 안이면 '제자리'] — 일반 공정에서 오래 서 있으면 발밑이 무너짐
   SPLIT_FROM:15,             // 정예 변이 '분열'은 15스테이지부터 (S8~14 초반에 새끼 무리가 너무 위협적이던 것)
   GOLD_EARLY:[.6,70,95],      // 골드 추가 배율 [A, 전부 적용하는 마지막 스테이지, 0이 되는 스테이지]: S1~70 ×(1+A), S95까지 서서히 줄어듦 (다음 장비 직전 무기·보호구 평균 +8 목표, 사람처럼 4부위를 고르게 강화하는 기준)
 };
@@ -1969,6 +1971,19 @@ function spawnRadius(){ return Math.hypot(V.w,V.h)/2/V.zoom+50; }
 // 몬스터 체력 배율: 직선 상승 + 30스테이지 이후 지수 상승 (후반 무기·스킬 성장 속도에 맞춤)
 const mobHpMul=st=>CFG.MONSTER_HP_MUL*(1+CFG.MONSTER_HP_STAGE*(st-1)+CFG.MONSTER_HP_STAGE2*Math.max(0,st-25))*Math.pow(CFG.MONSTER_HP_EXP,Math.max(0,st-30))*Math.pow(CFG.MONSTER_HP_LATE_DAMP,clamp(st-CFG.MONSTER_HP_LATE_FROM,0,CFG.MONSTER_HP_LATE_N))*(isBossStage(st)?CFG.BOSS_ADD_HP:1);
 const spitChance=st=>st>=CFG.SPIT_LATE[0]?Math.min(CFG.SPIT_LATE[2],CFG.SPIT_CHANCE[2]+CFG.SPIT_LATE[1]*(st-CFG.SPIT_LATE[0]+1)):Math.min(CFG.SPIT_CHANCE[2],CFG.SPIT_CHANCE[0]+CFG.SPIT_CHANCE[1]*st);
+const spitEarly=st=>{ const E=CFG.SPIT_EARLY; return st>=E[1]?1:E[2]+(1-E[2])*clamp((st-E[0])/(E[1]-E[0]),0,1); };
+/* 지반 침하: 일반 공정(S25부터)에서 한자리(반경 70)에 5초 넘게 머물면 발밑에 붉은 예고 원 → 0.9초 뒤 무너짐.
+   피해는 최대 체력 비율(15%, 연속될 때마다 +5%)이라 방어 스킬로 버틸 수 없고, 보고 한 걸음 비키면 피함 — 서서 버티기보다 움직이며 싸우게 (다른 뱀서류의 '정지 페널티'·장판 패턴 참고) */
+function updateSubside(dt){
+  const S=CFG.SUBSIDE; if(run.boss||run.stage<S[0]) return;
+  if(!run.anc||Math.hypot(P.x-run.anc.x,P.y-run.anc.y)>S[7]){ run.anc={x:P.x,y:P.y}; run.idleT=0; run.subN=0; run.subT=0; return; }
+  run.idleT+=dt; if(run.idleT<S[1]) return;
+  run.subT-=dt; if(run.subT>0) return;
+  run.subT=S[2]; const pct=S[5]+S[6]*(run.subN++), dm=Math.round(ST.maxHp*pct/Math.max(.2,1-ST.armor));
+  run.fx.push({type:'mark',x:P.x,y:P.y,r:S[3],t:0,life:S[4]+.25,warn:S[4],dmg:dm,done:false,sub:true});
+  run.subs=(run.subs||0)+1;
+  if(!SIM.on){ SND.play('spike'); if(!run.subWarned){ run.subWarned=true; toast('지반 침하 경고','한자리에 오래 서 있으면 발밑이 무너집니다 — 자리를 옮기세요','#ff6a4d'); } }
+}
 function pickType(){ const t=run.spc; return (t>0&&Math.random()<.25)?t-1:t; } // 이전 어종을 25% 섞음
 function spawnEnemy(ti,ang){
   if(run.enemies.length>=(run.boss?CFG.BOSS_ADD_MAX:CFG.MAX_ENEMIES)) return;
@@ -2319,7 +2334,7 @@ function update(dt){
     run.crateT-=dt; if(run.crateT<=0){ run.crateT=CFG.CRATE_EVERY/ST.crateMul; spawnCrate(); }
     if(run.goldT>0){ run.goldT-=dt; if(run.goldT<=0){ run.goldT=-1; spawnGoldfish(); } }
     if(run.postT>0){ run.postT-=dt; if(run.postT<=0){ run.postT=-1; spawnOutpost(); } }
-    updateOutpost(dt);
+    updateOutpost(dt); updateSubside(dt);
   }
   if(run.postBuff>0) run.postBuff-=dt;
   for(const c of run.crates){ c.t+=dt; if((c.x-P.x)**2+(c.y-P.y)**2<(c.r+CFG.PLAYER_R)**2) breakCrate(c); if(Math.hypot(c.x-P.x,c.y-P.y)>spawnRadius()*1.8) c.dead=true; }
@@ -2364,7 +2379,7 @@ function update(dt){
     e.wob+=dt*(e.f.kind==='plankton'?3:8)*slow;
     if(e.spitter){ const sr=Math.max(CFG.SPIT_RANGE,ST.range+110); e.spitT-=dt*(slow>0?1:0); if(d>=sr) e.spitT=Math.max(e.spitT,.6); else slow*=.5; }
     if(e.spitter&&d<Math.max(CFG.SPIT_RANGE,ST.range+110)){
-      if(e.spitT<=0){ e.spitT=rand(CFG.SPIT_CD[0],CFG.SPIT_CD[1]); const sp=230+run.stage*.8; run.eshots.push({x:e.x+dx/d*e.r,y:e.y+dy/d*e.r,vx:dx/d*sp,vy:dy/d*sp,r:6,life:Math.max(CFG.SPIT_RANGE,ST.range+110)/sp+.4,dmg:Math.round(e.dmg*(CFG.SPIT_DMG+CFG.SPIT_DMG_LATE[1]*Math.max(0,run.stage-CFG.SPIT_DMG_LATE[0]))),water:true}); if(!SIM.on) SND.play('spit'); } }
+      if(e.spitT<=0){ e.spitT=rand(CFG.SPIT_CD[0],CFG.SPIT_CD[1]); const sp=230+run.stage*.8; run.eshots.push({x:e.x+dx/d*e.r,y:e.y+dy/d*e.r,vx:dx/d*sp,vy:dy/d*sp,r:6,life:Math.max(CFG.SPIT_RANGE,ST.range+110)/sp+.4,dmg:Math.round(e.dmg*(CFG.SPIT_DMG+CFG.SPIT_DMG_LATE[1]*Math.max(0,run.stage-CFG.SPIT_DMG_LATE[0]))*spitEarly(run.stage)),water:true}); if(!SIM.on) SND.play('spit'); } }
     const ux=dx/d, uy=dy/d; let w=Math.sin(e.wob*.5)*.22, mv=1;
     switch(e.f.move){ // 어종별 움직임 (평균 속도는 비슷하게 유지)
       case 'dart': { const s=Math.max(0,Math.sin(e.wob*.4)); mv=.4+2.4*s*s; break; }              // 새우: 꼬리를 튕기며 톡톡 튀어 나감
@@ -2553,7 +2568,9 @@ function drawFishEnemy(e){
   const img=e.flash>0?S.white[fr]:S.normal[fr];
   ctx.save(); ctx.translate(e.x,e.y);
   if(e.spitter){ const ch=e.spitT<.45?1-e.spitT/.45:0; ctx.strokeStyle=`rgba(90,220,255,${.35+.5*ch})`; ctx.lineWidth=1.6+ch*2; ctx.setLineDash([4,4]); ctx.beginPath(); ctx.arc(0,0,e.r*1.25+ch*4,0,TAU); ctx.stroke(); ctx.setLineDash([]);
-    if(ch>0){ ctx.fillStyle=`rgba(140,235,255,${.35*ch})`; ctx.beginPath(); ctx.arc(0,0,e.r*1.1,0,TAU); ctx.fill(); } } // 물총 물고기: 하늘색 점선 고리, 발사 직전 밝아짐
+    if(ch>0){ ctx.fillStyle=`rgba(140,235,255,${.35*ch})`; ctx.beginPath(); ctx.arc(0,0,e.r*1.1,0,TAU); ctx.fill(); }
+    if(ch>.15){ const ax=P.x-e.x, ay=P.y-e.y, ad=Math.hypot(ax,ay)||1, L=Math.min(ad-20,90+130*ch); // 조준선: 발사 직전 플레이어 쪽으로 점선이 뻗어 나와 어디로 쏠지 미리 보여 줌
+      if(L>e.r){ ctx.strokeStyle=`rgba(140,235,255,${.15+.45*ch})`; ctx.lineWidth=2; ctx.setLineDash([6,6]); ctx.beginPath(); ctx.moveTo(ax/ad*e.r,ay/ad*e.r); ctx.lineTo(ax/ad*L,ay/ad*L); ctx.stroke(); ctx.setLineDash([]); } } } // 물총 물고기: 하늘색 점선 고리, 발사 직전 밝아짐
   if(e.gold){ const p=.6+.4*Math.sin(e.wob*1.5), g=ctx.createRadialGradient(0,0,e.r*.2,0,0,e.r*2); g.addColorStop(0,`rgba(255,220,90,${.55*p})`); g.addColorStop(1,'rgba(255,220,90,0)'); ctx.fillStyle=g; ctx.beginPath(); ctx.arc(0,0,e.r*2,0,TAU); ctx.fill();
     ctx.strokeStyle='rgba(255,216,74,.85)'; ctx.lineWidth=2.5; ctx.beginPath(); ctx.arc(0,0,e.r*1.45,-Math.PI/2,-Math.PI/2+TAU*clamp(e.life/CFG.GOLDFISH[3],0,1)); ctx.stroke(); } // 남은 시간 고리
   if(e.elite){ const g=ctx.createRadialGradient(0,0,e.r*.3,0,0,e.r*1.6); g.addColorStop(0,'rgba(255,214,74,.35)'); g.addColorStop(1,'rgba(255,214,74,0)'); ctx.fillStyle=g; ctx.beginPath(); ctx.arc(0,0,e.r*1.6,0,TAU); ctx.fill(); }
@@ -2829,7 +2846,8 @@ function render(dt,time){
   for(const f of run.fx) if(f.type==='mark'&&!f.done){ const p=clamp(f.t/f.warn,0,1); // 장판 예고: 바깥 원 + 안쪽에서 차오르는 원
     ctx.fillStyle=`rgba(255,70,50,${.1+.12*p})`; ctx.beginPath(); ctx.arc(f.x,f.y,f.r,0,TAU); ctx.fill();
     ctx.strokeStyle=`rgba(255,110,80,${.5+.4*p})`; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(f.x,f.y,f.r,0,TAU); ctx.stroke();
-    ctx.fillStyle=`rgba(255,90,60,${.25+.2*p})`; ctx.beginPath(); ctx.arc(f.x,f.y,f.r*p,0,TAU); ctx.fill(); }
+    ctx.fillStyle=`rgba(255,90,60,${.25+.2*p})`; ctx.beginPath(); ctx.arc(f.x,f.y,f.r*p,0,TAU); ctx.fill();
+    if(f.sub){ ctx.strokeStyle=`rgba(40,10,5,${.4+.4*p})`; ctx.lineWidth=2; ctx.beginPath(); for(let i=0;i<6;i++){ const a=i/6*TAU+.4, r1=f.r*(.35+.55*p); ctx.moveTo(f.x+Math.cos(a)*6,f.y+Math.sin(a)*6); ctx.lineTo(f.x+Math.cos(a+.25)*r1*.55,f.y+Math.sin(a+.25)*r1*.55); ctx.lineTo(f.x+Math.cos(a)*r1,f.y+Math.sin(a)*r1); } ctx.stroke(); } } // 지반 침하: 갈라지는 균열
   for(const f of run.fx) if(f.type==='stink'&&f.r>0){ // 두 번째 파동은 반지름이 음수에서 출발(지연) — 음수 반지름으로 arc를 부르면 오류
     const a=1-f.r/f.maxR;
     ctx.strokeStyle=`rgba(190,230,90,${.55*a+.1})`; ctx.lineWidth=14; ctx.beginPath(); ctx.arc(f.x,f.y,f.r,0,TAU); ctx.stroke();
@@ -3434,7 +3452,7 @@ function showClear(cleared,promos,last){
     <h2>${last?'준공 완료. 모든 공정을 마쳤습니다':`STAGE ${cleared} 공정 완료`}</h2>
     <div class="report"><div><small>작업 시간</small><b>${fmtTime(run.t)}</b></div><div><small>처치 수</small><b>${fmt(run.kills)}</b></div>
       <div><small>골드</small><b>+${fmt(run.goldEarned)}</b></div><div><small>레벨</small><b>Lv ${save.level}${run.levelsGained?` <span style="font-size:13px;color:var(--ok)">+${run.levelsGained}</span>`:''}</b></div></div>
-    <p style="font-size:13px">최고 콤보 ${run.bestCombo}${run.frenzies?` · 몰아치기 ${run.frenzies}회`:''}${run.goldfish?` · 황금 물고기 ${run.goldfish}마리`:''}${run.posts?` · 작업 거점 확보 ${run.posts}`:''} · 정예 처치 ${run.elitesKilled}${Object.keys(run.boons).length?` · 받은 현장 지원 ${Object.values(run.boons).reduce((a,b)=>a+b,0)}개`:''}</p>
+    <p style="font-size:13px">최고 콤보 ${run.bestCombo}${run.frenzies?` · 몰아치기 ${run.frenzies}회`:''}${run.goldfish?` · 황금 물고기 ${run.goldfish}마리`:''}${run.posts?` · 작업 거점 확보 ${run.posts}`:''}${run.subs?` · 지반 침하 ${run.subs}회`:''} · 정예 처치 ${run.elitesKilled}${Object.keys(run.boons).length?` · 받은 현장 지원 ${Object.values(run.boons).reduce((a,b)=>a+b,0)}개`:''}</p>
     ${dmgReport()}
     ${promo}${found}
     ${run.levelsGained?`<div class="note">스킬 포인트 ${run.levelsGained}개를 얻었습니다. 현장 사무소의 스킬 트리에서 사용하세요. (보유 ${save.sp})</div>`:''}
@@ -3589,7 +3607,7 @@ Object.defineProperty(window,'__JOGONG_SIM__',{value:{
     SIM.on=true; SIM.bot=true; SIM.result=null; startStage(stage); hideAll();
     const dt=1/30; let n=0; const lim=(maxSec||200)*30;
     while(!SIM.result&&n++<lim) update(dt);
-    const r=SIM.result||{cleared:false,timeout:true,stage,level:save.level}; r.elites=run.elitesKilled; r.combo=run.bestCombo; r.frenzies=run.frenzies||0; r.goldfish=run.goldfish||0; r.posts=run.posts||0; r.goldRun=run.goldEarned;
+    const r=SIM.result||{cleared:false,timeout:true,stage,level:save.level}; r.elites=run.elitesKilled; r.combo=run.bestCombo; r.frenzies=run.frenzies||0; r.goldfish=run.goldfish||0; r.posts=run.posts||0; r.subs=run.subs||0; r.goldRun=run.goldEarned;
     r.src=Object.fromEntries(Object.entries(run.dmg).map(([k,v])=>[k,Math.round(v)])); r.lvAfter=save.level; r.gold=save.gold; r.sp=save.sp; r.spent=SKILLS.reduce((a,x)=>a+sk(x.id),0); r.weapon=equipped().type+'+'+equipped().plus; r.hp=P?Math.round(P.hp):0; r.maxHp=stats().maxHp;
     return r;
   },
