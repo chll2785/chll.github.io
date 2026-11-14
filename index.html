@@ -315,7 +315,6 @@ details.dev summary{cursor:pointer}
 @media (prefers-reduced-motion:reduce){.btn{transition:none}}
 </style></head><body>
 
-
 <div id="wrap">
   <canvas id="cv" aria-label="게임 화면"></canvas>
   <button id="btnPause" type="button" aria-label="일시정지" hidden><span></span></button>
@@ -377,7 +376,7 @@ details.dev summary{cursor:pointer}
         <button type="button" role="tab" data-tab="inv" aria-selected="false"><span class="long">인벤토리 · 장비</span><span class="short">장비</span></button>
         <button type="button" role="tab" data-tab="enh" aria-selected="false"><span class="long">장비 강화</span><span class="short">강화</span><span class="badge dot" id="enhBadge" hidden></span></button>
         <button type="button" role="tab" data-tab="invest" aria-selected="false"><span class="long">본사 투자</span><span class="short">투자</span><span class="badge dot" id="invBadge" hidden></span></button>
-        <button type="button" role="tab" data-tab="rank" aria-selected="false"><span class="long">직급 · 공정 기록</span><span class="short">직급</span></button>
+        <button type="button" role="tab" data-tab="rank" aria-selected="false"><span class="long">직급 · 공정 기록</span><span class="short">직급</span><span class="badge dot" id="achBadge" hidden></span></button>
         <button type="button" role="tab" data-tab="code" aria-selected="false"><span class="long">세이브 코드</span><span class="short">코드</span></button>
       </div>
       <div class="tabbody" id="tabBody"></div>
@@ -619,7 +618,7 @@ const SND=(()=>{
   };
 })();
 /* 화면 표시 설정 (브라우저에 저장): 일반 타격 피해 숫자 표시 — 다른 뱀서류처럼 타격마다 숫자가 튀어 성장이 눈에 보이게 */
-const UIP={dmgNum:true,hpBar:true}; // hpBar: 플레이어 머리 위 체력바
+const UIP={dmgNum:true,hpBar:true,shake:true}; // hpBar: 플레이어 머리 위 체력바, shake: 화면 흔들림 (끄면 피격·폭발 때 화면이 흔들리지 않음 — 다른 뱀서류의 화면 흔들림·번쩍임 옵션처럼 멀미·눈 피로 줄이기)
 try{ Object.assign(UIP,JSON.parse(localStorage.getItem('jogong_ui')||'{}')); }catch(e){}
 const saveUIP=()=>{ try{ localStorage.setItem('jogong_ui',JSON.stringify(UIP)); }catch(e){} };
 const fmtTime=s=>`${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,'0')}`;
@@ -654,7 +653,7 @@ const CFG={
   MONSTER_DMG_MUL:2.0,       // 몬스터 접촉 대미지 배율 (1.5 → 2.0)
   BOSS_HP_GROWTH:1.5,        // 보스 1~4등급: 등급마다 체력 ×1.5
   BOSS_HP_GROWTH_LATE:1.7,   // 보스 5~10등급: 등급마다 체력 ×1.7
-  BOSS_HP_TUNE:[.8,1.35,2.1,1.75,2.05,1.9,1.6,1.12,1.9,1.25], // (2026-11-14 2차 S30 1.95→2.1·S50 1.85→2.05·S80 1→1.12: 시뮬 회차에 따라 21~24초 처치가 나와서) (2026-11-14 S30 1.75→1.95·S60 1.6→1.9·S70 1.35→1.6: 스킬 진화(S55~60부터 파이프 폭풍·급소 폭발·회전 톱날)로 S60·S70 보스가 18~19초에 녹고 S30도 20~22초 회차가 나와서) (2026-11-13 S40 1.6→1.75·S60 1.4→1.6: 봇 회차에 따라 17~26초로 짧던 것) // (S30 1.15→1.3, S40 1.2→1.35, S70 1.12→1.35: 17~20초 처치 회차 보정 / S90 .8→1.9·S100 1.1→1.25: 생존 스킬을 다 찍고 제자리에 선 봇이 16~21초 만에 잡던 것 보정) // 등급별 보정: 새 무기로 바뀐 직후(S30·S50·S60) 보스가 20초 안에 녹던 것을 보정 (회전 배관 강화 후 S60 1.12→1.3, S70 1→1.12, S40 21~25초 → 1.2)
+  BOSS_HP_TUNE:[.8,1.35,2.1,1.95,2.2,1.9,1.75,1.12,1.9,1.25], // (2026-11-14 3차 S40 1.75→1.95·S50 2.05→2.2·S70 1.6→1.75: 시뮬에서 S40 23초·S50 26초·S70 18초 회차로 목표 하한 근처) // (2026-11-14 2차 S30 1.95→2.1·S50 1.85→2.05·S80 1→1.12: 시뮬 회차에 따라 21~24초 처치가 나와서) (2026-11-14 S30 1.75→1.95·S60 1.6→1.9·S70 1.35→1.6: 스킬 진화(S55~60부터 파이프 폭풍·급소 폭발·회전 톱날)로 S60·S70 보스가 18~19초에 녹고 S30도 20~22초 회차가 나와서) (2026-11-13 S40 1.6→1.75·S60 1.4→1.6: 봇 회차에 따라 17~26초로 짧던 것) // (S30 1.15→1.3, S40 1.2→1.35, S70 1.12→1.35: 17~20초 처치 회차 보정 / S90 .8→1.9·S100 1.1→1.25: 생존 스킬을 다 찍고 제자리에 선 봇이 16~21초 만에 잡던 것 보정) // 등급별 보정: 새 무기로 바뀐 직후(S30·S50·S60) 보스가 20초 안에 녹던 것을 보정 (회전 배관 강화 후 S60 1.12→1.3, S70 1→1.12, S40 21~25초 → 1.2)
   SPIKE_WARN:.5,             // 가시 발사 예고 시간(초)
   ORBIT_R_BASE:66, ORBIT_R_RANGE:.2, // 회전 배관 반경 = 66 + 공격 범위×0.2 (범위 스킬과 함께 커짐)
   ORBIT_HIT_R:24, ORBIT_HIT_CD:.4, ORBIT_KNOCK:22, // 회전 배관 판정 반경·같은 적 재타격 간격(초)·밀어내기
@@ -865,6 +864,22 @@ const INVEST=[
   {id:'reroll',name:'지원 상자 재심사',max:2, base:60000, eff:l=>`현장 지원 '다시 뽑기' 공정마다 +${l}회`},
 ];
 const INV_GROWTH=1.6;
+/* 현장 표창(업적): 누적 기록이 목표에 닿으면 사무소 '직급' 탭에서 보너스 골드를 받음 — 뱀파이어 서바이버즈의 업적 해금·Survivor.io의 미션 보상처럼
+   '다음 목표'를 늘 보여 줘 오래 플레이할 이유를 만듦. 기존 세이브 값(처치·보스·별·야간·진화·강화)으로 계산, 받은 표창만 save.ach에 기록 */
+const ACH_GROUPS=[
+  {id:'kill', name:'물고기 처치',   unit:'마리', val:()=>save.totalKills|0, goals:[[1000,150],[10000,1200],[50000,8000],[150000,40000]]}, // 보상은 시뮬에서 다음 장비 직전 강화가 +10까지 당겨지지 않게 초중반을 낮게
+  {id:'boss', name:'홍어 보스 처치',unit:'회',   val:()=>save.bossKills|0, goals:[[1,250],[5,5000],[10,50000]]},
+  {id:'stage',name:'공정 준공',     unit:'공정', val:()=>save.maxCleared|0, goals:[[25,1000],[50,6000],[75,30000],[100,80000]]},
+  {id:'lv',   name:'숙련도',        unit:'레벨', val:()=>save.level|0, goals:[[100,2000],[200,12000],[300,50000]]},
+  {id:'star', name:'무사고 평가',   unit:'별',   val:()=>starTotal(), goals:[[30,600],[150,8000],[300,40000]]},
+  {id:'night',name:'야간 작업',     unit:'공정', val:()=>Object.keys(save.night||{}).length, goals:[[1,2000],[10,15000],[30,50000]]},
+  {id:'evo',  name:'스킬 진화',     unit:'종',   val:()=>evoCount(), goals:[[1,10000],[3,25000],[5,50000]]},
+  {id:'enh',  name:'장비 강화 장인',unit:'강',   val:()=>Math.max(0,...(save.inv||[]).map(x=>x.plus|0),...(save.gear||[]).map(x=>x.plus|0)), goals:[[7,3000],[10,15000]]},
+];
+const ACH=ACH_GROUPS.flatMap(g=>g.goals.map(([goal,gold],i)=>({id:g.id+i,g,goal,gold,tier:i})));
+const achGot=a=>!!(save.ach&&save.ach[a.id]);
+const achReady=()=>ACH.filter(a=>!achGot(a)&&a.g.val()>=a.goal);
+function claimAch(a){ if(achGot(a)||a.g.val()<a.goal) return 0; save.ach=save.ach||{}; save.ach[a.id]=1; const g=Math.round(a.gold*(1+.03*invLv('gold'))); save.gold+=g; return g; }
 const invLv=id=>(save.invest&&save.invest[id])||0;
 const investCost=d=>Math.round(d.base*Math.pow(INV_GROWTH,invLv(d.id))/100)*100;
 
@@ -995,7 +1010,7 @@ const PICKUPS=[
    6. 세이브 데이터 / 계정 / 저장소
    ===================================================================== */
 const freshSave=()=>({v:3,stage:1,maxCleared:0,level:1,xp:0,gold:0,rank:0,sp:0,skills:{},
-  inv:[{uid:'w1',type:'scrap',plus:0}],equip:{weapon:'w1',helmet:'g1',gloves:'g2',shoes:'g3'},nextUid:2,gear:starterGear(),nextGid:4,totalKills:0,bossKills:0,invest:{},bossBest:{},stars:{},night:{}});
+  inv:[{uid:'w1',type:'scrap',plus:0}],equip:{weapon:'w1',helmet:'g1',gloves:'g2',shoes:'g3'},nextUid:2,gear:starterGear(),nextGid:4,totalKills:0,bossKills:0,invest:{},bossBest:{},stars:{},night:{},ach:{}});
 let save=freshSave();
 let session=null;      // {id, key, salt, hash}
 let guest=false, testMode=false;
@@ -1128,6 +1143,8 @@ function normalizeSave(s){
   for(const k in d.stars){ const n=d.stars[k]|0; if(n<1||+k<1||+k>CFG.MAX_STAGE) delete d.stars[k]; else d.stars[k]=Math.min(3,n); }
   if(!d.night||typeof d.night!=='object'||Array.isArray(d.night)) d.night={}; // 야간 작업 클리어 기록 — 예전 세이브는 빈 값
   for(const k in d.night){ if(+k<1||+k>CFG.MAX_STAGE||+k>(d.maxCleared|0)) delete d.night[k]; else d.night[k]=1; }
+  if(!d.ach||typeof d.ach!=='object'||Array.isArray(d.ach)) d.ach={}; // 현장 표창(업적) 받은 기록 — 예전 세이브는 빈 값
+  for(const k in d.ach){ if(!ACH.find(a=>a.id===k)) delete d.ach[k]; else d.ach[k]=1; }
   d.stage=clamp(d.stage|0||1,1,Math.min(CFG.MAX_STAGE,(d.maxCleared|0)+1));
   for(const k in d.skills) if(!SKILL[k]){ d.sp+=d.skills[k]; delete d.skills[k]; }
   for(const k in d.skills) if(d.skills[k]>SKILL[k].max){ d.sp+=d.skills[k]-SKILL[k].max; d.skills[k]=SKILL[k].max; }
@@ -2308,7 +2325,7 @@ function onPipeHit(e,s){
   if(!e.boss&&!e.elite&&!e.dead&&s.kind!=='shard'){const sp=Math.hypot(s.vx,s.vy)||1; e.x+=s.vx/sp*ST.knock; e.y+=s.vy/sp*ST.knock;}
   if(s.crit&&ST.evCrit&&s.kind==='pipe'){ const cd=s.dmg*ST.critMul*.4; for(const t of enemiesNear(e.x,e.y,55)) if(t!==e&&!t.dead) damage(t,cd,false,'evo'); // 진화 '급소 폭발'
     if(!SIM.on&&run.fx.length<240) run.fx.push({type:'ring',x:e.x,y:e.y,t:0,life:.25,r:55,color:'#ffb04d'}); }
-  if(s.shock){ const r=ST.evQuake?100:60; for(const t of enemiesNear(e.x,e.y,r)) damage(t,ST.dmg*(.4+.1*ST.shock)*(ST.evQuake?1.5:1),false,'shock'); SND.play('shock'); if(!SIM.on) run.fx.push({type:'ring',x:e.x,y:e.y,t:0,life:.35,r,color:'#7f8cff'}); }
+  if(s.shock){ const r=ST.evQuake?100:60; for(const t of enemiesNear(e.x,e.y,r)) damage(t,ST.dmg*(.4+.1*ST.shock)*(ST.evQuake?1.5:1),false,'shock'); SND.play('shock'); if(!SIM.on){ run.fx.push({type:'ring',x:e.x,y:e.y,t:0,life:.35,r,color:'#7f8cff'}); if(ST.evQuake&&run.fx.length<250) run.fx.push({type:'quake',x:e.x,y:e.y,r,a:rand(0,TAU),t:0,life:.55}); } } // 진화 '여진': 바닥이 갈라지는 균열 + 흙먼지
   if(s.kind!=='pipe') return;
   const m=ST.magicDmg;
   switch(ST.wdef.magic){
@@ -2925,7 +2942,7 @@ function render(dt,time){
     ctx.setTransform(V.dpr,0,0,V.dpr,0,0); ctx.fillStyle=dark; ctx.fillRect(0,0,V.w,V.h);
     drawSnow(dt,time,cx,cy); return;
   }
-  const sh=run.shake, sx=sh?rand(-sh,sh)*.5:0, sy=sh?rand(-sh,sh)*.5:0;
+  const sh=UIP.shake?run.shake:0, sx=sh?rand(-sh,sh)*.5:0, sy=sh?rand(-sh,sh)*.5:0;
   const cx=P.x-sx, cy=P.y-sy;
   drawBackground(cx,cy,time);
   drawSilhouette(time,state==='play'?dt:0);
@@ -2991,6 +3008,13 @@ function render(dt,time){
     else if(f.type==='storm'){ // 파이프 폭풍: 사방으로 뻗는 8줄기 섬광
       ctx.save(); ctx.globalCompositeOperation='lighter'; ctx.lineCap='round';
       for(let i=0;i<8;i++){ const a=f.a+i/8*TAU, r0=24+70*t, r1=r0+40*(1-t); ctx.strokeStyle=`rgba(255,${150+Math.round(60*(1-t))},80,${.7*(1-t)})`; ctx.lineWidth=6*(1-t)+1.5; ctx.beginPath(); ctx.moveTo(f.x+Math.cos(a)*r0,f.y+Math.sin(a)*r0); ctx.lineTo(f.x+Math.cos(a)*r1,f.y+Math.sin(a)*r1); ctx.stroke(); }
+      ctx.restore(); }
+    else if(f.type==='quake'){ // 진화 '여진': 중심에서 6갈래 균열이 번지고 흙먼지 고리가 퍼짐
+      const k=Math.min(1,t*3), fade=1-t; ctx.save(); ctx.lineCap='round'; ctx.lineJoin='round';
+      for(let i=0;i<6;i++){ const a=f.a+i/6*TAU; let x=f.x, y=f.y; ctx.beginPath(); ctx.moveTo(x,y);
+        for(let s=1;s<=4;s++){ const d=f.r*k*s/4, j=Math.sin(i*7.3+s*3.1)*.32; x=f.x+Math.cos(a+j)*d; y=f.y+Math.sin(a+j)*d; ctx.lineTo(x,y); }
+        ctx.strokeStyle=`rgba(20,10,30,${.55*fade})`; ctx.lineWidth=4; ctx.stroke(); ctx.strokeStyle=`rgba(170,180,255,${.75*fade})`; ctx.lineWidth=1.6; ctx.stroke(); }
+      ctx.fillStyle=`rgba(160,150,190,${.18*fade})`; ctx.beginPath(); ctx.arc(f.x,f.y,f.r*(.6+.5*t),0,TAU); ctx.arc(f.x,f.y,f.r*(.35+.5*t),0,TAU,true); ctx.fill('evenodd');
       ctx.restore(); }
     else if(f.type==='boom'){ctx.strokeStyle=`rgba(95,240,255,${1-t})`; ctx.lineWidth=6*(1-t)+1; ctx.beginPath(); ctx.arc(f.x,f.y,80*Math.sqrt(t),0,TAU); ctx.stroke(); ctx.fillStyle=`rgba(95,240,255,${.25*(1-t)})`; ctx.fill();}
     else if(f.type==='corpse'){
@@ -3146,7 +3170,8 @@ function refreshOffice(){
   const b=$('#spBadge'); b.hidden=!save.sp; b.textContent=save.sp;
   { // 탭 알림 점(모바일 뱀서류의 '할 수 있는 일' 표시): 장착 장비 중 지금 골드로 강화할 수 있는 개수, 지금 살 수 있는 본사 투자 개수
     const ne=[equipped(),...GEAR_SLOTS.map(gearOn)].filter(x=>x&&x.uid!=='_'&&x.plus<MAX_PLUS&&save.gold>=enhCostOf(x)).length, eb=$('#enhBadge'); if(eb){ eb.hidden=!ne; eb.textContent=ne; eb.title=`지금 강화할 수 있는 장착 장비 ${ne}개`; }
-    const ni=INVEST.filter(d=>invLv(d.id)<d.max&&save.gold>=investCost(d)).length, ib=$('#invBadge'); if(ib){ ib.hidden=!ni; ib.textContent=ni; ib.title=`지금 살 수 있는 투자 ${ni}개`; } }
+    const ni=INVEST.filter(d=>invLv(d.id)<d.max&&save.gold>=investCost(d)).length, ib=$('#invBadge'); if(ib){ ib.hidden=!ni; ib.textContent=ni; ib.title=`지금 살 수 있는 투자 ${ni}개`; }
+    const na=achReady().length, ab=$('#achBadge'); if(ab){ ab.hidden=!na; ab.textContent=na; ab.title=`받을 수 있는 현장 표창 ${na}개`; } }
   const next=save.stage;
   $('#btnGo').textContent=`STAGE ${next} 출근하기`;
   $('#goInfo').innerHTML=isBossStage(next)?`보스 <b style="color:#ff9d84">${BOSS_NAMES[next/10-1]}</b> 출현 공정입니다.`:`${FISH[speciesOf(next)].name} 구간 · ${stageDuration(next)}초 버티기`+(save.sp?` · 스킬 포인트 ${save.sp}개를 먼저 사용하세요`:'');
@@ -3490,8 +3515,8 @@ function renderCode(body){
 function renderRanks(body){
   const nx=RANKS[save.rank+1];
   body.innerHTML=`${nx?`<div class="req" style="margin-bottom:14px"><h3>다음 승진: ${nx.name}</h3>${reqList(nx)}</div>`:'<div class="note" style="margin-bottom:14px">최고 직급 PM에 도달했습니다.</div>'}
-    <div class="ladder" id="ladder"></div>${stageLogHtml()}`;
-  bindStageLog(body);
+    ${achHtml()}<div class="ladder" id="ladder"></div>${stageLogHtml()}`;
+  bindStageLog(body); bindAch(body);
   const L=$('#ladder');
   RANKS.forEach((r,i)=>{
     const d=document.createElement('div'); d.className='rankcard'+(i===save.rank?' cur':'')+(i>save.rank?' lock':'');
@@ -3500,6 +3525,24 @@ function renderRanks(body){
       <span class="tag ${i<save.rank?'done':i===save.rank?'now':''}">${i<save.rank?'완료':i===save.rank?'현재':'예정'}</span>`);
     L.appendChild(d);
   });
+}
+/* 현장 표창 목록: 계열마다 다음 목표·진행 막대·받기 버튼 (받을 수 있는 표창이 있으면 '직급' 탭에 노란 점) */
+function achHtml(){
+  const ready=achReady(), got=ACH.filter(achGot).length;
+  const rows=ACH_GROUPS.map(g=>{ const list=ACH.filter(a=>a.g===g), v=g.val(), rd=list.filter(a=>!achGot(a)&&v>=a.goal), nx=list.find(a=>!achGot(a)&&v<a.goal), done=list.every(achGot);
+    const tgt=rd[0]||nx, p=tgt?clamp(v/tgt.goal,0,1):1, gn=list.filter(achGot).length;
+    return `<div class="skrow${done?' maxed':''}" style="--c:#ffc21a"><div class="skinfo"><div class="sktop"><b>${g.name}</b><span class="sklv">${gn} / ${list.length}</span></div>
+      <i style="display:block;height:6px;border-radius:3px;background:rgba(255,255,255,.08);overflow:hidden"><b style="display:block;height:100%;width:${(p*100).toFixed(1)}%;background:${rd.length?'var(--ok)':'var(--hazard)'}"></b></i>
+      <div class="skeff">${done?'모든 표창을 받았습니다':`${fmt(v)} / ${fmt(tgt.goal)} ${g.unit} · 보상 <span>${fmt(rd.length?rd.reduce((s,a)=>s+a.gold,0):tgt.gold)} G</span>${rd.length>1?` (${rd.length}단계)`:''}`}</div></div>
+      <div class="skbtns">${rd.length?`<button class="btn small" type="button" data-ach="${g.id}" style="min-width:76px">받기</button>`:''}</div></div>`; }).join('');
+  return `<div class="buildsec" style="margin-bottom:16px"><h3>현장 표창 <span style="font-family:var(--f-body);font-size:13px;color:var(--muted)">${got} / ${ACH.length}</span></h3>
+    <div class="row" style="justify-content:space-between"><p style="font-size:12px;flex:1;min-width:180px">처치·보스·준공·레벨·별·야간 작업·진화·강화 기록이 목표에 닿으면 보너스 골드를 받습니다.</p>${ready.length>1?`<button class="btn small" type="button" id="btnAchAll">모두 받기 (${ready.length})</button>`:''}</div>
+    <div class="list">${rows}</div></div>`;
+}
+function bindAch(body){
+  const done=g=>{ if(!g) return; SND.play('coins'); persist(); refreshOffice(); renderRanks(body); toastOffice(`현장 표창 보상 +${fmt(g)} G`); };
+  body.querySelectorAll('[data-ach]').forEach(b=>b.onclick=()=>{ let g=0; for(const a of achReady().filter(a=>a.g.id===b.dataset.ach)) g+=claimAch(a); done(g); });
+  const all=body.querySelector('#btnAchAll'); if(all) all.onclick=()=>{ let g=0; for(const a of achReady()) g+=claimAch(a); done(g); };
 }
 /* 공정 기록: 클리어한 공정의 별·보스 최고 기록, 눌러서 지난 공정 다시 하기 (두 번 눌러 확인, 골드 절반·진행 위치는 그대로) */
 const starTotal=()=>Object.values(save.stars||{}).reduce((a,n)=>a+n,0);
@@ -3609,6 +3652,7 @@ function showClear(cleared,promos,last){
     ${run.bossRec?`<div class="note" style="${run.bossRec.best?'border-color:var(--hazard);color:var(--ink)':''}">보스 처치 시간 <b>${fmtTime(run.bossRec.t)}</b>${run.bossRec.best?(run.bossRec.prev!=null?` · <b style="color:var(--hazard)">최고 기록 갱신!</b> (이전 ${fmtTime(run.bossRec.prev)})`:' · 첫 기록'):` · 최고 기록 ${fmtTime(run.bossRec.prev)}`}</div>`:''}
     ${run.xpGold?`<div class="note">최대 레벨 이후 얻은 경험치 ${fmt(run.xpOver)} → <b style="color:#ffd84a">+${fmt(run.xpGold)} G</b> (사무소 '본사 투자'에서 쓸 수 있습니다)</div>`:''}
     ${dmgReport()}
+    ${!testMode&&achReady().length?`<div class="note" style="border-color:var(--hazard);color:var(--ink)">현장 표창 <b style="color:var(--hazard)">${achReady().length}개</b>를 받을 수 있습니다 · 사무소 '직급' 탭에서 보너스 골드를 받으세요.</div>`:''}
     ${promo}${found}
     ${run.levelsGained?`<div class="note">스킬 포인트 ${run.levelsGained}개를 얻었습니다. 현장 사무소의 스킬 트리에서 사용하세요. (보유 ${save.sp})</div>`:''}
     ${(save.sp&&SKILLS.some(canLearn))||betterWeapon()?`<div class="row" id="quickPrep">${save.sp&&SKILLS.some(canLearn)?`<button class="btn ghost small" type="button" id="btnQuickSp">SP ${save.sp} 추천 자동 배분</button>`:''}${betterWeapon()?`<button class="btn ghost small" type="button" id="btnQuickW">${WEAPON[betterWeapon().type].name} +${betterWeapon().plus} 장착</button>`:''}<span class="msg ok" id="quickMsg" role="status"></span></div>`:''}
@@ -3642,7 +3686,7 @@ function showDead(){
     <div class="row"><button class="btn" id="btnRetry" type="button">STAGE ${run.stage} 다시 도전</button>
       <button class="btn ghost" id="btnOffice2" type="button">현장 사무소</button></div>`;
   show('#dead');
-  const n=run.stage, nt=!!run.night; $('#btnRetry').onclick=()=>startStage(n,nt); // 야간 작업은 야간 작업으로 다시 도전 $('#btnRetry').focus({preventScroll:true});
+  const n=run.stage, nt=!!run.night; $('#btnRetry').onclick=()=>startStage(n,nt); $('#btnRetry').focus({preventScroll:true}); // 야간 작업은 야간 작업으로 다시 도전 (2026-11-14: 주석이 focus 호출을 삼켜 '다시 도전' 버튼에 포커스가 안 가던 것 수정)
   $('#btnOffice2').onclick=openOffice;
 }
 /* 일시정지 화면 빌드 요약: 뱀서류의 일시정지 능력치 표처럼 지금 빌드의 세부 수치·습득 스킬·이번 공정 현장 지원을 한눈에 보여 줌 */
@@ -3687,8 +3731,9 @@ function togglePause(){
       ${buildSummary(st)}
       <label class="vol" style="grid-template-columns:auto 1fr;cursor:pointer"><input type="checkbox" id="optDmgNum" ${UIP.dmgNum?'checked':''} style="width:18px;height:18px;margin:0"><span>타격 피해 숫자 표시 (치명타 숫자는 항상 표시)</span></label>
       <label class="vol" style="grid-template-columns:auto 1fr;cursor:pointer;margin-top:-4px"><input type="checkbox" id="optHpBar" ${UIP.hpBar?'checked':''} style="width:18px;height:18px;margin:0"><span>머리 위 체력바 표시</span></label>
+      <label class="vol" style="grid-template-columns:auto 1fr;cursor:pointer;margin-top:-4px"><input type="checkbox" id="optShake" ${UIP.shake?'checked':''} style="width:18px;height:18px;margin:0"><span>화면 흔들림 (피격·폭발·보스 처치)</span></label>
       ${volHtml()}`;
-    show('#pause'); bindVol($('#pauseBody')); $('#optDmgNum').onchange=e=>{ UIP.dmgNum=e.target.checked; saveUIP(); }; $('#optHpBar').onchange=e=>{ UIP.hpBar=e.target.checked; saveUIP(); }; SND.duck(true); $('#pIcon').appendChild(pipeCanvas(w.type,w.plus,72,28));
+    show('#pause'); bindVol($('#pauseBody')); $('#optDmgNum').onchange=e=>{ UIP.dmgNum=e.target.checked; saveUIP(); }; $('#optHpBar').onchange=e=>{ UIP.hpBar=e.target.checked; saveUIP(); }; $('#optShake').onchange=e=>{ UIP.shake=e.target.checked; saveUIP(); }; SND.duck(true); $('#pIcon').appendChild(pipeCanvas(w.type,w.plus,72,28));
     $('#btnResume').onclick=togglePause; $('#btnResume').focus({preventScroll:true});
     $('#btnPsFull').onclick=()=>toggleFull(); syncFull();
     let armed=false; $('#btnQuit').onclick=e=>{ if(!armed){armed=true; e.target.textContent='한 번 더 누르면 포기합니다'; return;} persist(); openOffice(); };
@@ -3774,6 +3819,7 @@ Object.defineProperty(window,'__JOGONG_SIM__',{value:{
   },
   spendAndGear(){
     autoSkills();
+    for(const a of achReady()) claimAch(a); // 사람처럼 현장 표창 보상을 받고 정비
     const best=[...save.inv].filter(it=>WEAPON[it.type].req<=save.level).sort((a,b)=>tierIdx(b.type)-tierIdx(a.type)||b.plus-a.plus)[0]; if(best) save.equip.weapon=best.uid;
     for(const sl of GEAR_SLOTS){ const b=bestGear(sl); if(b&&gearBetter(b,gearOn(sl))) save.equip[sl]=b.uid; }
     // 사람처럼 강화: 무기·안전모·장갑·작업화 중 강화 수치가 가장 낮은 것부터 고르게 (같으면 싼 것부터), 골드가 모자라면 멈춤
