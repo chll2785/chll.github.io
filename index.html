@@ -648,7 +648,7 @@ const CFG={
   MONSTER_DMG_MUL:2.0,       // 몬스터 접촉 대미지 배율 (1.5 → 2.0)
   BOSS_HP_GROWTH:1.5,        // 보스 1~4등급: 등급마다 체력 ×1.5
   BOSS_HP_GROWTH_LATE:1.7,   // 보스 5~10등급: 등급마다 체력 ×1.7
-  BOSS_HP_TUNE:[.8,1.35,1.75,1.75,1.85,1.6,1.35,1,1.9,1.25], // (2026-11-13 S40 1.6→1.75·S60 1.4→1.6: 봇 회차에 따라 17~26초로 짧던 것) // (S30 1.15→1.3, S40 1.2→1.35, S70 1.12→1.35: 17~20초 처치 회차 보정 / S90 .8→1.9·S100 1.1→1.25: 생존 스킬을 다 찍고 제자리에 선 봇이 16~21초 만에 잡던 것 보정) // 등급별 보정: 새 무기로 바뀐 직후(S30·S50·S60) 보스가 20초 안에 녹던 것을 보정 (회전 배관 강화 후 S60 1.12→1.3, S70 1→1.12, S40 21~25초 → 1.2)
+  BOSS_HP_TUNE:[.8,1.35,1.95,1.75,1.85,1.9,1.6,1,1.9,1.25], // (2026-11-14 S30 1.75→1.95·S60 1.6→1.9·S70 1.35→1.6: 스킬 진화(S55~60부터 파이프 폭풍·급소 폭발·회전 톱날)로 S60·S70 보스가 18~19초에 녹고 S30도 20~22초 회차가 나와서) (2026-11-13 S40 1.6→1.75·S60 1.4→1.6: 봇 회차에 따라 17~26초로 짧던 것) // (S30 1.15→1.3, S40 1.2→1.35, S70 1.12→1.35: 17~20초 처치 회차 보정 / S90 .8→1.9·S100 1.1→1.25: 생존 스킬을 다 찍고 제자리에 선 봇이 16~21초 만에 잡던 것 보정) // 등급별 보정: 새 무기로 바뀐 직후(S30·S50·S60) 보스가 20초 안에 녹던 것을 보정 (회전 배관 강화 후 S60 1.12→1.3, S70 1→1.12, S40 21~25초 → 1.2)
   SPIKE_WARN:.5,             // 가시 발사 예고 시간(초)
   ORBIT_R_BASE:66, ORBIT_R_RANGE:.2, // 회전 배관 반경 = 66 + 공격 범위×0.2 (범위 스킬과 함께 커짐)
   ORBIT_HIT_R:24, ORBIT_HIT_CD:.4, ORBIT_KNOCK:22, // 회전 배관 판정 반경·같은 적 재타격 간격(초)·밀어내기
@@ -838,6 +838,17 @@ const SKILLS=[
   {id:'f5',br:'frt',d:3,off:.2,   name:'성과급',      max:10,req:['f3',5],  eff:l=>`보스·정예 골드 +${l*10}%`},
 ];
 const SKILL=Object.fromEntries(SKILLS.map(s=>[s.id,s]));
+/* 스킬 진화: 짝이 되는 두 스킬을 모두 최대로 찍으면 추가 효과가 열림 (뱀서류의 '무기 + 보조 아이템 → 진화' 구조에서 착안).
+   후반(모든 스킬을 찍게 되는 S80~90 전후)에 '화면을 쓸어 담는' 느낌을 더하는 보상. 생존 계열은 넣지 않음(제자리 클리어 방지) */
+const EVOS=[
+  {id:'storm', name:'파이프 폭풍', req:['a3','a7'], col:'#ff7a4d', desc:'12번째 투척마다 사방으로 파이프 8개를 함께 던짐 (공격력 80%)'},
+  {id:'saw',   name:'회전 톱날',   req:['r3','r4'], col:'#4dc3ff', desc:'회전 파이프 +2개, 회전 파이프 피해 ×1.4'},
+  {id:'crit',  name:'급소 폭발',   req:['a5','a6'], col:'#ffb04d', desc:'치명타가 터지며 주변(반경 55) 적에게 치명타 피해의 40%'},
+  {id:'thunder',name:'연쇄 낙뢰',  req:['g5','g3'], col:'#b9c4ff', desc:'낙뢰가 한 번에 3곳에 떨어짐'},
+  {id:'quake', name:'여진',        req:['g4','g2'], col:'#7f8cff', desc:'충격파 반경 60 → 100, 피해 ×1.5'},
+];
+const evoOn=id=>{ const v=EVOS.find(x=>x.id===id); return !!v&&v.req.every(r=>sk(r)>=SKILL[r].max); };
+const evoCount=()=>EVOS.filter(v=>evoOn(v.id)).length;
 /* 본사 투자: 강화를 다 끝내고 남는 후반 골드의 쓸모 — 골드로 사는 영구 강화 (뱀서류의 골드 상점·축복처럼 런 밖에서 쌓이는 성장).
    비용이 단계마다 1.6배로 올라 중반에는 장비 강화가 먼저, 후반 남는 골드가 여기로 흘러가도록 함. 레벨·스킬·강화 규칙과는 별개 */
 const INVEST=[
@@ -1165,7 +1176,8 @@ function stats(){
     pierce:CFG.BASE_PIERCE+sk('a4')+bn('pierce'), crit:.03*sk('a5')+GB.crit, critMul:2+.15*sk('a6'),
     range:CFG.BASE_RANGE*(1+.04*sk('r1'))*(1+.2*bn('range')),
     shotSpeed:CFG.SHOT_SPEED*(1+.05*sk('r2')),
-    orbit:sk('r3')+bn('orbit'), orbitMul:1.0*(1+.15*sk('r4')), orbitSpd:3.2*(1+.06*sk('r4')),
+    orbit:sk('r3')+bn('orbit')+(evoOn('saw')?2:0), orbitMul:1.0*(1+.15*sk('r4'))*(evoOn('saw')?1.4:1), orbitSpd:3.2*(1+.06*sk('r4')),
+    evStorm:evoOn('storm'), evCrit:evoOn('crit'), evThunder:evoOn('thunder'), evQuake:evoOn('quake'),
     knock:5+4*sk('r5'),
     elemDur:1+.1*sk('g2'), extraTargets:sk('g3'), shock:sk('g4'), bolt:sk('g5'),
     maxHp:Math.round((CFG.BASE_HP+CFG.HP_PER_LEVEL*(lv-1)+rb.hp)*(1+.03*sk('s1'))*(1+.15*bn('heal'))*(1+GB.hp)*(1+.02*invLv('hp'))),
@@ -1178,7 +1190,12 @@ function stats(){
 }
 function skillUnlocked(s){ if(!s.req) return true; return sk(s.req[0])>=s.req[1]; }
 function canLearn(s){ return save.sp>0&&sk(s.id)<s.max&&skillUnlocked(s); }
-function learnSkill(id){ const s=SKILL[id]; if(!s||!canLearn(s)) return false; save.skills[id]=sk(id)+1; save.sp--; return true; }
+function learnSkill(id){ const s=SKILL[id]; if(!s||!canLearn(s)) return false;
+  const before=EVOS.filter(v=>v.req.includes(id)&&!evoOn(v.id));
+  save.skills[id]=sk(id)+1; save.sp--;
+  if(!SIM.on){ const got=before.filter(v=>evoOn(v.id)); if(got.length){ evoJust=got.map(v=>v.name).join(', '); SND.play('weapon'); } } // 진화 달성 알림 (사무소 화면에서 표시)
+  return true; }
+let evoJust='';
 function resetSkills(){ let n=0; for(const k in save.skills) n+=save.skills[k]; save.skills={}; save.sp+=n; }
 function meetsRank(r){ return save.level>=r.minLevel&&save.maxCleared>=r.minStage&&r.conditions.every(c=>c.check(save)); }
 function checkPromotion(){ const got=[]; while(save.rank<RANKS.length-1&&meetsRank(RANKS[save.rank+1])){save.rank++; got.push(save.rank);} return got; }
@@ -2251,6 +2268,9 @@ function fire(){
     run.shots.push({kind:'pipe',x:P.x,y:P.y-8,vx:Math.cos(a)*ST.shotSpeed,vy:Math.sin(a)*ST.shotSpeed,rot:rand(0,TAU),
       dmg:ST.dmg,pierce:ST.pierce,bounce:0,life,r:10,hit:new Set(),crit:Math.random()<ST.crit,trail:[],shock:shockShot&&i===0});
   }
+  if(ST.evStorm&&run.throwN%12===0){ const a0=rand(0,TAU); for(let i=0;i<8;i++){ const a=a0+i/8*TAU; // 진화 '파이프 폭풍': 사방으로 8개
+    run.shots.push({kind:'pipe',x:P.x,y:P.y-8,vx:Math.cos(a)*ST.shotSpeed,vy:Math.sin(a)*ST.shotSpeed,rot:rand(0,TAU),dmg:ST.dmg*.8,pierce:ST.pierce,bounce:0,life,r:10,hit:new Set(),crit:Math.random()<ST.crit,trail:[],evo:true}); }
+    if(!SIM.on) run.fx.push({type:'ring',x:P.x,y:P.y,t:0,life:.35,r:90,color:'#ff7a4d'}); }
   P.face=Math.cos(Math.atan2(targets[0].y-P.y,targets[0].x-P.x))>=0?1:-1;
   P.throwT=.18; SND.play('throw');
   return true;
@@ -2275,7 +2295,9 @@ function enemiesNear(x,y,rad){
 function onPipeHit(e,s){
   damage(e,s.crit?s.dmg*ST.critMul:s.dmg,s.crit,s.kind==='pipe'?'pipe':'magic'); SND.play(s.crit?'crit':'hit');
   if(!e.boss&&!e.elite&&!e.dead&&s.kind!=='shard'){const sp=Math.hypot(s.vx,s.vy)||1; e.x+=s.vx/sp*ST.knock; e.y+=s.vy/sp*ST.knock;}
-  if(s.shock){ const r=60; for(const t of enemiesNear(e.x,e.y,r)) damage(t,ST.dmg*(.4+.1*ST.shock),false,'shock'); SND.play('shock'); if(!SIM.on) run.fx.push({type:'ring',x:e.x,y:e.y,t:0,life:.35,r,color:'#7f8cff'}); }
+  if(s.crit&&ST.evCrit&&s.kind==='pipe'){ const cd=s.dmg*ST.critMul*.4; for(const t of enemiesNear(e.x,e.y,55)) if(t!==e&&!t.dead) damage(t,cd,false,'evo'); // 진화 '급소 폭발'
+    if(!SIM.on&&run.fx.length<240) run.fx.push({type:'ring',x:e.x,y:e.y,t:0,life:.25,r:55,color:'#ffb04d'}); }
+  if(s.shock){ const r=ST.evQuake?100:60; for(const t of enemiesNear(e.x,e.y,r)) damage(t,ST.dmg*(.4+.1*ST.shock)*(ST.evQuake?1.5:1),false,'shock'); SND.play('shock'); if(!SIM.on) run.fx.push({type:'ring',x:e.x,y:e.y,t:0,life:.35,r,color:'#7f8cff'}); }
   if(s.kind!=='pipe') return;
   const m=ST.magicDmg;
   switch(ST.wdef.magic){
@@ -2372,8 +2394,9 @@ function update(dt){
   if(run.frenzyT>0) run.frenzyT-=dt;
   // 낙뢰 호출
   if(ST.bolt>0&&!run.ending){ run.boltT-=dt; if(run.boltT<=0){ run.boltT=3.5-.2*ST.bolt;
-    const c=nearestK(6,ST.range); const t=c[Math.floor(Math.random()*c.length)];
-    if(t){ SND.play('bolt'); for(const e of enemiesNear(t.x,t.y,45)) damage(e,ST.dmg*(1+.25*ST.bolt),false,'bolt'); if(!SIM.on) run.fx.push({type:'strike',x:t.x,y:t.y,t:0,life:.3}); } } }
+    const c=nearestK(ST.evThunder?10:6,ST.range); // 진화 '연쇄 낙뢰': 한 번에 3곳
+    for(let k=0;k<(ST.evThunder?3:1)&&c.length;k++){ const t=c.splice(Math.floor(Math.random()*c.length),1)[0];
+      SND.play('bolt'); for(const e of enemiesNear(t.x,t.y,45)) damage(e,ST.dmg*(1+.25*ST.bolt),false,'bolt'); if(!SIM.on) run.fx.push({type:'strike',x:t.x,y:t.y,t:0,life:.3}); } } }
   // 정예 몬스터 / 보급 상자
   if(!run.ending){
     run.eliteT-=dt; if(run.eliteT<=0){ run.eliteT=CFG.ELITE_EVERY; spawnElite(); }
@@ -2794,7 +2817,9 @@ function drawHUD(time,dt){
   if(run.comboMsg&&run.comboMsg.t>0){ run.comboMsg.t-=dt; ctx.textAlign='right'; ctx.globalAlpha=clamp(run.comboMsg.t/.4,0,1); ctx.font=`700 12px ${FB}`; ctx.fillStyle='#ffd84a'; ctx.fillText(run.comboMsg.text,cX,cY+40); ctx.globalAlpha=1; }
   const sy=narrow?110:30;
   ctx.textAlign='center'; ctx.fillStyle='#e9f2f7'; ctx.font=`${narrow?16:18}px ${FD}`;
-  ctx.fillText(run.boss?`STAGE ${run.stage} · BOSS`:`STAGE ${run.stage}`,V.w/2,sy-(narrow?0:6));
+  const bbest=run.boss&&save.bossBest?save.bossBest[String(run.stage)]:null; // 보스전 경과 시간 + 최고 기록 (기록 경쟁 — 뱀서류·DRG: Survivor의 타이머처럼)
+  ctx.fillText(run.boss?(narrow?`BOSS ${fmtTime(run.t)}${bbest!=null?` · 최고 ${fmtTime(bbest)}`:''}`:`STAGE ${run.stage} · BOSS`):`STAGE ${run.stage}`,V.w/2,sy-(narrow?0:6));
+  if(run.boss&&!narrow){ ctx.font=`700 15px ${FB}`; const ahead=bbest!=null&&run.t<=bbest; ctx.fillStyle=bbest==null?'rgba(233,242,247,.8)':ahead?'#5fd39a':'#ff9d84'; ctx.fillText(`${fmtTime(run.t)}${bbest!=null?` · 최고 ${fmtTime(bbest)}`:''}`,V.w/2,sy+14); }
   if(!run.boss){const left=Math.max(0,run.duration-run.t); ctx.font=`700 ${narrow?14:15}px ${FB}`; ctx.fillStyle=left<10?'#ffc21a':'rgba(233,242,247,.8)'; ctx.fillText(fmtTime(Math.ceil(left)),V.w/2,sy+(narrow?18:14));}
   const b=run.bossRef;
   if(b&&!b.dead){
@@ -3124,8 +3149,15 @@ function skillHead(){
     <span class="spsum">남은 포인트 <b>${save.sp}</b> · 습득 ${spent} / ${total}</span>
     <button class="btn small" type="button" id="btnAutoSp" ${save.sp&&SKILLS.some(canLearn)?'':'disabled'} title="공격·투척·생존을 고르게 키우는 추천 순서대로 남은 포인트를 한 번에 배분합니다">추천 자동 배분</button></div>`;
 }
+/* 스킬 진화 목록: 두 스킬을 모두 최대로 찍으면 열리는 추가 효과, 남은 조건을 함께 보여 줌 */
+function evoHtml(){
+  return `<section class="skgroup"><h4 style="color:#ff9de0">스킬 진화 <span style="font-family:var(--f-body);font-size:12px;color:var(--muted)">${evoCount()} / ${EVOS.length} · 짝이 되는 두 스킬을 모두 최대로 찍으면 열림</span></h4>${EVOS.map(v=>{ const on=evoOn(v.id);
+    const need=v.req.map(r=>`${SKILL[r].name} ${sk(r)}/${SKILL[r].max}`).join(' + ');
+    return `<div class="skrow${on?' maxed':' locked'}" style="--c:${v.col};${on?'':'opacity:.8'}"><div class="skinfo"><div class="sktop"><b>${on?'✦ ':''}${v.name}</b><span class="sklv">${on?'진화 완료':'미완성'}</span></div><div class="skeff">${on?`<span>${v.desc}</span>`:v.desc}</div><div class="skeff">${need}</div></div></div>`; }).join('')}</section>`;
+}
 /* 추천 자동 배분: 포인트가 많이 쌓였을 때(특히 모바일) 한 번에 찍기. 두 번 눌러 확인, 이미 찍은 스킬은 그대로 둔다 */
 function autoSpend(){ const before=save.sp; autoSkills(); const used=before-save.sp; if(used>0){ SND.play('learn'); persist(); } return used; }
+function evoNotice(){ if(evoJust){ toastOffice(`스킬 진화 달성 · ${evoJust}`); evoJust=''; } }
 function bindSkillHead(body){ body.querySelectorAll('.viewtoggle button').forEach(b=>b.onclick=()=>{ skillView=b.dataset.view; renderSkills(body); });
   const a=body.querySelector('#btnAutoSp'); if(a){ let arm=false; a.onclick=()=>{ if(!arm){ arm=true; a.textContent=`한 번 더 누르면 SP ${save.sp} 배분`; return; } const n=autoSpend(); refreshOffice(); renderSkills(body); toastOffice(n?`추천 순서대로 스킬 포인트 ${n}개를 배분했습니다.`:'배울 수 있는 스킬이 없습니다.'); }; } }
 function renderSkillList(body){
@@ -3144,8 +3176,8 @@ function renderSkillList(body){
     }
     h+='</section>';
   }
-  h+=`<button class="linkbtn" type="button" id="btnReset">스킬 초기화 (포인트 전부 돌려받기)</button>`;
-  body.innerHTML=h; bindSkillHead(body);
+  h+=evoHtml()+`<button class="linkbtn" type="button" id="btnReset">스킬 초기화 (포인트 전부 돌려받기)</button>`;
+  body.innerHTML=h; bindSkillHead(body); evoNotice();
   body.querySelectorAll('[data-learn]').forEach(btn=>btn.onclick=()=>{
     let ok=false; for(let i=0;i<+btn.dataset.n;i++) if(learnSkill(btn.dataset.learn)) ok=true; if(ok) SND.play('learn');
     if(ok){ persist(); const st=body.scrollTop; refreshOffice(); renderSkillList(body); body.scrollTop=st; }
@@ -3187,8 +3219,8 @@ function renderSkills(body){
       <button class="btn ghost small" type="button" id="btnLearn5" ${canLearn(s)?'':'disabled'}>5번 배우기</button></div>
       <p style="font-size:12px">${save.sp?`남은 스킬 포인트 ${save.sp}`:'레벨이 오를 때마다 스킬 포인트 1을 받습니다.'}</p>
       <button class="linkbtn" type="button" id="btnReset">스킬 초기화 (포인트 전부 돌려받기)</button>
-    </div></div>`;
-  bindSkillHead(body);
+    </div></div><div style="margin-top:16px">${evoHtml()}</div>`;
+  bindSkillHead(body); evoNotice();
   const mb=$('#mapbox'); if(mb.scrollWidth>mb.clientWidth) mb.scrollLeft=(mb.scrollWidth-mb.clientWidth)/2;
   body.querySelectorAll('.node').forEach(n=>{ const pick=()=>{selSkill=n.dataset.id; const sl=mb.scrollLeft; renderSkills(body); $('#mapbox').scrollLeft=sl;}; n.addEventListener('click',pick); n.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault(); pick();}}); });
   const learnN=n=>{ let ok=false; for(let i=0;i<n;i++) if(learnSkill(selSkill)) ok=true; if(ok){ SND.play('learn'); persist(); const sl=mb.scrollLeft, st=mb.scrollTop; refreshOffice(); renderSkills(body); $('#mapbox').scrollLeft=sl; $('#mapbox').scrollTop=st; } };
@@ -3517,7 +3549,7 @@ function stageCleared(){
 function dmgReport(){
   const d=run&&run.dmg; if(!d) return '';
   const w=WEAPON[equipped().type];
-  const L={pipe:['파이프 투척','#ffc21a'],magic:[`무기 마법 · ${w.mName}`,w.color],orbit:['회전 배관','#4dc3ff'],bolt:['낙뢰 호출','#b9c4ff'],shock:['충격파','#7f8cff'],lvl:['레벨업 충격파','#ffd84a'],post:['거점 충격파','#5fd39a'],item:['발파 신호탄','#ff5d4d']};
+  const L={pipe:['파이프 투척','#ffc21a'],magic:[`무기 마법 · ${w.mName}`,w.color],orbit:['회전 배관','#4dc3ff'],bolt:['낙뢰 호출','#b9c4ff'],shock:['충격파','#7f8cff'],lvl:['레벨업 충격파','#ffd84a'],post:['거점 충격파','#5fd39a'],item:['발파 신호탄','#ff5d4d'],evo:['진화 · 급소 폭발','#ffb04d']};
   const rows=Object.entries(d).filter(([k,v])=>v>=1&&L[k]).sort((a,b)=>b[1]-a[1]);
   const tot=rows.reduce((a,r)=>a+r[1],0); if(!tot) return '';
   return `<div class="dmgrep"><div class="eyebrow" style="color:var(--muted)">피해 기여 · 총 ${fmt(tot)} · 초당 ${fmt(tot/Math.max(1,run.t))}</div>${rows.map(([k,v])=>{const p=v/tot*100;
@@ -3556,7 +3588,7 @@ function showClear(cleared,promos,last){
   const bn=$('#btnNext'); if(bn){bn.onclick=()=>startStage(next); bn.focus({preventScroll:true});}
   $('#btnOffice1').onclick=openOffice;
   // 클리어 화면에서 바로 정비: 추천 배분 / 더 좋은 무기 장착 후 곧장 다음 공정으로
-  const qs=$('#btnQuickSp'); if(qs) qs.onclick=()=>{ const n=autoSpend(); qs.disabled=true; qs.textContent=n?`스킬 ${n}개 배분 완료`:'배울 스킬 없음'; };
+  const qs=$('#btnQuickSp'); if(qs) qs.onclick=()=>{ const n=autoSpend(); qs.disabled=true; qs.textContent=(n?`스킬 ${n}개 배분 완료`:'배울 스킬 없음')+(evoJust?` · 진화: ${evoJust}`:''); evoJust=''; };
   const qw=$('#btnQuickW'); if(qw) qw.onclick=()=>{ const b=betterWeapon(); if(b){ save.equip.weapon=b.uid; SND.play('weapon'); persist(); } qw.disabled=true; qw.textContent='장착 완료'; };
 }
 function convertXpOver(){ // 만렙 이후 쌓인 경험치 → 골드 (공정 종료·사고 모두)
@@ -3604,6 +3636,7 @@ function buildSummary(st){
   const bs=run&&run.boons?Object.entries(run.boons).filter(([,n])=>n>0):[];
   const boons=bs.length?`<div class="buildsec"><h3>이번 공정 현장 지원</h3><div class="skchips">${bs.map(([id,n])=>{const b=BOONS.find(o=>o.id===id); return b?`<span style="--c:#5fd39a" title="${esc(b.desc)}">${b.name}<i>×${n}</i></span>`:'';}).join('')}</div></div>`:'';
   return `<div class="buildsec"><h3>세부 능력치</h3><div class="statgrid">${rows}</div></div>
+    ${evoCount()?`<div class="buildsec"><h3>스킬 진화</h3><div class="skchips">${EVOS.filter(v=>evoOn(v.id)).map(v=>`<span class="max" style="--c:${v.col}" title="${esc(v.desc)}">✦ ${v.name}</span>`).join('')}</div></div>`:''}
     <div class="buildsec"><h3>습득 스킬 <span style="font-family:var(--f-body);font-size:12px;color:var(--muted)">${learned.length} / ${SKILLS.length}종</span></h3>${chips}</div>${boons}`;
 }
 function togglePause(){
