@@ -305,9 +305,15 @@ details.dev summary{cursor:pointer}
 .stg.boss{border-color:rgba(255,107,107,.55)}
 .stg.arm{border-color:var(--hazard);background:rgba(255,194,26,.12)}
 .stg:hover{border-color:var(--hazard)}
+.stg.nt{background:linear-gradient(180deg,rgba(127,140,255,.16),var(--panel-2))}
+.stg.nt b{color:#c9d0ff}
+.nightopt{display:flex;gap:10px;align-items:flex-start;margin:4px 0 10px;padding:10px 12px;border:1px solid rgba(127,140,255,.45);border-radius:4px;background:rgba(127,140,255,.08);font-size:12px;color:var(--muted);line-height:1.5;cursor:pointer}
+.nightopt input{width:18px;height:18px;margin:1px 0 0;flex:none;accent-color:#7f8cff}
+.nightopt b{color:#c9d0ff}
+/* 사무소 탭 알림 점: 지금 골드로 강화·투자할 수 있을 때 */
+.tabs .badge.dot{background:var(--hazard);color:var(--hazard-ink)}
 @media (prefers-reduced-motion:reduce){.btn{transition:none}}
 </style></head><body>
-
 
 
 <div id="wrap">
@@ -369,8 +375,8 @@ details.dev summary{cursor:pointer}
       <div class="tabs" role="tablist">
         <button type="button" role="tab" data-tab="skills" aria-selected="true"><span class="long">스킬 트리</span><span class="short">스킬</span><span class="badge" id="spBadge" hidden></span></button>
         <button type="button" role="tab" data-tab="inv" aria-selected="false"><span class="long">인벤토리 · 장비</span><span class="short">장비</span></button>
-        <button type="button" role="tab" data-tab="enh" aria-selected="false"><span class="long">장비 강화</span><span class="short">강화</span></button>
-        <button type="button" role="tab" data-tab="invest" aria-selected="false"><span class="long">본사 투자</span><span class="short">투자</span></button>
+        <button type="button" role="tab" data-tab="enh" aria-selected="false"><span class="long">장비 강화</span><span class="short">강화</span><span class="badge dot" id="enhBadge" hidden></span></button>
+        <button type="button" role="tab" data-tab="invest" aria-selected="false"><span class="long">본사 투자</span><span class="short">투자</span><span class="badge dot" id="invBadge" hidden></span></button>
         <button type="button" role="tab" data-tab="rank" aria-selected="false"><span class="long">직급 · 공정 기록</span><span class="short">직급</span></button>
         <button type="button" role="tab" data-tab="code" aria-selected="false"><span class="long">세이브 코드</span><span class="short">코드</span></button>
       </div>
@@ -648,7 +654,7 @@ const CFG={
   MONSTER_DMG_MUL:2.0,       // 몬스터 접촉 대미지 배율 (1.5 → 2.0)
   BOSS_HP_GROWTH:1.5,        // 보스 1~4등급: 등급마다 체력 ×1.5
   BOSS_HP_GROWTH_LATE:1.7,   // 보스 5~10등급: 등급마다 체력 ×1.7
-  BOSS_HP_TUNE:[.8,1.35,1.95,1.75,1.85,1.9,1.6,1,1.9,1.25], // (2026-11-14 S30 1.75→1.95·S60 1.6→1.9·S70 1.35→1.6: 스킬 진화(S55~60부터 파이프 폭풍·급소 폭발·회전 톱날)로 S60·S70 보스가 18~19초에 녹고 S30도 20~22초 회차가 나와서) (2026-11-13 S40 1.6→1.75·S60 1.4→1.6: 봇 회차에 따라 17~26초로 짧던 것) // (S30 1.15→1.3, S40 1.2→1.35, S70 1.12→1.35: 17~20초 처치 회차 보정 / S90 .8→1.9·S100 1.1→1.25: 생존 스킬을 다 찍고 제자리에 선 봇이 16~21초 만에 잡던 것 보정) // 등급별 보정: 새 무기로 바뀐 직후(S30·S50·S60) 보스가 20초 안에 녹던 것을 보정 (회전 배관 강화 후 S60 1.12→1.3, S70 1→1.12, S40 21~25초 → 1.2)
+  BOSS_HP_TUNE:[.8,1.35,2.1,1.75,2.05,1.9,1.6,1.12,1.9,1.25], // (2026-11-14 2차 S30 1.95→2.1·S50 1.85→2.05·S80 1→1.12: 시뮬 회차에 따라 21~24초 처치가 나와서) (2026-11-14 S30 1.75→1.95·S60 1.6→1.9·S70 1.35→1.6: 스킬 진화(S55~60부터 파이프 폭풍·급소 폭발·회전 톱날)로 S60·S70 보스가 18~19초에 녹고 S30도 20~22초 회차가 나와서) (2026-11-13 S40 1.6→1.75·S60 1.4→1.6: 봇 회차에 따라 17~26초로 짧던 것) // (S30 1.15→1.3, S40 1.2→1.35, S70 1.12→1.35: 17~20초 처치 회차 보정 / S90 .8→1.9·S100 1.1→1.25: 생존 스킬을 다 찍고 제자리에 선 봇이 16~21초 만에 잡던 것 보정) // 등급별 보정: 새 무기로 바뀐 직후(S30·S50·S60) 보스가 20초 안에 녹던 것을 보정 (회전 배관 강화 후 S60 1.12→1.3, S70 1→1.12, S40 21~25초 → 1.2)
   SPIKE_WARN:.5,             // 가시 발사 예고 시간(초)
   ORBIT_R_BASE:66, ORBIT_R_RANGE:.2, // 회전 배관 반경 = 66 + 공격 범위×0.2 (범위 스킬과 함께 커짐)
   ORBIT_HIT_R:24, ORBIT_HIT_CD:.4, ORBIT_KNOCK:22, // 회전 배관 판정 반경·같은 적 재타격 간격(초)·밀어내기
@@ -696,6 +702,7 @@ const CFG={
   STAR_HP:[.3,.6],           // 공정 평가: ★2 = 부활 없이 최저 체력 30% 이상, ★3 = 부활 없이 최저 체력 60% 이상 (★1 = 클리어)
   STAR_GOLD:[15,.5],         // 별을 처음 얻을 때마다 보너스 골드 = 15×(1+스테이지×0.5) (골드 배율 적용)
   REPLAY_GOLD:.5,            // 이미 클리어한 공정을 다시 할 때 골드 획득 배율 (반복 사냥으로 강화가 너무 빨라지지 않도록)
+  NIGHT:{hp:1.6,spd:1.12,dmg:1.25,gold:1,first:3}, // 야간 작업(클리어한 공정 다시 하기의 고난도 선택): 물고기 체력 ×1.6·속도 ×1.12·공격력 ×1.25, 골드 감액 없음(×1), 첫 야간 클리어 보너스 = 별 보너스 기준 ×3 — 뱀서류의 '저주·하이퍼 모드'(스스로 난이도를 올리고 보상을 더 받는 선택)에서 착안
   GOLD_EARLY:[.6,70,95],      // 골드 추가 배율 [A, 전부 적용하는 마지막 스테이지, 0이 되는 스테이지]: S1~70 ×(1+A), S95까지 서서히 줄어듦 (다음 장비 직전 무기·보호구 평균 +8 목표, 사람처럼 4부위를 고르게 강화하는 기준)
 };
 const stageDuration=s=>40+Math.min(18,Math.floor((s-1)/10)*2);
@@ -988,7 +995,7 @@ const PICKUPS=[
    6. 세이브 데이터 / 계정 / 저장소
    ===================================================================== */
 const freshSave=()=>({v:3,stage:1,maxCleared:0,level:1,xp:0,gold:0,rank:0,sp:0,skills:{},
-  inv:[{uid:'w1',type:'scrap',plus:0}],equip:{weapon:'w1',helmet:'g1',gloves:'g2',shoes:'g3'},nextUid:2,gear:starterGear(),nextGid:4,totalKills:0,bossKills:0,invest:{},bossBest:{},stars:{}});
+  inv:[{uid:'w1',type:'scrap',plus:0}],equip:{weapon:'w1',helmet:'g1',gloves:'g2',shoes:'g3'},nextUid:2,gear:starterGear(),nextGid:4,totalKills:0,bossKills:0,invest:{},bossBest:{},stars:{},night:{}});
 let save=freshSave();
 let session=null;      // {id, key, salt, hash}
 let guest=false, testMode=false;
@@ -1119,6 +1126,8 @@ function normalizeSave(s){
   if(!d.bossBest||typeof d.bossBest!=='object') d.bossBest={};
   if(!d.stars||typeof d.stars!=='object') d.stars={}; // 공정 평가(별) — 예전 세이브는 빈 값
   for(const k in d.stars){ const n=d.stars[k]|0; if(n<1||+k<1||+k>CFG.MAX_STAGE) delete d.stars[k]; else d.stars[k]=Math.min(3,n); }
+  if(!d.night||typeof d.night!=='object'||Array.isArray(d.night)) d.night={}; // 야간 작업 클리어 기록 — 예전 세이브는 빈 값
+  for(const k in d.night){ if(+k<1||+k>CFG.MAX_STAGE||+k>(d.maxCleared|0)) delete d.night[k]; else d.night[k]=1; }
   d.stage=clamp(d.stage|0||1,1,Math.min(CFG.MAX_STAGE,(d.maxCleared|0)+1));
   for(const k in d.skills) if(!SKILL[k]){ d.sp+=d.skills[k]; delete d.skills[k]; }
   for(const k in d.skills) if(d.skills[k]>SKILL[k].max){ d.sp+=d.skills[k]-SKILL[k].max; d.skills[k]=SKILL[k].max; }
@@ -2010,23 +2019,25 @@ function newRun(stage){
     goldT:(!isBossStage(stage)&&stage>=CFG.GOLDFISH[0])?rand(CFG.GOLDFISH[1],CFG.GOLDFISH[2]):-1,
     postT:(!isBossStage(stage)&&stage>=CFG.OUTPOST[0])?rand(CFG.OUTPOST[1],CFG.OUTPOST[2]):-1, post:null, posts:0, postBuff:0};
 }
-function startStage(n){
-  hideAll(); newRun(n); run.replay=n<=save.maxCleared; if(!run.replay) save.stage=n; state='play'; // 지난 공정 다시 하기는 진행 위치(save.stage)를 바꾸지 않음
+function startStage(n,night){
+  hideAll(); newRun(n); run.replay=n<=save.maxCleared; run.night=!!night&&run.replay; if(!run.replay) save.stage=n; state='play'; // 지난 공정 다시 하기는 진행 위치(save.stage)를 바꾸지 않음 · 야간 작업은 클리어한 공정에서만
   $('#btnPause').hidden=false; SND.mood(isBossStage(n)?'boss':'play',tierOf(n));
   for(let i=0;i<8;i++) spawnEnemy(pickType());
   ST=stats(); P.hp=ST.maxHp; P.shield=ST.shield>0;
   for(let i=0;i<2;i++) spawnCrate();
   if(run.boss){
     const b=bossDef(n/10), R=spawnRadius()*.85;
-    const e={boss:true,def:b,x:R,y:0,hp:b.hp,maxHp:b.hp,r:b.r,spd:b.spd,dmg:b.dmg,xp:b.xp,flash:0,ang:Math.PI,wob:0,mode:'chase',cd:3.5,tm:0,dx:0,dy:0,stinkCd:5,slowT:0,dotT:0,dotDps:0,orbitCd:0};
+    const nh=nightK('hp'), e={boss:true,def:b,x:R,y:0,hp:b.hp*nh,maxHp:b.hp*nh,r:b.r,spd:b.spd*nightK('spd'),dmg:Math.round(b.dmg*nightK('dmg')),xp:b.xp,flash:0,ang:Math.PI,wob:0,mode:'chase',cd:3.5,tm:0,dx:0,dy:0,stinkCd:5,slowT:0,dotT:0,dotDps:0,orbitCd:0};
     run.enemies.push(e); run.bossRef=e;
     run.banner={title:`STAGE ${n}`,sub:`보스 출현 — ${b.name}`,t:3,boss:true};
     SND.play('bossIntro');
   }else run.banner={title:`STAGE ${n}`,sub:(n%5===1&&n>1?`새 어종 출현 — ${FISH[run.spc].name} · `:`${FISH[run.spc].name} 무리 접근 중 · `)+`${run.duration}초 버티기`,t:2.6};
+  if(run.night){ run.banner.title=`☾ STAGE ${n}`; run.banner.sub=`야간 작업 · 물고기 체력 ×${CFG.NIGHT.hp} · 공격력 ×${CFG.NIGHT.dmg} · 골드 감액 없음`; }
 }
+const nightK=k=>run&&run.night?CFG.NIGHT[k]:1; // 야간 작업 배율 (평소 1)
 function spawnRadius(){ return Math.hypot(V.w,V.h)/2/V.zoom+50; }
 // 몬스터 체력 배율: 직선 상승 + 30스테이지 이후 지수 상승 (후반 무기·스킬 성장 속도에 맞춤)
-const mobHpMul=st=>CFG.MONSTER_HP_MUL*(1+CFG.MONSTER_HP_STAGE*(st-1)+CFG.MONSTER_HP_STAGE2*Math.max(0,st-25))*Math.pow(CFG.MONSTER_HP_EXP,Math.max(0,st-30))*Math.pow(CFG.MONSTER_HP_LATE_DAMP,clamp(st-CFG.MONSTER_HP_LATE_FROM,0,CFG.MONSTER_HP_LATE_N))*(isBossStage(st)?CFG.BOSS_ADD_HP:1);
+const mobHpMul=st=>CFG.MONSTER_HP_MUL*(1+CFG.MONSTER_HP_STAGE*(st-1)+CFG.MONSTER_HP_STAGE2*Math.max(0,st-25))*Math.pow(CFG.MONSTER_HP_EXP,Math.max(0,st-30))*Math.pow(CFG.MONSTER_HP_LATE_DAMP,clamp(st-CFG.MONSTER_HP_LATE_FROM,0,CFG.MONSTER_HP_LATE_N))*(isBossStage(st)?CFG.BOSS_ADD_HP:1)*nightK('hp');
 const spitChance=st=>st>=CFG.SPIT_LATE[0]?Math.min(CFG.SPIT_LATE[2],CFG.SPIT_CHANCE[2]+CFG.SPIT_LATE[1]*(st-CFG.SPIT_LATE[0]+1)):Math.min(CFG.SPIT_CHANCE[2],CFG.SPIT_CHANCE[0]+CFG.SPIT_CHANCE[1]*st);
 const spitEarly=st=>{ const E=CFG.SPIT_EARLY; return st>=E[1]?1:E[2]+(1-E[2])*clamp((st-E[0])/(E[1]-E[0]),0,1); };
 /* 지반 침하: 일반 공정(S25부터)에서 한자리(반경 70)에 5초 넘게 머물면 발밑에 붉은 예고 원 → 0.9초 뒤 무너짐.
@@ -2045,8 +2056,8 @@ function pickType(){ const t=run.spc; return (t>0&&Math.random()<.25)?t-1:t; } /
 function spawnEnemy(ti,ang){
   if(run.enemies.length>=(run.boss?CFG.BOSS_ADD_MAX:CFG.MAX_ENEMIES)) return;
   const f=FISH[ti], a=ang??rand(0,TAU), R=spawnRadius()+rand(0,60), hp=f.hp*run.scale*mobHpMul(run.stage);
-  run.enemies.push({f,x:P.x+Math.cos(a)*R,y:P.y+Math.sin(a)*R,hp,maxHp:hp,r:f.r,spd:f.spd*(1+CFG.MOB_SPD_STAGE*run.stage)*rand(.9,1.1),
-    dmg:Math.round(f.dmg*run.scale*CFG.MONSTER_DMG_MUL),xp:f.xp,flash:0,ang:a+Math.PI,wob:rand(0,TAU),slowT:0,dotT:0,dotDps:0,orbitCd:0,
+  run.enemies.push({f,x:P.x+Math.cos(a)*R,y:P.y+Math.sin(a)*R,hp,maxHp:hp,r:f.r,spd:f.spd*(1+CFG.MOB_SPD_STAGE*run.stage)*rand(.9,1.1)*nightK('spd'),
+    dmg:Math.round(f.dmg*run.scale*CFG.MONSTER_DMG_MUL*nightK('dmg')),xp:f.xp,flash:0,ang:a+Math.PI,wob:rand(0,TAU),slowT:0,dotT:0,dotDps:0,orbitCd:0,
     spitter:run.stage>=CFG.SPIT_FROM&&f.kind!=='plankton'&&Math.random()<spitChance(run.stage)?1:0, spitT:rand(.6,CFG.SPIT_CD[1])});
 }
 function spawnElite(){
@@ -2055,8 +2066,8 @@ function spawnElite(){
   // 정예 변이 (S8부터): 신속(빠르고 약함)·갑각(단단하고 밀리지 않음)·분열(죽으면 새끼 무리) — 다른 뱀서류 정예의 무작위 특성에서 착안
   const ks=Object.keys(CFG.ELITE_AFFIX).filter(k=>k!=='split'||run.stage>=CFG.SPLIT_FROM), afx=run.stage>=8?ks[Math.floor(Math.random()*ks.length)]:null, A=afx?CFG.ELITE_AFFIX[afx]:{hp:1,spd:1};
   const hp=f.hp*run.scale*mobHpMul(run.stage)*CFG.ELITE_HP*A.hp;
-  run.enemies.push({f,elite:true,afx,x:P.x+Math.cos(a)*R,y:P.y+Math.sin(a)*R,hp,maxHp:hp,r:f.r*1.7,spd:f.spd*.85*A.spd,
-    dmg:Math.round(f.dmg*run.scale*CFG.MONSTER_DMG_MUL*1.5),xp:f.xp*15,flash:0,ang:a+Math.PI,wob:0,slowT:0,dotT:0,dotDps:0,orbitCd:0});
+  run.enemies.push({f,elite:true,afx,x:P.x+Math.cos(a)*R,y:P.y+Math.sin(a)*R,hp,maxHp:hp,r:f.r*1.7,spd:f.spd*.85*A.spd*nightK('spd'),
+    dmg:Math.round(f.dmg*run.scale*CFG.MONSTER_DMG_MUL*1.5*nightK('dmg')),xp:f.xp*15,flash:0,ang:a+Math.PI,wob:0,slowT:0,dotT:0,dotDps:0,orbitCd:0});
   SND.play('elite');
   toast(afx?`정예 몬스터 출현 · ${A.name}`:'정예 몬스터 출현',afx==='split'?`죽으면 새끼 무리로 갈라집니다 · 잡으면 현장 지원 상자`:afx==='armor'?`단단하고 밀리지 않습니다 · 잡으면 현장 지원 상자`:afx==='swift'?`빠르게 덮쳐 옵니다 · 잡으면 현장 지원 상자`:`정예 ${f.name}을(를) 잡으면 현장 지원 상자가 나옵니다`,afx?A.col:'#ffd84a');
 }
@@ -2165,7 +2176,7 @@ function levelShock(){ // 레벨업 충격파: 주변 적을 밀어내고 피해
 }
 function addGold(amount,wx,wy,nCoins){
   const st=run?run.stage:1, GE=CFG.GOLD_EARLY, early=1+GE[0]*clamp((GE[2]-st)/Math.max(1,GE[2]-GE[1]),0,1); // 초반·중반 골드 보정
-  amount=Math.round(amount*CFG.GOLD_MUL*early*(1+.03*invLv('gold'))*(run&&run.replay?CFG.REPLAY_GOLD:1)); // 본사 투자 '협력업체 단가'는 모든 골드에 적용, 지난 공정 다시 하기는 골드 절반
+  amount=Math.round(amount*CFG.GOLD_MUL*early*(1+.03*invLv('gold'))*(run&&run.replay?(run.night?CFG.NIGHT.gold:CFG.REPLAY_GOLD):1)); // 야간 작업은 골드 감액 없음 // 본사 투자 '협력업체 단가'는 모든 골드에 적용, 지난 공정 다시 하기는 골드 절반
   save.gold+=amount; run.goldEarned+=amount;
   if(SIM.on) return;
   SND.play((nCoins||1)>=10?'coins':'coin');
@@ -2270,7 +2281,7 @@ function fire(){
   }
   if(ST.evStorm&&run.throwN%12===0){ const a0=rand(0,TAU); for(let i=0;i<8;i++){ const a=a0+i/8*TAU; // 진화 '파이프 폭풍': 사방으로 8개
     run.shots.push({kind:'pipe',x:P.x,y:P.y-8,vx:Math.cos(a)*ST.shotSpeed,vy:Math.sin(a)*ST.shotSpeed,rot:rand(0,TAU),dmg:ST.dmg*.8,pierce:ST.pierce,bounce:0,life,r:10,hit:new Set(),crit:Math.random()<ST.crit,trail:[],evo:true}); }
-    if(!SIM.on) run.fx.push({type:'ring',x:P.x,y:P.y,t:0,life:.35,r:90,color:'#ff7a4d'}); }
+    if(!SIM.on){ run.fx.push({type:'ring',x:P.x,y:P.y,t:0,life:.35,r:90,color:'#ff7a4d'}); run.fx.push({type:'storm',x:P.x,y:P.y,a:a0,t:0,life:.32}); } }
   P.face=Math.cos(Math.atan2(targets[0].y-P.y,targets[0].x-P.x))>=0?1:-1;
   P.throwT=.18; SND.play('throw');
   return true;
@@ -2734,6 +2745,13 @@ function drawShot(s,time){
   if(s.kind==='bounce'){if(s.trail.length>=4){ctx.strokeStyle='rgba(90,168,255,.45)'; ctx.lineWidth=4; ctx.beginPath(); ctx.moveTo(s.trail[0],s.trail[1]); for(let i=2;i<s.trail.length;i+=2) ctx.lineTo(s.trail[i],s.trail[i+1]); ctx.lineTo(s.x,s.y); ctx.stroke();}
     const q=1+.18*Math.sin(time*30); ctx.fillStyle='#5aa8ff'; ctx.beginPath(); ctx.ellipse(s.x,s.y,6*q,6/q,s.rot,0,TAU); ctx.fill(); ctx.fillStyle='rgba(225,240,255,.9)'; ctx.beginPath(); ctx.arc(s.x-1.5,s.y-1.5,2,0,TAU); ctx.fill(); return;}
   if(s.kind==='shard'){ctx.save(); ctx.translate(s.x,s.y); ctx.rotate(s.rot); ctx.fillStyle='rgba(200,245,255,.9)'; ctx.beginPath(); ctx.moveTo(5,0); ctx.lineTo(-3,-2.5); ctx.lineTo(-2,2.5); ctx.fill(); ctx.restore(); return;}
+  if(s.evo){ // 진화 '파이프 폭풍' 파이프: 주황 불꽃 꼬리 + 빛무리 (일반 투척과 구분되게)
+    const sp=Math.hypot(s.vx,s.vy)||1, ux=s.vx/sp, uy=s.vy/sp;
+    ctx.save(); ctx.globalCompositeOperation='lighter';
+    const g=ctx.createLinearGradient(s.x,s.y,s.x-ux*46,s.y-uy*46); g.addColorStop(0,'rgba(255,150,70,.75)'); g.addColorStop(1,'rgba(255,90,40,0)');
+    ctx.strokeStyle=g; ctx.lineWidth=9; ctx.lineCap='round'; ctx.beginPath(); ctx.moveTo(s.x,s.y); ctx.lineTo(s.x-ux*46,s.y-uy*46); ctx.stroke();
+    const r=ctx.createRadialGradient(s.x,s.y,1,s.x,s.y,20); r.addColorStop(0,'rgba(255,200,120,.55)'); r.addColorStop(1,'rgba(255,120,60,0)'); ctx.fillStyle=r; ctx.beginPath(); ctx.arc(s.x,s.y,20,0,TAU); ctx.fill();
+    ctx.restore(); }
   const col=ST.wdef.color;
   if(s.trail.length>=4){ctx.strokeStyle=col; ctx.globalAlpha=.35; ctx.lineWidth=3; ctx.beginPath(); ctx.moveTo(s.trail[0],s.trail[1]); for(let i=2;i<s.trail.length;i+=2) ctx.lineTo(s.trail[i],s.trail[i+1]); ctx.lineTo(s.x,s.y); ctx.stroke(); ctx.globalAlpha=1;}
   ctx.save(); ctx.translate(s.x,s.y); ctx.rotate(s.rot);
@@ -2818,7 +2836,7 @@ function drawHUD(time,dt){
   const sy=narrow?110:30;
   ctx.textAlign='center'; ctx.fillStyle='#e9f2f7'; ctx.font=`${narrow?16:18}px ${FD}`;
   const bbest=run.boss&&save.bossBest?save.bossBest[String(run.stage)]:null; // 보스전 경과 시간 + 최고 기록 (기록 경쟁 — 뱀서류·DRG: Survivor의 타이머처럼)
-  ctx.fillText(run.boss?(narrow?`BOSS ${fmtTime(run.t)}${bbest!=null?` · 최고 ${fmtTime(bbest)}`:''}`:`STAGE ${run.stage} · BOSS`):`STAGE ${run.stage}`,V.w/2,sy-(narrow?0:6));
+  ctx.fillText((run.boss?(narrow?`BOSS ${fmtTime(run.t)}${bbest!=null?` · 최고 ${fmtTime(bbest)}`:''}`:`STAGE ${run.stage} · BOSS`):`STAGE ${run.stage}`)+(run.night?' ☾':''),V.w/2,sy-(narrow?0:6));
   if(run.boss&&!narrow){ ctx.font=`700 15px ${FB}`; const ahead=bbest!=null&&run.t<=bbest; ctx.fillStyle=bbest==null?'rgba(233,242,247,.8)':ahead?'#5fd39a':'#ff9d84'; ctx.fillText(`${fmtTime(run.t)}${bbest!=null?` · 최고 ${fmtTime(bbest)}`:''}`,V.w/2,sy+14); }
   if(!run.boss){const left=Math.max(0,run.duration-run.t); ctx.font=`700 ${narrow?14:15}px ${FB}`; ctx.fillStyle=left<10?'#ffc21a':'rgba(233,242,247,.8)'; ctx.fillText(fmtTime(Math.ceil(left)),V.w/2,sy+(narrow?18:14));}
   const b=run.bossRef;
@@ -2970,6 +2988,10 @@ function render(dt,time){
     else if(f.type==='ring'){ctx.strokeStyle=f.color; ctx.globalAlpha=1-t; ctx.lineWidth=5*(1-t)+1; ctx.beginPath(); ctx.arc(f.x,f.y,f.r*Math.sqrt(t),0,TAU); ctx.stroke(); ctx.globalAlpha=1;}
     else if(f.type==='strike'){ctx.strokeStyle=`rgba(200,210,255,${1-t})`; ctx.lineWidth=4; ctx.beginPath(); ctx.moveTo(f.x+rand(-10,10),f.y-260); for(let i=1;i<=6;i++) ctx.lineTo(f.x+rand(-14,14),f.y-260+i*43); ctx.stroke(); ctx.fillStyle=`rgba(200,210,255,${.4*(1-t)})`; ctx.beginPath(); ctx.arc(f.x,f.y,45,0,TAU); ctx.fill();}
     else if(f.type==='spark'){ctx.strokeStyle=`rgba(255,240,190,${1-t})`; ctx.lineWidth=2; for(let k=-1;k<=1;k++){const a=f.a+k*.5, r0=4+t*6, r1=10+t*16; ctx.beginPath(); ctx.moveTo(f.x+Math.cos(a)*r0,f.y+Math.sin(a)*r0); ctx.lineTo(f.x+Math.cos(a)*r1,f.y+Math.sin(a)*r1); ctx.stroke();}}
+    else if(f.type==='storm'){ // 파이프 폭풍: 사방으로 뻗는 8줄기 섬광
+      ctx.save(); ctx.globalCompositeOperation='lighter'; ctx.lineCap='round';
+      for(let i=0;i<8;i++){ const a=f.a+i/8*TAU, r0=24+70*t, r1=r0+40*(1-t); ctx.strokeStyle=`rgba(255,${150+Math.round(60*(1-t))},80,${.7*(1-t)})`; ctx.lineWidth=6*(1-t)+1.5; ctx.beginPath(); ctx.moveTo(f.x+Math.cos(a)*r0,f.y+Math.sin(a)*r0); ctx.lineTo(f.x+Math.cos(a)*r1,f.y+Math.sin(a)*r1); ctx.stroke(); }
+      ctx.restore(); }
     else if(f.type==='boom'){ctx.strokeStyle=`rgba(95,240,255,${1-t})`; ctx.lineWidth=6*(1-t)+1; ctx.beginPath(); ctx.arc(f.x,f.y,80*Math.sqrt(t),0,TAU); ctx.stroke(); ctx.fillStyle=`rgba(95,240,255,${.25*(1-t)})`; ctx.fill();}
     else if(f.type==='corpse'){
       const S=getSprites(f.f), k=1+.35*t; ctx.save(); ctx.globalAlpha=(1-t)*(1-t); ctx.translate(f.x,f.y); ctx.rotate(f.ang); if(Math.cos(f.ang)<0) ctx.scale(1,-1);
@@ -2987,7 +3009,8 @@ function render(dt,time){
   // 어둠 (심해) + 빛줄기
   ctx.setTransform(V.dpr,0,0,V.dpr,0,0);
   ctx.fillStyle=dark; ctx.fillRect(0,0,V.w,V.h);
-  drawRays(time);
+  if(run.night){ ctx.fillStyle='rgba(10,8,46,.3)'; ctx.fillRect(0,0,V.w,V.h); } // 야간 작업: 화면 전체를 남보라빛으로 어둡게 (헤드램프·발광이 더 돋보임)
+  else drawRays(time);
   drawSnow(dt,time,P.x,P.y);
   if(P.inv>ST.iframe*.6){ctx.fillStyle='rgba(240,60,40,.12)'; ctx.fillRect(0,0,V.w,V.h);}
   { const fr=P.hp/ST.maxHp; if(!run.dead&&fr<.35){ // 위험 경고: 체력 35% 미만이면 화면 가장자리가 붉게 맥동 (심장 박동 소리와 함께)
@@ -3121,6 +3144,9 @@ function refreshOffice(){
   $('#ofSub').textContent=`Lv ${save.level} · 최고 클리어 STAGE ${save.maxCleared}${save.maxCleared?` · ★ ${starTotal()}/${save.maxCleared*3}`:''} · 처치 ${fmt(save.totalKills)}`;
   $('#ofGold').textContent=fmt(save.gold); $('#ofSp').textContent=save.sp;
   const b=$('#spBadge'); b.hidden=!save.sp; b.textContent=save.sp;
+  { // 탭 알림 점(모바일 뱀서류의 '할 수 있는 일' 표시): 장착 장비 중 지금 골드로 강화할 수 있는 개수, 지금 살 수 있는 본사 투자 개수
+    const ne=[equipped(),...GEAR_SLOTS.map(gearOn)].filter(x=>x&&x.uid!=='_'&&x.plus<MAX_PLUS&&save.gold>=enhCostOf(x)).length, eb=$('#enhBadge'); if(eb){ eb.hidden=!ne; eb.textContent=ne; eb.title=`지금 강화할 수 있는 장착 장비 ${ne}개`; }
+    const ni=INVEST.filter(d=>invLv(d.id)<d.max&&save.gold>=investCost(d)).length, ib=$('#invBadge'); if(ib){ ib.hidden=!ni; ib.textContent=ni; ib.title=`지금 살 수 있는 투자 ${ni}개`; } }
   const next=save.stage;
   $('#btnGo').textContent=`STAGE ${next} 출근하기`;
   $('#goInfo').innerHTML=isBossStage(next)?`보스 <b style="color:#ff9d84">${BOSS_NAMES[next/10-1]}</b> 출현 공정입니다.`:`${FISH[speciesOf(next)].name} 구간 · ${stageDuration(next)}초 버티기`+(save.sp?` · 스킬 포인트 ${save.sp}개를 먼저 사용하세요`:'');
@@ -3479,17 +3505,21 @@ function renderRanks(body){
 const starTotal=()=>Object.values(save.stars||{}).reduce((a,n)=>a+n,0);
 function stageLogHtml(){
   const n=save.maxCleared; if(!n) return '';
-  let cells=''; for(let i=1;i<=n;i++){ const st=(save.stars&&save.stars[i])||0, bb=save.bossBest&&save.bossBest[i];
-    cells+=`<button type="button" class="stg${isBossStage(i)?' boss':''}" data-stg="${i}" aria-label="STAGE ${i} 별 ${st}개 다시 하기"><b>${i}</b><small><em>${'★'.repeat(st)}</em>${'★'.repeat(3-st)}</small>${bb!=null?`<small style="letter-spacing:0;color:var(--muted)">${fmtTime(bb)}</small>`:''}</button>`; }
-  return `<div class="buildsec" style="margin-top:18px"><h3>공정 기록 <span style="font-family:var(--f-body);font-size:13px;color:var(--muted)">별 ${starTotal()} / ${n*3}</span></h3>
+  let cells=''; for(let i=1;i<=n;i++){ const st=(save.stars&&save.stars[i])||0, bb=save.bossBest&&save.bossBest[i], nt=save.night&&save.night[i];
+    cells+=`<button type="button" class="stg${isBossStage(i)?' boss':''}${nt?' nt':''}" data-stg="${i}" aria-label="STAGE ${i} 별 ${st}개${nt?' 야간 작업 완료':''} 다시 하기"><b>${nt?'☾':''}${i}</b><small><em>${'★'.repeat(st)}</em>${'★'.repeat(3-st)}</small>${bb!=null?`<small style="letter-spacing:0;color:var(--muted)">${fmtTime(bb)}</small>`:''}</button>`; }
+  const nN=Object.keys(save.night||{}).length;
+  return `<div class="buildsec" style="margin-top:18px"><h3>공정 기록 <span style="font-family:var(--f-body);font-size:13px;color:var(--muted)">별 ${starTotal()} / ${n*3}${nN?` · ☾ ${nN}`:''}</span></h3>
     <p style="font-size:12px">★1 클리어 · ★2 부활 없이 최저 체력 ${Math.round(CFG.STAR_HP[0]*100)}% 이상 · ★3 부활 없이 최저 체력 ${Math.round(CFG.STAR_HP[1]*100)}% 이상. 처음 얻는 별마다 보너스 골드. 공정을 두 번 누르면 다시 할 수 있습니다(골드 획득 절반, 진행 공정은 그대로).</p>
+    <label class="nightopt"><input type="checkbox" id="optNight" ${nightOpt?'checked':''}><span><b>☾ 야간 작업으로 다시 하기</b> — 물고기 체력 ×${CFG.NIGHT.hp}·속도 ×${CFG.NIGHT.spd}·공격력 ×${CFG.NIGHT.dmg}, 대신 골드 감액 없음. 공정마다 첫 야간 클리어 보너스 골드</span></label>
     <div class="stagegrid" id="stageGrid">${cells}</div></div>`;
 }
+let nightOpt=false; // 공정 기록에서 '야간 작업' 선택 여부 (이번 접속 동안만)
 function bindStageLog(body){
   let armed=null;
+  const on=body.querySelector('#optNight'); if(on) on.onchange=()=>{ nightOpt=on.checked; armed=null; body.querySelectorAll('.stg.arm').forEach(x=>x.classList.remove('arm')); };
   body.querySelectorAll('[data-stg]').forEach(b=>b.onclick=()=>{ const n=+b.dataset.stg;
-    if(armed!==n){ armed=n; body.querySelectorAll('.stg.arm').forEach(x=>x.classList.remove('arm')); b.classList.add('arm'); toastOffice(`STAGE ${n} 다시 하기 — 한 번 더 누르면 출근합니다 (골드 절반)`); return; }
-    startStage(n); });
+    if(armed!==n){ armed=n; body.querySelectorAll('.stg.arm').forEach(x=>x.classList.remove('arm')); b.classList.add('arm'); toastOffice(nightOpt?`☾ STAGE ${n} 야간 작업 — 한 번 더 누르면 출근합니다 (고난도, 골드 감액 없음)`:`STAGE ${n} 다시 하기 — 한 번 더 누르면 출근합니다 (골드 절반)`); return; }
+    startStage(n,nightOpt); });
 }
 function reqList(r){
   const items=[[save.level>=r.minLevel,`레벨 ${r.minLevel} 달성 (현재 ${save.level})`],[save.maxCleared>=r.minStage,`스테이지 ${r.minStage} 클리어 (최고 ${save.maxCleared})`],...r.conditions.map(c=>[c.check(save),c.label])];
@@ -3538,6 +3568,8 @@ function stageCleared(){
   { const mh=run.minHp??1, st=run.revived?1:mh>=CFG.STAR_HP[1]?3:mh>=CFG.STAR_HP[0]?2:1, k=String(cleared), prev=(save.stars&&save.stars[k])||0;
     run.stars={n:st,prev,gold:0};
     if(st>prev&&(!testMode||SIM.on)){ save.stars[k]=st; const g=Math.round(CFG.STAR_GOLD[0]*(1+cleared*CFG.STAR_GOLD[1])*(st-prev)*CFG.GOLD_MUL*(1+.03*invLv('gold'))); save.gold+=g; run.goldEarned+=g; run.stars.gold=g; } }
+  if(run.night){ const k=String(cleared); save.night=save.night||{}; run.nightRec={first:!save.night[k],gold:0}; // 야간 작업: 공정마다 첫 클리어 보너스
+    if(run.nightRec.first&&(!testMode||SIM.on)){ save.night[k]=1; const g=Math.round(CFG.STAR_GOLD[0]*(1+cleared*CFG.STAR_GOLD[1])*CFG.NIGHT.first*CFG.GOLD_MUL*(1+.03*invLv('gold'))); save.gold+=g; run.goldEarned+=g; run.nightRec.gold=g; } }
   const promos=checkPromotion(), last=cleared>=CFG.MAX_STAGE;
   save.stage=Math.min(CFG.MAX_STAGE,save.maxCleared+1); // 지난 공정을 다시 해도 다음 진행 공정으로 돌아옴
   persist();
@@ -3569,7 +3601,8 @@ function showClear(cleared,promos,last){
     <div class="eyebrow">작업일보 · STAGE ${cleared}${run.boss?' · 보스 처치':''}</div>
     <h2>${last?'준공 완료. 모든 공정을 마쳤습니다':`STAGE ${cleared} 공정 완료`}</h2>
     ${run.stars?`<div class="starline" aria-label="공정 평가 별 ${run.stars.n}개">${[1,2,3].map(i=>`<i class="${i<=run.stars.n?'on':''}${i<=run.stars.n&&i>run.stars.prev?' new':''}" style="animation-delay:${.15+i*.18}s">★</i>`).join('')}
-      <span>${run.stars.gold?`새 별 +${fmt(run.stars.gold)} G`:run.stars.n<3?'':'최고 평가'}${run.stars.n<3?`${run.stars.gold?' · ':''}${run.revived?'부활 없이':''}${run.stars.n<2?`최저 체력 ${Math.round(CFG.STAR_HP[0]*100)}% 이상이면 ★2`:`최저 체력 ${Math.round(CFG.STAR_HP[1]*100)}% 이상이면 ★3`}`:''}${run.replay?' · 다시 하기(골드 ½)':''}</span></div>`:''}
+      <span>${run.stars.gold?`새 별 +${fmt(run.stars.gold)} G`:run.stars.n<3?'':'최고 평가'}${run.stars.n<3?`${run.stars.gold?' · ':''}${run.revived?'부활 없이':''}${run.stars.n<2?`최저 체력 ${Math.round(CFG.STAR_HP[0]*100)}% 이상이면 ★2`:`최저 체력 ${Math.round(CFG.STAR_HP[1]*100)}% 이상이면 ★3`}`:''}${run.replay?(run.night?' · ☾ 야간 작업':' · 다시 하기(골드 ½)'):''}</span></div>`:''}
+    ${run.nightRec?`<div class="note" style="border-color:rgba(127,140,255,.6);color:var(--ink)">☾ 야간 작업 완료${run.nightRec.gold?` · 첫 야간 클리어 보너스 <b style="color:#ffd84a">+${fmt(run.nightRec.gold)} G</b>`:' · 이미 야간 클리어한 공정입니다'}</div>`:''}
     <div class="report"><div><small>작업 시간</small><b>${fmtTime(run.t)}</b></div><div><small>처치 수</small><b>${fmt(run.kills)}</b></div>
       <div><small>골드</small><b>+${fmt(run.goldEarned)}</b></div><div><small>레벨</small><b>Lv ${save.level}${run.levelsGained?` <span style="font-size:13px;color:var(--ok)">+${run.levelsGained}</span>`:''}</b></div></div>
     <p style="font-size:13px">최고 콤보 ${run.bestCombo}${run.frenzies?` · 몰아치기 ${run.frenzies}회`:''}${run.goldfish?` · 황금 물고기 ${run.goldfish}마리`:''}${run.posts?` · 작업 거점 확보 ${run.posts}`:''}${run.subs?` · 지반 침하 ${run.subs}회`:''} · 정예 처치 ${run.elitesKilled}${Object.keys(run.boons).length?` · 받은 현장 지원 ${Object.values(run.boons).reduce((a,b)=>a+b,0)}개`:''}</p>
@@ -3600,7 +3633,7 @@ function showDead(){
   if(SIM.on){ SIM.result={cleared:false,stage:run.stage,t:run.t,kills:run.kills,xp:run.xpEarned,level:save.level,dmgTaken:Math.round(run.dmgTaken||0),minHp:0}; return; }
   $('#btnPause').hidden=true;
   $('#deadBody').innerHTML=`
-    <div class="eyebrow" style="color:var(--rust)">안전사고 발생</div><h2>STAGE ${run.stage} 작업 중단</h2>
+    <div class="eyebrow" style="color:var(--rust)">안전사고 발생${run.night?' · ☾ 야간 작업':''}</div><h2>STAGE ${run.stage} 작업 중단</h2>
     <div class="report"><div><small>버틴 시간</small><b>${fmtTime(run.t)}</b></div><div><small>처치 수</small><b>${fmt(run.kills)}</b></div>
       <div><small>골드</small><b>+${fmt(run.goldEarned)}</b></div><div><small>레벨</small><b>Lv ${save.level}</b></div></div>
     ${run.xpGold?`<div class="note">최대 레벨 이후 경험치 → <b style="color:#ffd84a">+${fmt(run.xpGold)} G</b></div>`:''}
@@ -3609,7 +3642,7 @@ function showDead(){
     <div class="row"><button class="btn" id="btnRetry" type="button">STAGE ${run.stage} 다시 도전</button>
       <button class="btn ghost" id="btnOffice2" type="button">현장 사무소</button></div>`;
   show('#dead');
-  const n=run.stage; $('#btnRetry').onclick=()=>startStage(n); $('#btnRetry').focus({preventScroll:true});
+  const n=run.stage, nt=!!run.night; $('#btnRetry').onclick=()=>startStage(n,nt); // 야간 작업은 야간 작업으로 다시 도전 $('#btnRetry').focus({preventScroll:true});
   $('#btnOffice2').onclick=openOffice;
 }
 /* 일시정지 화면 빌드 요약: 뱀서류의 일시정지 능력치 표처럼 지금 빌드의 세부 수치·습득 스킬·이번 공정 현장 지원을 한눈에 보여 줌 */
@@ -3731,11 +3764,11 @@ Object.defineProperty(window,'__JOGONG_SIM__',{value:{
     return {t:run.t,n:run.enemies.length,kills:run.kills,minD:Math.round(md),hp:Math.round(P.hp),max:st.maxHp,range:Math.round(st.range),spawnR:Math.round(spawnRadius()),res:SIM.result,boss:run.bossRef?Math.round(run.bossRef.hp/run.bossRef.maxHp*100):null,src:Object.fromEntries(Object.entries(run.dmg).map(([k,v])=>[k,Math.round(v)]))}; },
   test(stage,lv,mode){ this.reset(mode); save=testSave(stage,lv); },
   reset(mode){ SIM.on=true; SIM.bot=true; SIM.stand=!!(mode&&mode.stand); SIM.noSurvive=!!(mode&&mode.noSurvive); save=freshSave(); session=null; guest=true; testMode=true; },
-  play(stage,maxSec){
-    SIM.on=true; SIM.bot=true; SIM.result=null; startStage(stage); hideAll();
+  play(stage,maxSec,night){ // night: 야간 작업(클리어한 공정만)
+    SIM.on=true; SIM.bot=true; SIM.result=null; startStage(stage,night); hideAll();
     const dt=1/30; let n=0; const lim=(maxSec||200)*30;
     while(!SIM.result&&n++<lim) update(dt);
-    const r=SIM.result||{cleared:false,timeout:true,stage,level:save.level}; r.elites=run.elitesKilled; r.combo=run.bestCombo; r.frenzies=run.frenzies||0; r.goldfish=run.goldfish||0; r.posts=run.posts||0; r.subs=run.subs||0; r.goldRun=run.goldEarned;
+    const r=SIM.result||{cleared:false,timeout:true,stage,level:save.level}; r.elites=run.elitesKilled; r.combo=run.bestCombo; r.frenzies=run.frenzies||0; r.goldfish=run.goldfish||0; r.posts=run.posts||0; r.subs=run.subs||0; r.goldRun=run.goldEarned; r.night=!!run.night;
     r.src=Object.fromEntries(Object.entries(run.dmg).map(([k,v])=>[k,Math.round(v)])); r.lvAfter=save.level; r.gold=save.gold; r.sp=save.sp; r.spent=SKILLS.reduce((a,x)=>a+sk(x.id),0); r.weapon=equipped().type+'+'+equipped().plus; r.hp=P?Math.round(P.hp):0; r.maxHp=stats().maxHp;
     return r;
   },
