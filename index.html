@@ -289,8 +289,26 @@ details.dev summary{cursor:pointer}
 .enhauto .row{gap:8px}
 .enhauto select{padding:8px 10px;border-radius:4px;border:1px solid var(--line);background:#06131e;color:var(--ink);font:inherit;font-size:14px}
 .enhauto small{font-size:12px;color:var(--muted);line-height:1.5}
+/* 공정 평가(별) + 공정 기록(지난 공정 다시 하기) */
+.starline{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+.starline i{font-style:normal;font-size:30px;line-height:1;color:#2a4356;text-shadow:0 2px 0 rgba(0,0,0,.4)}
+.starline i.on{color:#ffc21a}
+.starline i.new{animation:starPop .5s cubic-bezier(.2,.9,.3,1.4) backwards}
+.starline span{margin-left:8px;font-size:13px;color:var(--muted)}
+@keyframes starPop{0%{transform:scale(0) rotate(-40deg);opacity:0}70%{transform:scale(1.35) rotate(8deg);opacity:1}100%{transform:none}}
+@media (prefers-reduced-motion:reduce){.starline i.new{animation:none}}
+.stagegrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:6px}
+.stg{appearance:none;cursor:pointer;background:var(--panel-2);border:1px solid var(--line);border-radius:4px;padding:6px 4px;color:var(--ink);font:inherit;display:flex;flex-direction:column;align-items:center;gap:2px;min-width:0}
+.stg b{font-size:13px;font-variant-numeric:tabular-nums}
+.stg small{font-size:11px;letter-spacing:1px;color:#2f4d63}
+.stg small em{font-style:normal;color:#ffc21a}
+.stg.boss{border-color:rgba(255,107,107,.55)}
+.stg.arm{border-color:var(--hazard);background:rgba(255,194,26,.12)}
+.stg:hover{border-color:var(--hazard)}
 @media (prefers-reduced-motion:reduce){.btn{transition:none}}
 </style></head><body>
+
+
 
 <div id="wrap">
   <canvas id="cv" aria-label="게임 화면"></canvas>
@@ -353,7 +371,7 @@ details.dev summary{cursor:pointer}
         <button type="button" role="tab" data-tab="inv" aria-selected="false"><span class="long">인벤토리 · 장비</span><span class="short">장비</span></button>
         <button type="button" role="tab" data-tab="enh" aria-selected="false"><span class="long">장비 강화</span><span class="short">강화</span></button>
         <button type="button" role="tab" data-tab="invest" aria-selected="false"><span class="long">본사 투자</span><span class="short">투자</span></button>
-        <button type="button" role="tab" data-tab="rank" aria-selected="false"><span class="long">직급 · 복장</span><span class="short">직급</span></button>
+        <button type="button" role="tab" data-tab="rank" aria-selected="false"><span class="long">직급 · 공정 기록</span><span class="short">직급</span></button>
         <button type="button" role="tab" data-tab="code" aria-selected="false"><span class="long">세이브 코드</span><span class="short">코드</span></button>
       </div>
       <div class="tabbody" id="tabBody"></div>
@@ -675,6 +693,9 @@ const CFG={
   SUBSIDE:[25,5,2.4,58,.9,.15,.05,70], // 지반 침하: [시작 스테이지, 한자리에 머문 시간(초), 간격(초), 반경, 예고(초), 첫 피해(최대 체력 비율), 연속될 때마다 추가, 이 거리 안이면 '제자리'] — 일반 공정에서 오래 서 있으면 발밑이 무너짐
   SPLIT_FROM:15,             // 정예 변이 '분열'은 15스테이지부터 (S8~14 초반에 새끼 무리가 너무 위협적이던 것)
   XP_OVER_GOLD:1,            // 최대 레벨(300) 이후 얻는 경험치 1당 골드 (골드 배율 적용 전) — 만렙 뒤에도 처치가 보상으로 이어지게
+  STAR_HP:[.3,.6],           // 공정 평가: ★2 = 부활 없이 최저 체력 30% 이상, ★3 = 부활 없이 최저 체력 60% 이상 (★1 = 클리어)
+  STAR_GOLD:[15,.5],         // 별을 처음 얻을 때마다 보너스 골드 = 15×(1+스테이지×0.5) (골드 배율 적용)
+  REPLAY_GOLD:.5,            // 이미 클리어한 공정을 다시 할 때 골드 획득 배율 (반복 사냥으로 강화가 너무 빨라지지 않도록)
   GOLD_EARLY:[.6,70,95],      // 골드 추가 배율 [A, 전부 적용하는 마지막 스테이지, 0이 되는 스테이지]: S1~70 ×(1+A), S95까지 서서히 줄어듦 (다음 장비 직전 무기·보호구 평균 +8 목표, 사람처럼 4부위를 고르게 강화하는 기준)
 };
 const stageDuration=s=>40+Math.min(18,Math.floor((s-1)/10)*2);
@@ -685,7 +706,7 @@ function monsterScale(stage){
 }
 
 /* 필요 경험치: 4구간 단계별 함수 (최대 레벨 300, 레벨 ≈ 스테이지 × 3.2 가 되도록 시뮬레이션으로 조정) */
-const XPC={a:14,s1:1.3, s2:5, g3:1.0135, s4:60}; // 2026-11-13: 서스 냉기 확산으로 S70~89 처치 수가 약 2배 → 구간3·4 필요 경험치 상향 (S90 도달 레벨 ~290 유지)
+const XPC={a:14,s1:1.3, s2:5, g3:1.0135, s4:80}; // 2026-11-14 s4 60→80: 만렙이 S92~93으로 일러 S90 이후 성장이 멈추던 것 → S96 전후 (S90 Lv ~288 유지) / 2026-11-13: 서스 냉기 확산으로 S70~89 처치 수가 약 2배 → 구간3·4 필요 경험치 상향 (S90 도달 레벨 ~290 유지)
 const XP_SEGMENTS=[
   {from:1,  to:60,  name:'빠른 성장'},
   {from:61, to:150, name:'빌드 구축'},
@@ -956,7 +977,7 @@ const PICKUPS=[
    6. 세이브 데이터 / 계정 / 저장소
    ===================================================================== */
 const freshSave=()=>({v:3,stage:1,maxCleared:0,level:1,xp:0,gold:0,rank:0,sp:0,skills:{},
-  inv:[{uid:'w1',type:'scrap',plus:0}],equip:{weapon:'w1',helmet:'g1',gloves:'g2',shoes:'g3'},nextUid:2,gear:starterGear(),nextGid:4,totalKills:0,bossKills:0,invest:{},bossBest:{}});
+  inv:[{uid:'w1',type:'scrap',plus:0}],equip:{weapon:'w1',helmet:'g1',gloves:'g2',shoes:'g3'},nextUid:2,gear:starterGear(),nextGid:4,totalKills:0,bossKills:0,invest:{},bossBest:{},stars:{}});
 let save=freshSave();
 let session=null;      // {id, key, salt, hash}
 let guest=false, testMode=false;
@@ -1085,6 +1106,9 @@ function normalizeSave(s){
   if(!d.invest||typeof d.invest!=='object') d.invest={};
   for(const k in d.invest){ const I=INVEST.find(x=>x.id===k); if(!I) delete d.invest[k]; else d.invest[k]=clamp(d.invest[k]|0,0,I.max); }
   if(!d.bossBest||typeof d.bossBest!=='object') d.bossBest={};
+  if(!d.stars||typeof d.stars!=='object') d.stars={}; // 공정 평가(별) — 예전 세이브는 빈 값
+  for(const k in d.stars){ const n=d.stars[k]|0; if(n<1||+k<1||+k>CFG.MAX_STAGE) delete d.stars[k]; else d.stars[k]=Math.min(3,n); }
+  d.stage=clamp(d.stage|0||1,1,Math.min(CFG.MAX_STAGE,(d.maxCleared|0)+1));
   for(const k in d.skills) if(!SKILL[k]){ d.sp+=d.skills[k]; delete d.skills[k]; }
   for(const k in d.skills) if(d.skills[k]>SKILL[k].max){ d.sp+=d.skills[k]-SKILL[k].max; d.skills[k]=SKILL[k].max; }
   return d;
@@ -1970,7 +1994,7 @@ function newRun(stage){
     postT:(!isBossStage(stage)&&stage>=CFG.OUTPOST[0])?rand(CFG.OUTPOST[1],CFG.OUTPOST[2]):-1, post:null, posts:0, postBuff:0};
 }
 function startStage(n){
-  hideAll(); newRun(n); save.stage=n; state='play';
+  hideAll(); newRun(n); run.replay=n<=save.maxCleared; if(!run.replay) save.stage=n; state='play'; // 지난 공정 다시 하기는 진행 위치(save.stage)를 바꾸지 않음
   $('#btnPause').hidden=false; SND.mood(isBossStage(n)?'boss':'play',tierOf(n));
   for(let i=0;i<8;i++) spawnEnemy(pickType());
   ST=stats(); P.hp=ST.maxHp; P.shield=ST.shield>0;
@@ -2124,7 +2148,7 @@ function levelShock(){ // 레벨업 충격파: 주변 적을 밀어내고 피해
 }
 function addGold(amount,wx,wy,nCoins){
   const st=run?run.stage:1, GE=CFG.GOLD_EARLY, early=1+GE[0]*clamp((GE[2]-st)/Math.max(1,GE[2]-GE[1]),0,1); // 초반·중반 골드 보정
-  amount=Math.round(amount*CFG.GOLD_MUL*early*(1+.03*invLv('gold'))); // 본사 투자 '협력업체 단가'는 모든 골드에 적용
+  amount=Math.round(amount*CFG.GOLD_MUL*early*(1+.03*invLv('gold'))*(run&&run.replay?CFG.REPLAY_GOLD:1)); // 본사 투자 '협력업체 단가'는 모든 골드에 적용, 지난 공정 다시 하기는 골드 절반
   save.gold+=amount; run.goldEarned+=amount;
   if(SIM.on) return;
   SND.play((nCoins||1)>=10?'coins':'coin');
@@ -2729,7 +2753,8 @@ function drawOffscreen(time){ // 화면 밖 보스·정예·지원 상자 방향
   }
   ctx.globalAlpha=1;
 }
-function drawHUD(time){
+function drawHUD(time,dt){
+  dt=dt||1/60; // 콤보 보너스·몰아치기 글자 시간은 실제 프레임 시간으로 (이전엔 1/60 고정이라 120Hz 화면에서 절반 시간만 표시)
   ctx.setTransform(V.dpr,0,0,V.dpr,0,0);
   const narrow=V.w<640;
   const need=xpToNext(save.level), fr=save.level>=CFG.MAX_LEVEL?1:clamp(save.xp/need,0,1);
@@ -2747,6 +2772,8 @@ function drawHUD(time){
   ctx.fillStyle='#fff'; ctx.font=`700 11px ${FB}`; ctx.fillText(`${Math.ceil(P.hp)} / ${ST.maxHp}`,20,60.5);
   ctx.fillStyle='rgba(233,242,247,.7)'; ctx.font=`500 12px ${FB}`;
   ctx.fillText(`처치 ${fmt(run.kills)} · XP ${save.level>=CFG.MAX_LEVEL?`MAX → 골드 ${fmt((run.xpOver||0)*CFG.XP_OVER_GOLD*CFG.GOLD_MUL)}`:fmt(save.xp)+'/'+fmt(need)}`,14,82);
+  { const mh=run.minHp??1, sn=run.revived?1:mh>=CFG.STAR_HP[1]?3:mh>=CFG.STAR_HP[0]?2:1, sw=ctx.measureText(`처치 ${fmt(run.kills)} · XP ${save.level>=CFG.MAX_LEVEL?`MAX → 골드 ${fmt((run.xpOver||0)*CFG.XP_OVER_GOLD*CFG.GOLD_MUL)}`:fmt(save.xp)+'/'+fmt(need)}`).width; // 현재 평가(별): 피해를 받으면 줄어드는 걸 바로 보여 줌
+    ctx.font=`700 12px ${FB}`; ctx.fillStyle='#ffc21a'; ctx.fillText('★'.repeat(sn),14+sw+10,82); const s1=ctx.measureText('★'.repeat(sn)).width; ctx.fillStyle='rgba(120,150,170,.55)'; ctx.fillText('★'.repeat(3-sn),14+sw+10+s1,82); }
   const gtxt=fmt(displayGold);
   ctx.font=`${22+goldPulse*14}px ${FD}`; ctx.textAlign='right';
   const gw=ctx.measureText(gtxt).width;
@@ -2762,9 +2789,9 @@ function drawHUD(time){
   hud.comboBottom=0;
   if(run.combo>=10){ ctx.textAlign='right'; ctx.font=`${(narrow?16:18)+Math.min(8,run.combo/50)}px ${FD}`; ctx.fillStyle=run.combo>=100?'#ff9d5c':'#ffe9b0'; ctx.fillText(`${run.combo} 콤보`,cX,cY); ctx.fillStyle=`rgba(255,157,92,.8)`; ctx.fillRect(cX-80,cY+10,80*clamp(run.comboT/2,0,1),3);
     const nx=Math.ceil((run.combo+1)/CFG.FRENZY_EVERY)*CFG.FRENZY_EVERY; ctx.font=`600 11px ${FB}`; ctx.fillStyle=run.frenzyT>0?'#ffb347':'rgba(255,200,140,.75)';
-    if(run.frenzyT>0&&run.frenzyPop){ run.frenzyPop=Math.max(0,run.frenzyPop-1/60); ctx.font=`700 ${11+Math.round(run.frenzyPop*5)}px ${FB}`; }
+    if(run.frenzyT>0&&run.frenzyPop){ run.frenzyPop=Math.max(0,run.frenzyPop-dt); ctx.font=`700 ${11+Math.round(run.frenzyPop*5)}px ${FB}`; }
     ctx.fillText(run.frenzyT>0?`몰아치기! 투척 +${Math.round(CFG.FRENZY_RATE*100)}% · ${run.frenzyT.toFixed(1)}초`:`몰아치기까지 ${nx-run.combo}`,cX,cY+24); hud.comboBottom=cY+24; }
-  if(run.comboMsg&&run.comboMsg.t>0){ run.comboMsg.t-=1/60; ctx.textAlign='right'; ctx.globalAlpha=clamp(run.comboMsg.t/.4,0,1); ctx.font=`700 12px ${FB}`; ctx.fillStyle='#ffd84a'; ctx.fillText(run.comboMsg.text,cX,cY+40); ctx.globalAlpha=1; }
+  if(run.comboMsg&&run.comboMsg.t>0){ run.comboMsg.t-=dt; ctx.textAlign='right'; ctx.globalAlpha=clamp(run.comboMsg.t/.4,0,1); ctx.font=`700 12px ${FB}`; ctx.fillStyle='#ffd84a'; ctx.fillText(run.comboMsg.text,cX,cY+40); ctx.globalAlpha=1; }
   const sy=narrow?110:30;
   ctx.textAlign='center'; ctx.fillStyle='#e9f2f7'; ctx.font=`${narrow?16:18}px ${FD}`;
   ctx.fillText(run.boss?`STAGE ${run.stage} · BOSS`:`STAGE ${run.stage}`,V.w/2,sy-(narrow?0:6));
@@ -2964,7 +2991,7 @@ function render(dt,time){
     if(b.hp<b.lastHp) b.trailHold=.45; b.lastHp=b.hp;
     if(b.trailHold>0) b.trailHold-=dt; else b.trail=Math.max(b.hp,b.trail-(b.trail-b.hp)*Math.min(1,dt*5)-b.maxHp*.01*dt);
   }
-  drawOffscreen(time); drawHUD(time); drawCoins();
+  drawOffscreen(time); drawHUD(time,dt); drawCoins();
   if(joy.id!==null&&state==='play'){
     const r=wrap.getBoundingClientRect(), ox=joy.ox-r.left, oy=joy.oy-r.top;
     let dx=joy.x-joy.ox, dy=joy.y-joy.oy; const d=Math.hypot(dx,dy); if(d>50){dx=dx/d*50; dy=dy/d*50;}
@@ -3057,8 +3084,8 @@ function updateSaveInfo(){
   else if(guest) el.textContent='체험 중: 저장 안 됨 · 로그아웃 후 계정을 만들면 지금 진행을 저장합니다';
   else if(saveError) el.textContent=saveError;
   else if(saving||pendingSave) el.textContent='저장 중…';
-  else if(lastSaved) el.textContent=`저장됨 ${new Date(lastSaved).toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'})}${Store.mode==='cloud'?' · 온라인':' · 이 브라우저'}`;
-  else el.textContent=Store.mode==='cloud'?'온라인 저장 사용 중':'이 브라우저에 저장 중';
+  else if(lastSaved) el.textContent=`저장됨 ${new Date(lastSaved).toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'})}${Store.mode!=='local'?' · 온라인':' · 이 브라우저'}`; // firebase(웹사이트)도 온라인 저장 — 이전엔 '이 브라우저'로 잘못 표시
+  else el.textContent=Store.mode!=='local'?'온라인 저장 사용 중':'이 브라우저에 저장 중';
 }
 function openOffice(){
   state='office'; run=null; $('#btnPause').hidden=true; keys.clear(); SND.duck(false); SND.mood('office');
@@ -3066,7 +3093,7 @@ function openOffice(){
 }
 function refreshOffice(){
   $('#ofName').textContent=(session?session.id:guest?'체험 계정':'테스트')+' · '+RANKS[save.rank].name;
-  $('#ofSub').textContent=`Lv ${save.level} · 최고 클리어 STAGE ${save.maxCleared} · 처치 ${fmt(save.totalKills)}`;
+  $('#ofSub').textContent=`Lv ${save.level} · 최고 클리어 STAGE ${save.maxCleared}${save.maxCleared?` · ★ ${starTotal()}/${save.maxCleared*3}`:''} · 처치 ${fmt(save.totalKills)}`;
   $('#ofGold').textContent=fmt(save.gold); $('#ofSp').textContent=save.sp;
   const b=$('#spBadge'); b.hidden=!save.sp; b.textContent=save.sp;
   const next=save.stage;
@@ -3405,7 +3432,8 @@ function renderCode(body){
 function renderRanks(body){
   const nx=RANKS[save.rank+1];
   body.innerHTML=`${nx?`<div class="req" style="margin-bottom:14px"><h3>다음 승진: ${nx.name}</h3>${reqList(nx)}</div>`:'<div class="note" style="margin-bottom:14px">최고 직급 PM에 도달했습니다.</div>'}
-    <div class="ladder" id="ladder"></div>`;
+    <div class="ladder" id="ladder"></div>${stageLogHtml()}`;
+  bindStageLog(body);
   const L=$('#ladder');
   RANKS.forEach((r,i)=>{
     const d=document.createElement('div'); d.className='rankcard'+(i===save.rank?' cur':'')+(i>save.rank?' lock':'');
@@ -3414,6 +3442,22 @@ function renderRanks(body){
       <span class="tag ${i<save.rank?'done':i===save.rank?'now':''}">${i<save.rank?'완료':i===save.rank?'현재':'예정'}</span>`);
     L.appendChild(d);
   });
+}
+/* 공정 기록: 클리어한 공정의 별·보스 최고 기록, 눌러서 지난 공정 다시 하기 (두 번 눌러 확인, 골드 절반·진행 위치는 그대로) */
+const starTotal=()=>Object.values(save.stars||{}).reduce((a,n)=>a+n,0);
+function stageLogHtml(){
+  const n=save.maxCleared; if(!n) return '';
+  let cells=''; for(let i=1;i<=n;i++){ const st=(save.stars&&save.stars[i])||0, bb=save.bossBest&&save.bossBest[i];
+    cells+=`<button type="button" class="stg${isBossStage(i)?' boss':''}" data-stg="${i}" aria-label="STAGE ${i} 별 ${st}개 다시 하기"><b>${i}</b><small><em>${'★'.repeat(st)}</em>${'★'.repeat(3-st)}</small>${bb!=null?`<small style="letter-spacing:0;color:var(--muted)">${fmtTime(bb)}</small>`:''}</button>`; }
+  return `<div class="buildsec" style="margin-top:18px"><h3>공정 기록 <span style="font-family:var(--f-body);font-size:13px;color:var(--muted)">별 ${starTotal()} / ${n*3}</span></h3>
+    <p style="font-size:12px">★1 클리어 · ★2 부활 없이 최저 체력 ${Math.round(CFG.STAR_HP[0]*100)}% 이상 · ★3 부활 없이 최저 체력 ${Math.round(CFG.STAR_HP[1]*100)}% 이상. 처음 얻는 별마다 보너스 골드. 공정을 두 번 누르면 다시 할 수 있습니다(골드 획득 절반, 진행 공정은 그대로).</p>
+    <div class="stagegrid" id="stageGrid">${cells}</div></div>`;
+}
+function bindStageLog(body){
+  let armed=null;
+  body.querySelectorAll('[data-stg]').forEach(b=>b.onclick=()=>{ const n=+b.dataset.stg;
+    if(armed!==n){ armed=n; body.querySelectorAll('.stg.arm').forEach(x=>x.classList.remove('arm')); b.classList.add('arm'); toastOffice(`STAGE ${n} 다시 하기 — 한 번 더 누르면 출근합니다 (골드 절반)`); return; }
+    startStage(n); });
 }
 function reqList(r){
   const items=[[save.level>=r.minLevel,`레벨 ${r.minLevel} 달성 (현재 ${save.level})`],[save.maxCleared>=r.minStage,`스테이지 ${r.minStage} 클리어 (최고 ${save.maxCleared})`],...r.conditions.map(c=>[c.check(save),c.label])];
@@ -3458,10 +3502,14 @@ function stageCleared(){
   convertXpOver();
   if(run.boss){ const k=String(cleared), pb=save.bossBest[k]; run.bossRec={t:run.t,prev:pb??null,best:pb==null||run.t<pb}; if(run.bossRec.best&&!testMode) save.bossBest[k]=Math.round(run.t*10)/10; } // 보스 처치 최고 기록 (다시 도전할 이유)
   save.maxCleared=Math.max(save.maxCleared,cleared);
+  // 공정 평가(별): 다른 모바일 뱀서류의 스테이지 별점처럼 '더 잘 깨기' 목표 — 처음 얻는 별마다 보너스 골드
+  { const mh=run.minHp??1, st=run.revived?1:mh>=CFG.STAR_HP[1]?3:mh>=CFG.STAR_HP[0]?2:1, k=String(cleared), prev=(save.stars&&save.stars[k])||0;
+    run.stars={n:st,prev,gold:0};
+    if(st>prev&&(!testMode||SIM.on)){ save.stars[k]=st; const g=Math.round(CFG.STAR_GOLD[0]*(1+cleared*CFG.STAR_GOLD[1])*(st-prev)*CFG.GOLD_MUL*(1+.03*invLv('gold'))); save.gold+=g; run.goldEarned+=g; run.stars.gold=g; } }
   const promos=checkPromotion(), last=cleared>=CFG.MAX_STAGE;
-  save.stage=last?CFG.MAX_STAGE:cleared+1;
+  save.stage=Math.min(CFG.MAX_STAGE,save.maxCleared+1); // 지난 공정을 다시 해도 다음 진행 공정으로 돌아옴
   persist();
-  if(SIM.on){ SIM.result={cleared:true,stage:cleared,t:run.t,kills:run.kills,xp:run.xpEarned,level:save.level,promos:promos.length,dmgTaken:Math.round(run.dmgTaken||0),minHp:Math.round((run.minHp??1)*100)}; return; }
+  if(SIM.on){ SIM.result={cleared:true,stage:cleared,t:run.t,kills:run.kills,xp:run.xpEarned,level:save.level,promos:promos.length,stars:run.stars?run.stars.n:0,starGold:run.stars?run.stars.gold:0,dmgTaken:Math.round(run.dmgTaken||0),minHp:Math.round((run.minHp??1)*100)}; return; }
   SND.mood('calm'); SND.play('clear'); if(promos.length) SND.play('promo');
   showClear(cleared,promos,last);
 }
@@ -3488,6 +3536,8 @@ function showClear(cleared,promos,last){
   $('#clearBody').innerHTML=`
     <div class="eyebrow">작업일보 · STAGE ${cleared}${run.boss?' · 보스 처치':''}</div>
     <h2>${last?'준공 완료. 모든 공정을 마쳤습니다':`STAGE ${cleared} 공정 완료`}</h2>
+    ${run.stars?`<div class="starline" aria-label="공정 평가 별 ${run.stars.n}개">${[1,2,3].map(i=>`<i class="${i<=run.stars.n?'on':''}${i<=run.stars.n&&i>run.stars.prev?' new':''}" style="animation-delay:${.15+i*.18}s">★</i>`).join('')}
+      <span>${run.stars.gold?`새 별 +${fmt(run.stars.gold)} G`:run.stars.n<3?'':'최고 평가'}${run.stars.n<3?`${run.stars.gold?' · ':''}${run.revived?'부활 없이':''}${run.stars.n<2?`최저 체력 ${Math.round(CFG.STAR_HP[0]*100)}% 이상이면 ★2`:`최저 체력 ${Math.round(CFG.STAR_HP[1]*100)}% 이상이면 ★3`}`:''}${run.replay?' · 다시 하기(골드 ½)':''}</span></div>`:''}
     <div class="report"><div><small>작업 시간</small><b>${fmtTime(run.t)}</b></div><div><small>처치 수</small><b>${fmt(run.kills)}</b></div>
       <div><small>골드</small><b>+${fmt(run.goldEarned)}</b></div><div><small>레벨</small><b>Lv ${save.level}${run.levelsGained?` <span style="font-size:13px;color:var(--ok)">+${run.levelsGained}</span>`:''}</b></div></div>
     <p style="font-size:13px">최고 콤보 ${run.bestCombo}${run.frenzies?` · 몰아치기 ${run.frenzies}회`:''}${run.goldfish?` · 황금 물고기 ${run.goldfish}마리`:''}${run.posts?` · 작업 거점 확보 ${run.posts}`:''}${run.subs?` · 지반 침하 ${run.subs}회`:''} · 정예 처치 ${run.elitesKilled}${Object.keys(run.boons).length?` · 받은 현장 지원 ${Object.values(run.boons).reduce((a,b)=>a+b,0)}개`:''}</p>
