@@ -315,6 +315,8 @@ details.dev summary{cursor:pointer}
 @media (prefers-reduced-motion:reduce){.btn{transition:none}}
 </style></head><body>
 
+
+
 <div id="wrap">
   <canvas id="cv" aria-label="게임 화면"></canvas>
   <button id="btnPause" type="button" aria-label="일시정지" hidden><span></span></button>
@@ -653,7 +655,7 @@ const CFG={
   MONSTER_DMG_MUL:2.0,       // 몬스터 접촉 대미지 배율 (1.5 → 2.0)
   BOSS_HP_GROWTH:1.5,        // 보스 1~4등급: 등급마다 체력 ×1.5
   BOSS_HP_GROWTH_LATE:1.7,   // 보스 5~10등급: 등급마다 체력 ×1.7
-  BOSS_HP_TUNE:[.8,1.35,2.1,1.95,2.2,1.9,1.75,1.12,1.9,1.25], // (2026-11-14 3차 S40 1.75→1.95·S50 2.05→2.2·S70 1.6→1.75: 시뮬에서 S40 23초·S50 26초·S70 18초 회차로 목표 하한 근처) // (2026-11-14 2차 S30 1.95→2.1·S50 1.85→2.05·S80 1→1.12: 시뮬 회차에 따라 21~24초 처치가 나와서) (2026-11-14 S30 1.75→1.95·S60 1.6→1.9·S70 1.35→1.6: 스킬 진화(S55~60부터 파이프 폭풍·급소 폭발·회전 톱날)로 S60·S70 보스가 18~19초에 녹고 S30도 20~22초 회차가 나와서) (2026-11-13 S40 1.6→1.75·S60 1.4→1.6: 봇 회차에 따라 17~26초로 짧던 것) // (S30 1.15→1.3, S40 1.2→1.35, S70 1.12→1.35: 17~20초 처치 회차 보정 / S90 .8→1.9·S100 1.1→1.25: 생존 스킬을 다 찍고 제자리에 선 봇이 16~21초 만에 잡던 것 보정) // 등급별 보정: 새 무기로 바뀐 직후(S30·S50·S60) 보스가 20초 안에 녹던 것을 보정 (회전 배관 강화 후 S60 1.12→1.3, S70 1→1.12, S40 21~25초 → 1.2)
+  BOSS_HP_TUNE:[.8,1.35,2.1,1.95,2.4,2.2,1.75,1.35,1.9,1.25], // (2026-11-14 4차 S50 2.2→2.4·S60 1.9→2.2·S80 1.12→1.35: 시뮬 S50 31초·S60 25초·S80 27초로 하한 근처) // (2026-11-14 3차 S40 1.75→1.95·S50 2.05→2.2·S70 1.6→1.75: 시뮬에서 S40 23초·S50 26초·S70 18초 회차로 목표 하한 근처) // (2026-11-14 2차 S30 1.95→2.1·S50 1.85→2.05·S80 1→1.12: 시뮬 회차에 따라 21~24초 처치가 나와서) (2026-11-14 S30 1.75→1.95·S60 1.6→1.9·S70 1.35→1.6: 스킬 진화(S55~60부터 파이프 폭풍·급소 폭발·회전 톱날)로 S60·S70 보스가 18~19초에 녹고 S30도 20~22초 회차가 나와서) (2026-11-13 S40 1.6→1.75·S60 1.4→1.6: 봇 회차에 따라 17~26초로 짧던 것) // (S30 1.15→1.3, S40 1.2→1.35, S70 1.12→1.35: 17~20초 처치 회차 보정 / S90 .8→1.9·S100 1.1→1.25: 생존 스킬을 다 찍고 제자리에 선 봇이 16~21초 만에 잡던 것 보정) // 등급별 보정: 새 무기로 바뀐 직후(S30·S50·S60) 보스가 20초 안에 녹던 것을 보정 (회전 배관 강화 후 S60 1.12→1.3, S70 1→1.12, S40 21~25초 → 1.2)
   SPIKE_WARN:.5,             // 가시 발사 예고 시간(초)
   ORBIT_R_BASE:66, ORBIT_R_RANGE:.2, // 회전 배관 반경 = 66 + 공격 범위×0.2 (범위 스킬과 함께 커짐)
   ORBIT_HIT_R:24, ORBIT_HIT_CD:.4, ORBIT_KNOCK:22, // 회전 배관 판정 반경·같은 적 재타격 간격(초)·밀어내기
@@ -702,7 +704,8 @@ const CFG={
   STAR_GOLD:[15,.5],         // 별을 처음 얻을 때마다 보너스 골드 = 15×(1+스테이지×0.5) (골드 배율 적용)
   REPLAY_GOLD:.5,            // 이미 클리어한 공정을 다시 할 때 골드 획득 배율 (반복 사냥으로 강화가 너무 빨라지지 않도록)
   NIGHT:{hp:1.6,spd:1.12,dmg:1.25,gold:1,first:3}, // 야간 작업(클리어한 공정 다시 하기의 고난도 선택): 물고기 체력 ×1.6·속도 ×1.12·공격력 ×1.25, 골드 감액 없음(×1), 첫 야간 클리어 보너스 = 별 보너스 기준 ×3 — 뱀서류의 '저주·하이퍼 모드'(스스로 난이도를 올리고 보상을 더 받는 선택)에서 착안
-  GOLD_EARLY:[.6,70,95],      // 골드 추가 배율 [A, 전부 적용하는 마지막 스테이지, 0이 되는 스테이지]: S1~70 ×(1+A), S95까지 서서히 줄어듦 (다음 장비 직전 무기·보호구 평균 +8 목표, 사람처럼 4부위를 고르게 강화하는 기준)
+  RUSH:[10,1.4,1.5],          // 마감 러시: 일반 공정 마지막 10초 동안 출현 ×1.4, 잡몹 골드 드랍 확률 ×1.5 — 공정 끝을 '쓸어 담는' 절정으로 (20 Minutes Till Dawn·뱀서류의 막판 몰아치기 연출에서 착안)
+  GOLD_EARLY:[-.2,70,95],     // (2026-11-14 .6→-.2: 다음 장비 직전 4부위 강화가 +9~10으로 목표 +6~8보다 높아서 — 이제 S1~70 ×0.8, S95까지 서서히 ×1) 골드 추가 배율 [A, 전부 적용하는 마지막 스테이지, 0이 되는 스테이지]: S1~70 ×(1+A), S95까지 서서히 줄어듦 (다음 장비 직전 무기·보호구 평균 +8 목표, 사람처럼 4부위를 고르게 강화하는 기준)
 };
 const stageDuration=s=>40+Math.min(18,Math.floor((s-1)/10)*2);
 const isBossStage=s=>s%10===0;
@@ -2263,7 +2266,8 @@ function killEnemy(e){
     if(!SIM.on){ burst(e.x,e.y,'#ffd84a',24,e.r); toast('황금 물고기 포획','골드 주머니를 떨어뜨렸습니다','#ffd84a'); }
     return;
   }
-  if(Math.random()<g.p*(1+.1*sk('f1'))) addGold(Math.round((g.a[0]+Math.floor(Math.random()*(g.a[1]-g.a[0]+1)))*gt*(1+.5*(run.boons.gold||0))),e.x,e.y,1);
+  if(run.rush) run.rushKills=(run.rushKills||0)+1;
+  if(Math.random()<g.p*(1+.1*sk('f1'))*(run.rush&&!run.ending?CFG.RUSH[2]:1)) addGold(Math.round((g.a[0]+Math.floor(Math.random()*(g.a[1]-g.a[0]+1)))*gt*(1+.5*(run.boons.gold||0))),e.x,e.y,1);
   if(Math.random()<CFG.WEAPON_DROP*ST.dropMul) dropWeapon(e.x,e.y);
   if(Math.random()<CFG.GEAR_DROP*ST.dropMul) dropGear(e.x,e.y);
 }
@@ -2340,7 +2344,9 @@ function onPipeHit(e,s){
     case 'burst': {SND.play('boom'); for(const t of enemiesNear(e.x,e.y,80)) damage(t,m,false,'magic'); if(!SIM.on) run.fx.push({type:'boom',x:e.x,y:e.y,t:0,life:.45});} break;
   }
 }
-function hurtPlayer(dmg,fromBoss,ground){ // ground: 지반 침하 — 발밑이 무너지는 것이라 피격 무적·회피·보호막으로 막지 못함 (제자리에서 다른 몹에게 계속 맞아 무적이 이어지면 침하가 전부 무시되던 것)
+function hitDir(sx,sy){ // 피격 방향 표시: 어디서 맞았는지 플레이어 둘레에 붉은 호로 잠깐 보여 줌 (화면 밖 물총·보스 공격 파악용)
+  if(SIM.on||!P) return; const a=Math.atan2(sy-P.y,sx-P.x); P.hitDirs=(P.hitDirs||[]).filter(h=>h.t>0&&Math.abs(Math.atan2(Math.sin(h.a-a),Math.cos(h.a-a)))>.35); P.hitDirs.push({a,t:.7}); if(P.hitDirs.length>4) P.hitDirs.shift(); }
+function hurtPlayer(dmg,fromBoss,ground,src){ if(src&&!ground&&P.inv<=0) hitDir(src.x,src.y); // ground: 지반 침하 — 발밑이 무너지는 것이라 피격 무적·회피·보호막으로 막지 못함 (제자리에서 다른 몹에게 계속 맞아 무적이 이어지면 침하가 전부 무시되던 것)
   if(run.ending||run.dead) return;
   if(ground){ dmg=Math.max(1,Math.round(dmg*(1-ST.armor))); P.hp-=dmg; P.inv=Math.max(P.inv,ST.iframe); SND.play('hurt'); run.dmgTaken=(run.dmgTaken||0)+dmg; run.minHp=Math.min(run.minHp??1,P.hp/ST.maxHp);
     floater(P.x+rand(-10,10),P.y-34,`-${dmg}`,'#ff7a5a',15); run.shake=reduceMotion?0:6; }
@@ -2442,13 +2448,15 @@ function update(dt){
   }
   run.crates=run.crates.filter(c=>!c.dead); run.items=run.items.filter(i=>!i.dead);
   // 보스 투사체
-  for(const b of run.eshots){ b.x+=b.vx*dt; b.y+=b.vy*dt; b.life-=dt; if((b.x-P.x)**2+(b.y-P.y)**2<(b.r+CFG.PLAYER_R*.8)**2){ b.life=0; hurtPlayer(b.dmg,!b.water); } }
+  for(const b of run.eshots){ b.x+=b.vx*dt; b.y+=b.vy*dt; b.life-=dt; if((b.x-P.x)**2+(b.y-P.y)**2<(b.r+CFG.PLAYER_R*.8)**2){ b.life=0; hurtPlayer(b.dmg,!b.water,false,{x:b.x-b.vx,y:b.y-b.vy}); } }
   run.eshots=run.eshots.filter(b=>b.life>0);
   if(run.dead) return;
 
   if(!run.ending){
     const prog=run.boss?Math.min(1,run.t/60):run.t/run.duration;
-    const rate=(CFG.SPAWN_BASE+run.stage*CFG.SPAWN_PER_STAGE)*(1+prog)*(run.boss?.7:1);
+    const rush=!run.boss&&run.duration-run.t<=CFG.RUSH[0]; // 마감 러시: 마지막 10초
+    if(rush&&!run.rush){ run.rush=true; if(!SIM.on){ run.banner={title:'마감 러시',sub:`남은 ${CFG.RUSH[0]}초 — 물고기 떼 ×${CFG.RUSH[1]} · 골드 드랍 ×${CFG.RUSH[2]}`,t:1.6}; SND.play('combo'); run.fx.push({type:'ring',x:P.x,y:P.y,t:0,life:.5,r:200,color:'#ffb347'}); } }
+    const rate=(CFG.SPAWN_BASE+run.stage*CFG.SPAWN_PER_STAGE)*(1+prog)*(run.boss?.7:1)*(rush?CFG.RUSH[1]:1);
     run.spawnAcc+=rate*dt;
     while(run.spawnAcc>=1){run.spawnAcc-=1; spawnEnemy(pickType());}
     run.waveT-=dt;
@@ -2504,7 +2512,7 @@ function update(dt){
   for(const e of run.enemies){
     if(e.dead) continue;
     const rr2=e.r*(e.boss?.75:.8)+CFG.PLAYER_R;
-    if(!e.gold&&(e.x-P.x)**2+(e.y-P.y)**2<rr2*rr2){ hurtPlayer(e.boss&&e.mode==='dash'?Math.round(e.dmg*1.5):e.dmg,!!e.boss); if(run.dead) return; }
+    if(!e.gold&&(e.x-P.x)**2+(e.y-P.y)**2<rr2*rr2){ hurtPlayer(e.boss&&e.mode==='dash'?Math.round(e.dmg*1.5):e.dmg,!!e.boss,false,e); if(run.dead) return; }
   }
   // 회전 배관
   if(ST.orbit>0){
@@ -2595,7 +2603,7 @@ function updateFx(dt){
     else if(f.type==='mark'){ if(!f.done&&f.t>=f.warn){ f.done=true; if(!run.ending&&(P.x-f.x)**2+(P.y-f.y)**2<(f.r+CFG.PLAYER_R*.6)**2) hurtPlayer(f.dmg,true,!!f.sub); if(!SIM.on){ SND.play('boom'); run.fx.push({type:'ring',x:f.x,y:f.y,t:0,life:.3,r:f.r+10,color:'#ff6a4d'}); } } }
     else if(f.type==='stink'){
       f.r+=240*dt;
-      if(!f.hit&&!run.ending&&f.r>0){const d=Math.hypot(P.x-f.x,P.y-f.y); if(Math.abs(d-f.r)<16){f.hit=true; hurtPlayer(f.dmg,true);}}
+      if(!f.hit&&!run.ending&&f.r>0){const d=Math.hypot(P.x-f.x,P.y-f.y); if(Math.abs(d-f.r)<16){f.hit=true; hurtPlayer(f.dmg,true,false,f);}}
       if(f.r>=f.maxR) f.t=f.life;
     }
   }
@@ -2855,7 +2863,7 @@ function drawHUD(time,dt){
   const bbest=run.boss&&save.bossBest?save.bossBest[String(run.stage)]:null; // 보스전 경과 시간 + 최고 기록 (기록 경쟁 — 뱀서류·DRG: Survivor의 타이머처럼)
   ctx.fillText((run.boss?(narrow?`BOSS ${fmtTime(run.t)}${bbest!=null?` · 최고 ${fmtTime(bbest)}`:''}`:`STAGE ${run.stage} · BOSS`):`STAGE ${run.stage}`)+(run.night?' ☾':''),V.w/2,sy-(narrow?0:6));
   if(run.boss&&!narrow){ ctx.font=`700 15px ${FB}`; const ahead=bbest!=null&&run.t<=bbest; ctx.fillStyle=bbest==null?'rgba(233,242,247,.8)':ahead?'#5fd39a':'#ff9d84'; ctx.fillText(`${fmtTime(run.t)}${bbest!=null?` · 최고 ${fmtTime(bbest)}`:''}`,V.w/2,sy+14); }
-  if(!run.boss){const left=Math.max(0,run.duration-run.t); ctx.font=`700 ${narrow?14:15}px ${FB}`; ctx.fillStyle=left<10?'#ffc21a':'rgba(233,242,247,.8)'; ctx.fillText(fmtTime(Math.ceil(left)),V.w/2,sy+(narrow?18:14));}
+  if(!run.boss){const left=Math.max(0,run.duration-run.t), rs=run.rush&&!run.ending; ctx.font=`700 ${(narrow?14:15)+(rs&&!reduceMotion?Math.round(2*Math.max(0,Math.sin(time*8))):0)}px ${FB}`; ctx.fillStyle=rs?'#ffb347':left<10?'#ffc21a':'rgba(233,242,247,.8)'; ctx.fillText(fmtTime(Math.ceil(left))+(rs&&!narrow?' · 마감 러시':''),V.w/2,sy+(narrow?18:14));} // 모바일은 콤보 표시와 겹치지 않게 시간만 주황색으로
   const b=run.bossRef;
   if(b&&!b.dead){
     const w=Math.min(460,V.w-28), x=(V.w-w)/2, y=narrow?132:58;
@@ -3049,6 +3057,13 @@ function render(dt,time){
   for(const f of run.fx) if(f.type==='flash'){ctx.fillStyle=`rgba(255,220,180,${.6*(1-f.t/f.life)})`; ctx.fillRect(0,0,V.w,V.h);}
   if(run.freezeT>0){ctx.fillStyle='rgba(140,210,255,.08)'; ctx.fillRect(0,0,V.w,V.h);}
   if(UIP.hpBar&&!run.dead) drawPlayerHpBar(dt,cx,cy);
+  if(P.hitDirs&&P.hitDirs.length){ // 피격 방향 표시: 맞은 쪽으로 붉은 호 (0.7초 동안 사라짐)
+    const px=(P.x-cx)*z+V.w/2, py=(P.y-cy-8)*z+V.h/2, R=Math.max(46,52*z);
+    ctx.save(); ctx.lineCap='round';
+    for(const h of P.hitDirs){ h.t-=dt; if(h.t<=0) continue; const k=h.t/.7;
+      ctx.strokeStyle=`rgba(255,70,50,${.85*k})`; ctx.lineWidth=5+3*k; ctx.beginPath(); ctx.arc(px,py,R+(1-k)*10,h.a-.42,h.a+.42); ctx.stroke();
+      ctx.fillStyle=`rgba(255,120,90,${.9*k})`; const tx=px+Math.cos(h.a)*(R+12+(1-k)*10), ty=py+Math.sin(h.a)*(R+12+(1-k)*10); ctx.beginPath(); ctx.moveTo(tx+Math.cos(h.a)*8,ty+Math.sin(h.a)*8); ctx.lineTo(tx+Math.cos(h.a+2.2)*6,ty+Math.sin(h.a+2.2)*6); ctx.lineTo(tx+Math.cos(h.a-2.2)*6,ty+Math.sin(h.a-2.2)*6); ctx.closePath(); ctx.fill(); }
+    ctx.restore(); P.hitDirs=P.hitDirs.filter(h=>h.t>0); }
   ctx.setTransform(V.dpr*z,0,0,V.dpr*z,V.dpr*(V.w/2-cx*z),V.dpr*(V.h/2-cy*z));
   drawHpBars(vis);
   ctx.textAlign='center'; ctx.textBaseline='middle';
@@ -3648,7 +3663,7 @@ function showClear(cleared,promos,last){
     ${run.nightRec?`<div class="note" style="border-color:rgba(127,140,255,.6);color:var(--ink)">☾ 야간 작업 완료${run.nightRec.gold?` · 첫 야간 클리어 보너스 <b style="color:#ffd84a">+${fmt(run.nightRec.gold)} G</b>`:' · 이미 야간 클리어한 공정입니다'}</div>`:''}
     <div class="report"><div><small>작업 시간</small><b>${fmtTime(run.t)}</b></div><div><small>처치 수</small><b>${fmt(run.kills)}</b></div>
       <div><small>골드</small><b>+${fmt(run.goldEarned)}</b></div><div><small>레벨</small><b>Lv ${save.level}${run.levelsGained?` <span style="font-size:13px;color:var(--ok)">+${run.levelsGained}</span>`:''}</b></div></div>
-    <p style="font-size:13px">최고 콤보 ${run.bestCombo}${run.frenzies?` · 몰아치기 ${run.frenzies}회`:''}${run.goldfish?` · 황금 물고기 ${run.goldfish}마리`:''}${run.posts?` · 작업 거점 확보 ${run.posts}`:''}${run.subs?` · 지반 침하 ${run.subs}회`:''} · 정예 처치 ${run.elitesKilled}${Object.keys(run.boons).length?` · 받은 현장 지원 ${Object.values(run.boons).reduce((a,b)=>a+b,0)}개`:''}</p>
+    <p style="font-size:13px">최고 콤보 ${run.bestCombo}${run.frenzies?` · 몰아치기 ${run.frenzies}회`:''}${run.goldfish?` · 황금 물고기 ${run.goldfish}마리`:''}${run.posts?` · 작업 거점 확보 ${run.posts}`:''}${run.subs?` · 지반 침하 ${run.subs}회`:''}${run.rushKills?` · 마감 러시 처치 ${fmt(run.rushKills)}`:''} · 정예 처치 ${run.elitesKilled}${Object.keys(run.boons).length?` · 받은 현장 지원 ${Object.values(run.boons).reduce((a,b)=>a+b,0)}개`:''}</p>
     ${run.bossRec?`<div class="note" style="${run.bossRec.best?'border-color:var(--hazard);color:var(--ink)':''}">보스 처치 시간 <b>${fmtTime(run.bossRec.t)}</b>${run.bossRec.best?(run.bossRec.prev!=null?` · <b style="color:var(--hazard)">최고 기록 갱신!</b> (이전 ${fmtTime(run.bossRec.prev)})`:' · 첫 기록'):` · 최고 기록 ${fmtTime(run.bossRec.prev)}`}</div>`:''}
     ${run.xpGold?`<div class="note">최대 레벨 이후 얻은 경험치 ${fmt(run.xpOver)} → <b style="color:#ffd84a">+${fmt(run.xpGold)} G</b> (사무소 '본사 투자'에서 쓸 수 있습니다)</div>`:''}
     ${dmgReport()}
