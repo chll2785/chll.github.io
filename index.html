@@ -664,7 +664,7 @@ const CFG={
   MONSTER_DMG_MUL:2.0,       // 몬스터 접촉 대미지 배율 (1.5 → 2.0)
   BOSS_HP_GROWTH:1.5,        // 보스 1~4등급: 등급마다 체력 ×1.5
   BOSS_HP_GROWTH_LATE:1.7,   // 보스 5~10등급: 등급마다 체력 ×1.7
-  BOSS_HP_TUNE:[.9,1.45,2.1,2.05,2.6,2.2,1.75,1.35,1.9,1.25], // (2026-11-15 S10 .8→.9·S40 1.95→2.05·S50 2.4→2.6: 시뮬 S10 21~30초, S40·S50 23~26초 회차로 하한 근처) (2026-11-14 5차 S20 1.35→1.45: 회유 떼 추가 후 S20 보스 21초 회차) // (2026-11-14 4차 S50 2.2→2.4·S60 1.9→2.2·S80 1.12→1.35: 시뮬 S50 31초·S60 25초·S80 27초로 하한 근처) // (2026-11-14 3차 S40 1.75→1.95·S50 2.05→2.2·S70 1.6→1.75: 시뮬에서 S40 23초·S50 26초·S70 18초 회차로 목표 하한 근처) // (2026-11-14 2차 S30 1.95→2.1·S50 1.85→2.05·S80 1→1.12: 시뮬 회차에 따라 21~24초 처치가 나와서) (2026-11-14 S30 1.75→1.95·S60 1.6→1.9·S70 1.35→1.6: 스킬 진화(S55~60부터 파이프 폭풍·급소 폭발·회전 톱날)로 S60·S70 보스가 18~19초에 녹고 S30도 20~22초 회차가 나와서) (2026-11-13 S40 1.6→1.75·S60 1.4→1.6: 봇 회차에 따라 17~26초로 짧던 것) // (S30 1.15→1.3, S40 1.2→1.35, S70 1.12→1.35: 17~20초 처치 회차 보정 / S90 .8→1.9·S100 1.1→1.25: 생존 스킬을 다 찍고 제자리에 선 봇이 16~21초 만에 잡던 것 보정) // 등급별 보정: 새 무기로 바뀐 직후(S30·S50·S60) 보스가 20초 안에 녹던 것을 보정 (회전 배관 강화 후 S60 1.12→1.3, S70 1→1.12, S40 21~25초 → 1.2)
+  BOSS_HP_TUNE:[.9,1.45,2.1,2.05,2.8,2.2,1.75,1.5,1.9,1.25], // (2026-11-15 2차 S50 2.6→2.8·S80 1.35→1.5: 시뮬 S50·S80 보스 28초로 하한 근처) (2026-11-15 S10 .8→.9·S40 1.95→2.05·S50 2.4→2.6: 시뮬 S10 21~30초, S40·S50 23~26초 회차로 하한 근처) (2026-11-14 5차 S20 1.35→1.45: 회유 떼 추가 후 S20 보스 21초 회차) // (2026-11-14 4차 S50 2.2→2.4·S60 1.9→2.2·S80 1.12→1.35: 시뮬 S50 31초·S60 25초·S80 27초로 하한 근처) // (2026-11-14 3차 S40 1.75→1.95·S50 2.05→2.2·S70 1.6→1.75: 시뮬에서 S40 23초·S50 26초·S70 18초 회차로 목표 하한 근처) // (2026-11-14 2차 S30 1.95→2.1·S50 1.85→2.05·S80 1→1.12: 시뮬 회차에 따라 21~24초 처치가 나와서) (2026-11-14 S30 1.75→1.95·S60 1.6→1.9·S70 1.35→1.6: 스킬 진화(S55~60부터 파이프 폭풍·급소 폭발·회전 톱날)로 S60·S70 보스가 18~19초에 녹고 S30도 20~22초 회차가 나와서) (2026-11-13 S40 1.6→1.75·S60 1.4→1.6: 봇 회차에 따라 17~26초로 짧던 것) // (S30 1.15→1.3, S40 1.2→1.35, S70 1.12→1.35: 17~20초 처치 회차 보정 / S90 .8→1.9·S100 1.1→1.25: 생존 스킬을 다 찍고 제자리에 선 봇이 16~21초 만에 잡던 것 보정) // 등급별 보정: 새 무기로 바뀐 직후(S30·S50·S60) 보스가 20초 안에 녹던 것을 보정 (회전 배관 강화 후 S60 1.12→1.3, S70 1→1.12, S40 21~25초 → 1.2)
   SPIKE_WARN:.5,             // 가시 발사 예고 시간(초)
   ORBIT_R_BASE:66, ORBIT_R_RANGE:.2, // 회전 배관 반경 = 66 + 공격 범위×0.2 (범위 스킬과 함께 커짐)
   ORBIT_HIT_R:24, ORBIT_HIT_CD:.4, ORBIT_KNOCK:22, // 회전 배관 판정 반경·같은 적 재타격 간격(초)·밀어내기
@@ -911,8 +911,8 @@ const WEAPONS=[
   {id:'glass',  name:'유리 파이프',    req:45, coef:1.35,magicPct:.35, magic:'shard',  mName:'파편 비산', mDesc:p=>`25% 확률로 유리 파편 3개가 튀어 각각 공격력의 ${p}% 마법 피해`, cost:95, // 2026-11-15 2차 80→95: 시뮬에서 S24 유리 구간 4부위 +9~10 (목표 +6~8)
   color:'#9fe8ff'},
   {id:'plastic',name:'플라스틱 파이프',req:90, coef:1.8, magicPct:.6,  magic:'bounce', mName:'탄성 반동', mDesc:p=>`적중할 때마다 탄성 고무 조각이 근처 적에게 튕겨 공격력의 ${p}% 마법 피해 (연쇄 확장만큼 더 튕김)`, cost:250, color:'#5aa8ff'},
-  {id:'galva',  name:'갈바 파이프',    req:150,coef:2.5, magicPct:.45, magic:'chain',  mName:'아연 전류', mDesc:p=>`근처 적 2마리에게 전류가 이어져 공격력의 ${p}% 마법 피해`, cost:600, color:'#e9f27a'},
-  {id:'sus',    name:'서스 파이프',    req:210,coef:3.4, magicPct:.3,  magic:'frost',  mName:'스테인리스 냉각', mDesc:p=>`적중 시 공격력의 ${p}% 추가 마법 피해, 1.5초간 45% 감속 · 냉기가 주변 적에게 퍼져 그 1/3 정도의 피해와 감속`, cost:1500, color:'#bfe9ff'},
+  {id:'galva',  name:'갈바 파이프',    req:150,coef:2.5, magicPct:.45, magic:'chain',  mName:'아연 전류', mDesc:p=>`근처 적 2마리에게 전류가 이어져 공격력의 ${p}% 마법 피해`, cost:650, /* 2026-11-15 3차 600→650: S55 갈바 4부위 +8~9 */ color:'#e9f27a'},
+  {id:'sus',    name:'서스 파이프',    req:210,coef:3.4, magicPct:.3,  magic:'frost',  mName:'스테인리스 냉각', mDesc:p=>`적중 시 공격력의 ${p}% 추가 마법 피해, 1.5초간 45% 감속 · 냉기가 주변 적에게 퍼져 그 1/3 정도의 피해와 감속`, cost:1650, /* 2026-11-15 3차 1500→1650: S79 서스 4부위 +8~9 */ color:'#bfe9ff'},
   {id:'tube',   name:'튜브 파이프',    req:270,coef:4.6, magicPct:.6,  magic:'burst',  mName:'수압 폭발', mDesc:p=>`적중 지점 반경 80 폭발, 범위 내 모든 적에게 공격력의 ${p}% 마법 피해`, cost:3500, color:'#5ff0ff'},
 ];
 const WEAPON=Object.fromEntries(WEAPONS.map(w=>[w.id,w]));
@@ -939,7 +939,7 @@ const GEAR={
   shoes:{name:'작업화',names:['고무 장화','안전화','경량 안전화','방수 안전화','철심 작업화','심해 잠수화'],
     main:{key:'speed',label:'이동 속도',v:[.03,.05,.07,.09,.11,.13]}, sub:{key:'dodge',label:'회피 확률',v:[.005,.01,.015,.02,.025,.03]}},
 };
-const GEAR_COST=[28,70,180,450,1100,2600]; // 2등급 60→70 (2026-11-15, 유리 구간 강화 +9~10 과다) // 1등급 15→22 (2026-11-14, 폐 파이프 구간 강화 과다) // 강화 비용 기준 (같은 등급 무기보다 낮음)
+const GEAR_COST=[28,70,180,490,1200,2600]; // 4·5등급 450→490·1100→1200 (2026-11-15 3차, 갈바·서스 구간 강화 +8~9 상한) // 2등급 60→70 (2026-11-15, 유리 구간 강화 +9~10 과다) // 1등급 15→22 (2026-11-14, 폐 파이프 구간 강화 과다) // 강화 비용 기준 (같은 등급 무기보다 낮음)
 const GEAR_MAX=30;                         // 보호구 가방 칸 수
 const gMul=g=>1+.06*g.plus;
 const gVal=(g,which)=>GEAR[g.slot][which].v[g.tier]*gMul(g);
@@ -2181,7 +2181,7 @@ function spawnMigration(){
   for(let i=0;i<n;i++){ const off=lane+rand(-half*.55,half*.55), back=rand(0,320);
     run.enemies.push({f,stream:true,x:P.x-ux*(R+back)-uy*off,y:P.y-uy*(R+back)+ux*off,hp,maxHp:hp,r:f.r,spd:sp,svx:ux*sp,svy:uy*sp,life:(2*R+400)/sp+2,
       dmg:Math.round(f.dmg*run.scale*CFG.MONSTER_DMG_MUL*nightK('dmg')),xp:f.xp*CFG.MIGRATE_XP,flash:0,ang:a,wob:rand(0,TAU),slowT:0,dotT:0,dotDps:0,orbitCd:0}); }
-  run.migs=(run.migs||0)+1;
+  run.migs=(run.migs||0)+1; run.migWarn={a,t:2.6}; // 화면 가장자리 진입 경고 (떼가 들어오는 쪽)
   if(!SIM.on){ SND.play('summon'); const deg=(a*180/Math.PI+360)%360, from=['오른쪽','아래','왼쪽','위'][Math.round(((deg+180)%360)/90)%4];
     toast('회유 떼 통과',`${f.name} 떼 ${n}마리가 ${from}에서 화면을 가로지릅니다 — 한 번에 쓸어 담으세요`,'#7fe3ff'); }
 }
@@ -2246,6 +2246,7 @@ function updateChallenge(dt){
 function drawSign(sg,time){
   const blink=sg.life<5&&!reduceMotion?.5+.5*Math.sin(time*10):1, bob=reduceMotion?0:Math.sin(time*3)*2;
   ctx.save(); ctx.translate(sg.x,sg.y);
+  { const k=clamp(.85/V.zoom,1,1.45); if(k>1) ctx.scale(k,k); } // 모바일(화면 배율이 작을 때) 표지판을 크게 그려 잘 보이게 — 밟는 판정은 그대로
   const g=ctx.createRadialGradient(0,0,6,0,0,62); g.addColorStop(0,'rgba(255,138,61,.35)'); g.addColorStop(1,'rgba(255,138,61,0)'); ctx.fillStyle=g; ctx.beginPath(); ctx.arc(0,0,62,0,TAU); ctx.fill();
   ctx.strokeStyle=`rgba(255,138,61,${.6*blink})`; ctx.lineWidth=3; ctx.setLineDash([8,6]); ctx.lineDashOffset=reduceMotion?0:-time*20; ctx.beginPath(); ctx.arc(0,0,sg.r+14,0,TAU); ctx.stroke(); ctx.setLineDash([]);
   ctx.fillStyle='rgba(0,0,0,.35)'; ctx.beginPath(); ctx.ellipse(4,6,16,5,0,0,TAU); ctx.fill();
@@ -2467,9 +2468,11 @@ function onPipeHit(e,s){
 }
 function hitDir(sx,sy){ // 피격 방향 표시: 어디서 맞았는지 플레이어 둘레에 붉은 호로 잠깐 보여 줌 (화면 밖 물총·보스 공격 파악용)
   if(SIM.on||!P) return; const a=Math.atan2(sy-P.y,sx-P.x); P.hitDirs=(P.hitDirs||[]).filter(h=>h.t>0&&Math.abs(Math.atan2(Math.sin(h.a-a),Math.cos(h.a-a)))>.35); P.hitDirs.push({a,t:.7}); if(P.hitDirs.length>4) P.hitDirs.shift(); }
-function hurtPlayer(dmg,fromBoss,ground,src){ if(src&&!ground&&P.inv<=0) hitDir(src.x,src.y); // ground: 지반 침하 — 발밑이 무너지는 것이라 피격 무적·회피·보호막으로 막지 못함 (제자리에서 다른 몹에게 계속 맞아 무적이 이어지면 침하가 전부 무시되던 것)
+/* 사고 원인 기록: 무엇에 얼마나 맞았는지 (사고 화면에서 원인별 막대 + 대처 요령 — Brotato·Halls of Torment 같은 뱀서류의 '무엇에 당했는지' 결과 화면에서 착안) */
+function noteHurt(cause,d){ if(!run||!(d>0)) return; run.hurtBy=run.hurtBy||{}; run.hurtBy[cause]=(run.hurtBy[cause]||0)+d; }
+function hurtPlayer(dmg,fromBoss,ground,src,cause){ if(src&&!ground&&P.inv<=0) hitDir(src.x,src.y); cause=cause||(ground?'subside':fromBoss?'boss':'mob'); // ground: 지반 침하 — 발밑이 무너지는 것이라 피격 무적·회피·보호막으로 막지 못함 (제자리에서 다른 몹에게 계속 맞아 무적이 이어지면 침하가 전부 무시되던 것)
   if(run.ending||run.dead) return;
-  if(ground){ dmg=Math.max(1,Math.round(dmg*(1-ST.armor))); P.hp-=dmg; P.inv=Math.max(P.inv,ST.iframe); SND.play('hurt'); run.dmgTaken=(run.dmgTaken||0)+dmg; run.minHp=Math.min(run.minHp??1,P.hp/ST.maxHp);
+  if(ground){ dmg=Math.max(1,Math.round(dmg*(1-ST.armor))); P.hp-=dmg; noteHurt(cause,dmg); P.inv=Math.max(P.inv,ST.iframe); SND.play('hurt'); run.dmgTaken=(run.dmgTaken||0)+dmg; run.minHp=Math.min(run.minHp??1,P.hp/ST.maxHp);
     floater(P.x+rand(-10,10),P.y-34,`-${dmg}`,'#ff7a5a',15); run.shake=reduceMotion?0:6; }
   else{
   if(P.inv>0) return;
@@ -2477,7 +2480,7 @@ function hurtPlayer(dmg,fromBoss,ground,src){ if(src&&!ground&&P.inv<=0) hitDir(
   if(P.shield){ P.shield=false; SND.play('shield'); P.shieldT=14-1.5*ST.shield; P.inv=.4; floater(P.x,P.y-40,fromBoss?'보호막 관통':'보호막','#9fe8ff',15); if(!SIM.on) run.fx.push({type:'ring',x:P.x,y:P.y,t:0,life:.3,r:40,color:'#9fe8ff'});
     if(!fromBoss) return; dmg*=CFG.BOSS_SHIELD_PIERCE; } // 보스의 강한 공격은 보호막을 깨고 일부 피해가 들어옴
   dmg=Math.max(1,Math.round(dmg*(1-ST.armor)));
-  P.hp-=dmg; P.inv=ST.iframe; SND.play('hurt'); run.dmgTaken=(run.dmgTaken||0)+dmg; run.minHp=Math.min(run.minHp??1,P.hp/ST.maxHp);
+  P.hp-=dmg; noteHurt(cause,dmg); P.inv=ST.iframe; SND.play('hurt'); run.dmgTaken=(run.dmgTaken||0)+dmg; run.minHp=Math.min(run.minHp??1,P.hp/ST.maxHp);
   floater(P.x+rand(-10,10),P.y-34,`-${dmg}`,'#ff7a5a',15);
   run.shake=reduceMotion?0:6;
   }
@@ -2570,7 +2573,7 @@ function update(dt){
   }
   run.crates=run.crates.filter(c=>!c.dead); run.items=run.items.filter(i=>!i.dead);
   // 보스 투사체
-  for(const b of run.eshots){ b.x+=b.vx*dt; b.y+=b.vy*dt; b.life-=dt; if((b.x-P.x)**2+(b.y-P.y)**2<(b.r+CFG.PLAYER_R*.8)**2){ b.life=0; hurtPlayer(b.dmg,!b.water,false,{x:b.x-b.vx,y:b.y-b.vy}); } }
+  for(const b of run.eshots){ b.x+=b.vx*dt; b.y+=b.vy*dt; b.life-=dt; if((b.x-P.x)**2+(b.y-P.y)**2<(b.r+CFG.PLAYER_R*.8)**2){ b.life=0; hurtPlayer(b.dmg,!b.water,false,{x:b.x-b.vx,y:b.y-b.vy},b.water?'water':'spike'); } }
   run.eshots=run.eshots.filter(b=>b.life>0);
   if(run.dead) return;
 
@@ -2638,7 +2641,7 @@ function update(dt){
   for(const e of run.enemies){
     if(e.dead) continue;
     const rr2=e.r*(e.boss?.75:.8)+CFG.PLAYER_R;
-    if(!e.gold&&(e.x-P.x)**2+(e.y-P.y)**2<rr2*rr2){ hurtPlayer(e.boss&&e.mode==='dash'?Math.round(e.dmg*1.5):e.dmg,!!e.boss,false,e); if(run.dead) return; }
+    if(!e.gold&&(e.x-P.x)**2+(e.y-P.y)**2<rr2*rr2){ hurtPlayer(e.boss&&e.mode==='dash'?Math.round(e.dmg*1.5):e.dmg,!!e.boss,false,e,e.boss?(e.mode==='dash'?'dash':'boss'):e.elite?'elite':e.stream?'mig':'mob'); if(run.dead) return; }
   }
   // 회전 배관
   if(ST.orbit>0){
@@ -2731,10 +2734,10 @@ function updateFx(dt){
     f.t+=dt;
     if(f.type==='bub'){f.x+=f.vx*dt; f.y+=f.vy*dt; f.vx*=.92; f.vy=f.vy*.92-30*dt;}
     else if(f.type==='breath'){f.y-=40*dt; f.x+=Math.sin(f.t*6)*10*dt;}
-    else if(f.type==='mark'){ if(!f.done&&f.t>=f.warn){ f.done=true; if(!run.ending&&(P.x-f.x)**2+(P.y-f.y)**2<(f.r+CFG.PLAYER_R*.6)**2) hurtPlayer(f.dmg,true,!!f.sub); if(!SIM.on){ SND.play('boom'); run.fx.push({type:'ring',x:f.x,y:f.y,t:0,life:.3,r:f.r+10,color:'#ff6a4d'}); } } }
+    else if(f.type==='mark'){ if(!f.done&&f.t>=f.warn){ f.done=true; if(!run.ending&&(P.x-f.x)**2+(P.y-f.y)**2<(f.r+CFG.PLAYER_R*.6)**2) hurtPlayer(f.dmg,true,!!f.sub,null,f.sub?'subside':'mark'); if(!SIM.on){ SND.play('boom'); run.fx.push({type:'ring',x:f.x,y:f.y,t:0,life:.3,r:f.r+10,color:'#ff6a4d'}); } } }
     else if(f.type==='stink'){
       f.r+=240*dt;
-      if(!f.hit&&!run.ending&&f.r>0){const d=Math.hypot(P.x-f.x,P.y-f.y); if(Math.abs(d-f.r)<16){f.hit=true; hurtPlayer(f.dmg,true,false,f);}}
+      if(!f.hit&&!run.ending&&f.r>0){const d=Math.hypot(P.x-f.x,P.y-f.y); if(Math.abs(d-f.r)<16){f.hit=true; hurtPlayer(f.dmg,true,false,f,'stink');}}
       if(f.r>=f.maxR) f.t=f.life;
     }
   }
@@ -2951,6 +2954,21 @@ function drawOffscreen(time){ // 화면 밖 보스·정예·지원 상자 방향
     ctx.strokeText(t,tx,ty); ctx.fillStyle=o.c; ctx.fillText(t,tx,ty);
   }
   ctx.globalAlpha=1;
+}
+/* 회유 떼 진입 경고: 떼가 들어오는 쪽 화면 가장자리에 하늘색 띠 + 안쪽을 가리키는 화살표 3개가 2.6초 동안 깜빡임 (공격 예고 — 뱀서류의 화면 밖 위협 표시 참고) */
+function drawMigWarn(dt,time){
+  const w=run.migWarn; if(!w) return; w.t-=dt; if(w.t<=0){ run.migWarn=null; return; }
+  const from=w.a+Math.PI, ca=Math.cos(from), sa=Math.sin(from), cx=V.w/2, cy=V.h/2, m=34, top=V.w<640?150:100;
+  const kx=ca>0?(V.w-m-cx)/ca:ca<0?(m-cx)/ca:Infinity, ky=sa>0?(V.h-m-cy)/sa:sa<0?(top-cy)/sa:Infinity, k=Math.min(kx,ky);
+  const x=cx+ca*k, y=cy+sa*k, fade=Math.min(1,w.t/.5), bl=reduceMotion?1:.55+.45*Math.abs(Math.sin(time*7));
+  ctx.setTransform(V.dpr,0,0,V.dpr,0,0); ctx.save(); ctx.translate(x,y); ctx.rotate(w.a); // 화살표가 떼의 진행 방향(화면 안쪽)을 가리킴
+  const g=ctx.createLinearGradient(-30,0,40,0); g.addColorStop(0,`rgba(127,227,255,${.45*fade})`); g.addColorStop(1,'rgba(127,227,255,0)');
+  ctx.fillStyle=g; ctx.fillRect(-30,-90,70,180);
+  ctx.fillStyle=`rgba(160,240,255,${.9*fade*bl})`;
+  for(let i=0;i<3;i++){ const ox=-8+i*16; ctx.beginPath(); ctx.moveTo(ox+10,0); ctx.lineTo(ox-4,-12); ctx.lineTo(ox-4,-5); ctx.lineTo(ox+2,0); ctx.lineTo(ox-4,5); ctx.lineTo(ox-4,12); ctx.closePath(); ctx.fill(); }
+  ctx.restore();
+  const tx=clamp(x-ca*58,44,V.w-44), ty=clamp(y-sa*58,top,V.h-20);
+  ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.font=`700 12px ${FB}`; ctx.lineWidth=3; ctx.strokeStyle=`rgba(0,0,0,${.7*fade})`; ctx.strokeText('회유 떼',tx,ty); ctx.fillStyle=`rgba(160,240,255,${fade})`; ctx.fillText('회유 떼',tx,ty);
 }
 function drawHUD(time,dt){
   dt=dt||1/60; // 콤보 보너스·몰아치기 글자 시간은 실제 프레임 시간으로 (이전엔 1/60 고정이라 120Hz 화면에서 절반 시간만 표시)
@@ -3233,7 +3251,7 @@ function render(dt,time){
     if(b.hp<b.lastHp) b.trailHold=.45; b.lastHp=b.hp;
     if(b.trailHold>0) b.trailHold-=dt; else b.trail=Math.max(b.hp,b.trail-(b.trail-b.hp)*Math.min(1,dt*5)-b.maxHp*.01*dt);
   }
-  drawOffscreen(time); drawHUD(time,dt); drawCoins();
+  drawOffscreen(time); drawMigWarn(dt,time); drawHUD(time,dt); drawCoins();
   if(joy.id!==null&&state==='play'){
     const r=wrap.getBoundingClientRect(), ox=joy.ox-r.left, oy=joy.oy-r.top;
     let dx=joy.x-joy.ox, dy=joy.y-joy.oy; const d=Math.hypot(dx,dy); if(d>50){dx=dx/d*50; dy=dy/d*50;}
@@ -3830,6 +3848,24 @@ function dmgReport(){
   return `<div class="dmgrep"><div class="eyebrow" style="color:var(--muted)">피해 기여 · 총 ${fmt(tot)} · 초당 ${fmt(tot/Math.max(1,run.t))}</div>${rows.map(([k,v])=>{const p=v/tot*100;
     return `<div class="dmgrow"><span>${L[k][0]}</span><i><b style="width:${Math.max(1.5,p).toFixed(1)}%;background:${L[k][1]}"></b></i><em>${p<1?'<1':Math.round(p)}%</em></div>`;}).join('')}</div>`;
 }
+/* 사고 원인: 받은 피해를 원인별로 보여 주고, 가장 큰 원인에 맞는 대처 요령 한 줄 */
+const HURT_L={mob:['물고기 박치기','#ff9d84','포위되기 전에 계속 자리를 옮기고, 생존 계열(안전 장구·체력 단련)과 안전모 강화를 올려 보세요.'],
+  elite:['정예 몬스터','#ffd84a','정예는 왕관 표시가 보이면 거리를 두고 원을 그리며 깎으세요. 갑각 정예는 밀리지 않습니다.'],
+  mig:['회유 떼','#7fe3ff','화면 가장자리에 회유 떼 경고가 뜨면 그 줄에서 옆으로 비키세요.'],
+  water:['물대포','#9fe8ff','하늘색 점선 조준선이 뻗으면 옆으로 한 걸음 비키세요. 멈춰 서 있을수록 많이 맞습니다.'],
+  boss:['보스 박치기','#ff6b8a','보스에 붙어 있지 말고 공격 범위 끝에서 원을 그리며 싸우세요.'],
+  dash:['보스 돌진','#ff4d5e','붉은 점선이 뻗으면 그 줄에서 옆으로 벗어나세요. 돌진 뒤 \'빈틈\'에 몰아치면 됩니다.'],
+  spike:['보스 가시','#f1e3d0','부채꼴 예고선 사이 빈 곳으로 들어가거나 옆으로 크게 도세요.'],
+  stink:['냄새 파동','#bee65a','퍼지는 녹색 고리는 멀리 떨어지면 닿지 않습니다. 고리가 다가오면 바깥쪽으로 이동하세요.'],
+  mark:['해저 붕괴','#ff6a4d','발밑에 붉은 원이 생기면 안쪽 원이 다 차기 전에 원 밖으로 나가세요.'],
+  subside:['지반 침하','#c8643c','한자리에 5초 넘게 머물면 발밑이 무너집니다. 조금씩이라도 계속 움직이세요.']};
+function hurtReport(){
+  const h=run&&run.hurtBy; if(!h) return '';
+  const rows=Object.entries(h).filter(([k,v])=>v>=1&&HURT_L[k]).sort((a,b)=>b[1]-a[1]); const tot=rows.reduce((a,r)=>a+r[1],0); if(!tot) return '';
+  return `<div class="dmgrep"><div class="eyebrow" style="color:#ff9d84">사고 원인 · 받은 피해 ${fmt(tot)}</div>${rows.slice(0,5).map(([k,v])=>{const p=v/tot*100;
+    return `<div class="dmgrow"><span>${HURT_L[k][0]}</span><i><b style="width:${Math.max(1.5,p).toFixed(1)}%;background:${HURT_L[k][1]}"></b></i><em>${p<1?'<1':Math.round(p)}%</em></div>`;}).join('')}
+    <p style="font-size:12px;margin-top:4px;color:var(--ink)">대처 요령 · ${HURT_L[rows[0][0]][2]}</p></div>`;
+}
 function showClear(cleared,promos,last){
   $('#btnPause').hidden=true;
   const next=save.stage, nextRank=RANKS[save.rank+1];
@@ -3875,13 +3911,14 @@ function convertXpOver(){ // 만렙 이후 쌓인 경험치 → 골드 (공정 �
 }
 function showDead(){
   state='dead'; convertXpOver(); persist();
-  if(SIM.on){ SIM.result={cleared:false,stage:run.stage,t:run.t,kills:run.kills,xp:run.xpEarned,level:save.level,dmgTaken:Math.round(run.dmgTaken||0),minHp:0}; return; }
+  if(SIM.on){ SIM.result={cleared:false,stage:run.stage,t:run.t,kills:run.kills,xp:run.xpEarned,level:save.level,dmgTaken:Math.round(run.dmgTaken||0),minHp:0,hurt:Object.fromEntries(Object.entries(run.hurtBy||{}).map(([k,v])=>[k,Math.round(v)]))}; return; }
   $('#btnPause').hidden=true;
   $('#deadBody').innerHTML=`
     <div class="eyebrow" style="color:var(--rust)">안전사고 발생${run.night?' · ☾ 야간 작업':''}</div><h2>STAGE ${run.stage} 작업 중단</h2>
     <div class="report"><div><small>버틴 시간</small><b>${fmtTime(run.t)}</b></div><div><small>처치 수</small><b>${fmt(run.kills)}</b></div>
       <div><small>골드</small><b>+${fmt(run.goldEarned)}</b></div><div><small>레벨</small><b>Lv ${save.level}</b></div></div>
     ${run.xpGold?`<div class="note">최대 레벨 이후 경험치 → <b style="color:#ffd84a">+${fmt(run.xpGold)} G</b></div>`:''}
+    ${hurtReport()}
     ${dmgReport()}
     <p>레벨, 스킬 포인트, 골드, 얻은 무기는 그대로 유지됩니다. 사무소에서 스킬을 찍고 장비를 정비한 뒤 다시 도전하세요.</p>
     <div class="row"><button class="btn" id="btnRetry" type="button">STAGE ${run.stage} 다시 도전</button>
@@ -4015,7 +4052,7 @@ Object.defineProperty(window,'__JOGONG_SIM__',{value:{
     SIM.on=true; SIM.bot=true; SIM.result=null; startStage(stage,night); hideAll();
     const dt=1/30; let n=0; const lim=(maxSec||200)*30;
     while(!SIM.result&&n++<lim) update(dt);
-    const r=SIM.result||{cleared:false,timeout:true,stage,level:save.level}; r.elites=run.elitesKilled; r.combo=run.bestCombo; r.frenzies=run.frenzies||0; r.goldfish=run.goldfish||0; r.posts=run.posts||0; r.subs=run.subs||0; r.goldRun=run.goldEarned; r.night=!!run.night; r.mig=run.migKills||0; r.jack=run.jackpots||0; r.rk=run.rushKills||0; r.chal=run.chals||0;
+    const r=SIM.result||{cleared:false,timeout:true,stage,level:save.level}; r.elites=run.elitesKilled; r.combo=run.bestCombo; r.frenzies=run.frenzies||0; r.goldfish=run.goldfish||0; r.posts=run.posts||0; r.subs=run.subs||0; r.goldRun=run.goldEarned; r.night=!!run.night; r.mig=run.migKills||0; r.jack=run.jackpots||0; r.rk=run.rushKills||0; r.chal=run.chals||0; r.hurt=Object.fromEntries(Object.entries(run.hurtBy||{}).map(([k,v])=>[k,Math.round(v)]));
     r.src=Object.fromEntries(Object.entries(run.dmg).map(([k,v])=>[k,Math.round(v)])); r.lvAfter=save.level; r.gold=save.gold; r.sp=save.sp; r.spent=SKILLS.reduce((a,x)=>a+sk(x.id),0); r.weapon=equipped().type+'+'+equipped().plus; r.hp=P?Math.round(P.hp):0; r.maxHp=stats().maxHp;
     return r;
   },
