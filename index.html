@@ -664,7 +664,7 @@ const CFG={
   MONSTER_DMG_MUL:2.0,       // 몬스터 접촉 대미지 배율 (1.5 → 2.0)
   BOSS_HP_GROWTH:1.5,        // 보스 1~4등급: 등급마다 체력 ×1.5
   BOSS_HP_GROWTH_LATE:1.7,   // 보스 5~10등급: 등급마다 체력 ×1.7
-  BOSS_HP_TUNE:[.8,1.45,2.1,1.95,2.4,2.2,1.75,1.35,1.9,1.25], // (2026-11-14 5차 S20 1.35→1.45: 회유 떼 추가 후 S20 보스 21초 회차) // (2026-11-14 4차 S50 2.2→2.4·S60 1.9→2.2·S80 1.12→1.35: 시뮬 S50 31초·S60 25초·S80 27초로 하한 근처) // (2026-11-14 3차 S40 1.75→1.95·S50 2.05→2.2·S70 1.6→1.75: 시뮬에서 S40 23초·S50 26초·S70 18초 회차로 목표 하한 근처) // (2026-11-14 2차 S30 1.95→2.1·S50 1.85→2.05·S80 1→1.12: 시뮬 회차에 따라 21~24초 처치가 나와서) (2026-11-14 S30 1.75→1.95·S60 1.6→1.9·S70 1.35→1.6: 스킬 진화(S55~60부터 파이프 폭풍·급소 폭발·회전 톱날)로 S60·S70 보스가 18~19초에 녹고 S30도 20~22초 회차가 나와서) (2026-11-13 S40 1.6→1.75·S60 1.4→1.6: 봇 회차에 따라 17~26초로 짧던 것) // (S30 1.15→1.3, S40 1.2→1.35, S70 1.12→1.35: 17~20초 처치 회차 보정 / S90 .8→1.9·S100 1.1→1.25: 생존 스킬을 다 찍고 제자리에 선 봇이 16~21초 만에 잡던 것 보정) // 등급별 보정: 새 무기로 바뀐 직후(S30·S50·S60) 보스가 20초 안에 녹던 것을 보정 (회전 배관 강화 후 S60 1.12→1.3, S70 1→1.12, S40 21~25초 → 1.2)
+  BOSS_HP_TUNE:[.9,1.45,2.1,2.05,2.6,2.2,1.75,1.35,1.9,1.25], // (2026-11-15 S10 .8→.9·S40 1.95→2.05·S50 2.4→2.6: 시뮬 S10 21~30초, S40·S50 23~26초 회차로 하한 근처) (2026-11-14 5차 S20 1.35→1.45: 회유 떼 추가 후 S20 보스 21초 회차) // (2026-11-14 4차 S50 2.2→2.4·S60 1.9→2.2·S80 1.12→1.35: 시뮬 S50 31초·S60 25초·S80 27초로 하한 근처) // (2026-11-14 3차 S40 1.75→1.95·S50 2.05→2.2·S70 1.6→1.75: 시뮬에서 S40 23초·S50 26초·S70 18초 회차로 목표 하한 근처) // (2026-11-14 2차 S30 1.95→2.1·S50 1.85→2.05·S80 1→1.12: 시뮬 회차에 따라 21~24초 처치가 나와서) (2026-11-14 S30 1.75→1.95·S60 1.6→1.9·S70 1.35→1.6: 스킬 진화(S55~60부터 파이프 폭풍·급소 폭발·회전 톱날)로 S60·S70 보스가 18~19초에 녹고 S30도 20~22초 회차가 나와서) (2026-11-13 S40 1.6→1.75·S60 1.4→1.6: 봇 회차에 따라 17~26초로 짧던 것) // (S30 1.15→1.3, S40 1.2→1.35, S70 1.12→1.35: 17~20초 처치 회차 보정 / S90 .8→1.9·S100 1.1→1.25: 생존 스킬을 다 찍고 제자리에 선 봇이 16~21초 만에 잡던 것 보정) // 등급별 보정: 새 무기로 바뀐 직후(S30·S50·S60) 보스가 20초 안에 녹던 것을 보정 (회전 배관 강화 후 S60 1.12→1.3, S70 1→1.12, S40 21~25초 → 1.2)
   SPIKE_WARN:.5,             // 가시 발사 예고 시간(초)
   ORBIT_R_BASE:66, ORBIT_R_RANGE:.2, // 회전 배관 반경 = 66 + 공격 범위×0.2 (범위 스킬과 함께 커짐)
   ORBIT_HIT_R:24, ORBIT_HIT_CD:.4, ORBIT_KNOCK:22, // 회전 배관 판정 반경·같은 적 재타격 간격(초)·밀어내기
@@ -689,7 +689,7 @@ const CFG={
   GOLD_TIER_MUL:.5,          // 어종 구간마다 잡몹 골드 +50%
   GOLD_MUL:2.0,              // 모든 골드 획득 배율 (보호구 강화 비용만큼 상향, 몬스터 2배와 합쳐 이전 대비 약 2.5배)
   MOB_XP_MUL:.6,             // 일반 몬스터 경험치 배율 (몬스터 2배 → 마리당 경험치 줄임)
-  BOSS_DMG_TUNE:[.95,1.6,2.4,3,2.6,4.4,5.8,5.5,4,3.6], // 등급별 보스 공격력 배율 (2026-11-13 사용자 요청으로 전 등급 상향: 후반으로 갈수록 플레이어 체력·피해 감소가 커져 보스 한 방이 최대 체력의 10% 미만이던 것 → 돌진 한 방 약 25~45%)
+  BOSS_DMG_TUNE:[.95,1.6,2.2,3,2.6,4.4,5.8,5.5,4,3.6], // 등급별 보스 공격력 배율 (2026-11-15 S30 2.4→2.2: 플라스틱 전환 직후 S30 보스전 봇 최저 체력 1~21% 회차) (2026-11-13 사용자 요청으로 전 등급 상향: 후반으로 갈수록 플레이어 체력·피해 감소가 커져 보스 한 방이 최대 체력의 10% 미만이던 것 → 돌진 한 방 약 25~45%)
   WAVE_MUL:2,                // 포위 웨이브 마릿수 배율
   MOB_SPD_STAGE:.004,        // 스테이지당 몬스터 이동 속도 상승
   FRENZY_EVERY:150, FRENZY_T:4, FRENZY_RATE:.2, // 몰아치기: 연속 처치 150마다 4초 동안 투척 속도 +20% (처치가 이어질수록 더 빨리 쓸어 담는 성장감)
@@ -720,6 +720,8 @@ const CFG={
   BOSS_GROGGY:[1.3,1.35],     // 보스 빈틈: 돌진(연속 돌진이면 마지막 돌진)이 끝나면 1.3초 동안 멈춰 숨을 고르고 받는 피해 ×1.35 — 액션·DRG: Survivor 보스의 '공격 후 빈틈(반격 타이밍)'에서 착안, 돌진을 피한 뒤 몰아칠 이유
   BARREL:[3,2,9,4,135,5,.35], // 폭발 가스통: [등장 스테이지, 시작 개수, 추가 간격(초), 최대 수, 폭발 반경, 공격력 배율, 점화 후 폭발까지(초)] — 파이프·회전 배관에 맞으면 터져 주변 물고기에게 큰 피해, 옆 가스통도 연쇄 폭발 (플레이어는 다치지 않음). DRG: Survivor·뱀서류의 '환경 오브젝트' 구조에서 착안 — 물고기 떼를 가스통 쪽으로 끌고 가는 위치 선정의 재미
   ORDER_GOLD:[10,.4],         // 공정 특별 지시(일반 공정마다 무작위 목표 1개) 달성 보상 골드 = 10×(1+스테이지×0.4) (12·0.45로는 다음 장비 직전 강화가 +8~9로 살짝 올라 낮춤) (골드 배율·다시 하기 감액 적용)
+  CHALLENGE:[7,8,20,12,2.6,24,25,.5], // 긴급 공정 표지판: [시작 스테이지, 등장 시각 최소·최대(초), 버틸 시간(초), 출현 배율, 표지판이 남아 있는 시간(초), 보상 골드 기본, 스테이지당] — 밟으면 12초 동안 물고기 떼가 몰려오고, 버티면 현장 지원 상자 + 골드 (Megabonk의 도전 성소처럼 스스로 위험을 골라 보상을 얻는 선택지)
+  CHAL_XP:.4,                // 긴급 공정 중 나온 물고기 경험치 배율 (보너스 무리라 레벨이 너무 당겨지지 않게 — 첫 시뮬에서 S30 Lv 115~118, 만렙 S95로 당겨져서)
   GOLD_EARLY:[-.2,70,95],     // (2026-11-14 .6→-.2: 다음 장비 직전 4부위 강화가 +9~10으로 목표 +6~8보다 높아서 — 이제 S1~70 ×0.8, S95까지 서서히 ×1) 골드 추가 배율 [A, 전부 적용하는 마지막 스테이지, 0이 되는 스테이지]: S1~70 ×(1+A), S95까지 서서히 줄어듦 (다음 장비 직전 무기·보호구 평균 +8 목표, 사람처럼 4부위를 고르게 강화하는 기준)
 };
 const stageDuration=s=>40+Math.min(18,Math.floor((s-1)/10)*2);
@@ -906,7 +908,8 @@ const investCost=d=>Math.round(d.base*Math.pow(INV_GROWTH,invLv(d.id))/100)*100;
    ===================================================================== */
 const WEAPONS=[
   {id:'scrap',  name:'폐 파이프',      req:1,  coef:1.0, magicPct:.15, magic:'rust',   mName:'녹물 부식', mDesc:p=>`적중 시 3초간 초당 공격력의 ${p}% 지속 피해`, cost:38,   color:'#b5683a'}, // 2026-11-15 30→38: 시뮬에서 S14 4부위 +9로 목표(+6~8) 위 // 2026-11-14 강화 비용 20→30: 폐 파이프 구간(S1~14) 골드로 +10까지 차던 것(목표 +6~8)
-  {id:'glass',  name:'유리 파이프',    req:45, coef:1.35,magicPct:.35, magic:'shard',  mName:'파편 비산', mDesc:p=>`25% 확률로 유리 파편 3개가 튀어 각각 공격력의 ${p}% 마법 피해`, cost:80, color:'#9fe8ff'},
+  {id:'glass',  name:'유리 파이프',    req:45, coef:1.35,magicPct:.35, magic:'shard',  mName:'파편 비산', mDesc:p=>`25% 확률로 유리 파편 3개가 튀어 각각 공격력의 ${p}% 마법 피해`, cost:95, // 2026-11-15 2차 80→95: 시뮬에서 S24 유리 구간 4부위 +9~10 (목표 +6~8)
+  color:'#9fe8ff'},
   {id:'plastic',name:'플라스틱 파이프',req:90, coef:1.8, magicPct:.6,  magic:'bounce', mName:'탄성 반동', mDesc:p=>`적중할 때마다 탄성 고무 조각이 근처 적에게 튕겨 공격력의 ${p}% 마법 피해 (연쇄 확장만큼 더 튕김)`, cost:250, color:'#5aa8ff'},
   {id:'galva',  name:'갈바 파이프',    req:150,coef:2.5, magicPct:.45, magic:'chain',  mName:'아연 전류', mDesc:p=>`근처 적 2마리에게 전류가 이어져 공격력의 ${p}% 마법 피해`, cost:600, color:'#e9f27a'},
   {id:'sus',    name:'서스 파이프',    req:210,coef:3.4, magicPct:.3,  magic:'frost',  mName:'스테인리스 냉각', mDesc:p=>`적중 시 공격력의 ${p}% 추가 마법 피해, 1.5초간 45% 감속 · 냉기가 주변 적에게 퍼져 그 1/3 정도의 피해와 감속`, cost:1500, color:'#bfe9ff'},
@@ -936,7 +939,7 @@ const GEAR={
   shoes:{name:'작업화',names:['고무 장화','안전화','경량 안전화','방수 안전화','철심 작업화','심해 잠수화'],
     main:{key:'speed',label:'이동 속도',v:[.03,.05,.07,.09,.11,.13]}, sub:{key:'dodge',label:'회피 확률',v:[.005,.01,.015,.02,.025,.03]}},
 };
-const GEAR_COST=[28,60,180,450,1100,2600]; // 1등급 15→22 (2026-11-14, 폐 파이프 구간 강화 과다) // 강화 비용 기준 (같은 등급 무기보다 낮음)
+const GEAR_COST=[28,70,180,450,1100,2600]; // 2등급 60→70 (2026-11-15, 유리 구간 강화 +9~10 과다) // 1등급 15→22 (2026-11-14, 폐 파이프 구간 강화 과다) // 강화 비용 기준 (같은 등급 무기보다 낮음)
 const GEAR_MAX=30;                         // 보호구 가방 칸 수
 const gMul=g=>1+.06*g.plus;
 const gVal=(g,which)=>GEAR[g.slot][which].v[g.tier]*gMul(g);
@@ -2054,7 +2057,8 @@ function newRun(stage){
     goldT:(!isBossStage(stage)&&stage>=CFG.GOLDFISH[0])?rand(CFG.GOLDFISH[1],CFG.GOLDFISH[2]):-1,
     postT:(!isBossStage(stage)&&stage>=CFG.OUTPOST[0])?rand(CFG.OUTPOST[1],CFG.OUTPOST[2]):-1, post:null, posts:0, postBuff:0,
     migT:(!isBossStage(stage)&&stage>=CFG.MIGRATE[0])?stageDuration(stage)*rand(CFG.MIGRATE[1],CFG.MIGRATE[2]):-1, migKills:0,
-    barrels:[], barrelT:CFG.BARREL[2], barrelsBlown:0, barrelKills:0, cratesBroken:0, order:null};
+    barrels:[], barrelT:CFG.BARREL[2], barrelsBlown:0, barrelKills:0, cratesBroken:0, order:null,
+    signT:(!isBossStage(stage)&&stage>=CFG.CHALLENGE[0])?rand(CFG.CHALLENGE[1],CFG.CHALLENGE[2]):-1, sign:null, chal:null, chals:0};
 }
 /* 공정 특별 지시: 일반 공정마다 무작위 목표 1개 — 달성하면 클리어 때 보너스 골드 (Halls of Torment의 퀘스트·뱀서류의 스테이지 도전 목표처럼 공정마다 '이번엔 이것' 하는 작은 목표) */
 const ORDERS=[
@@ -2064,6 +2068,8 @@ const ORDERS=[
   {id:'barrel',from:3, name:n=>`가스통 폭발로 물고기 ${n}마리 처치`, short:'가스통', goal:s=>Math.min(30,6+Math.floor(s/5)), val:()=>run.barrelKills},
   {id:'gold',  from:3, name:()=>'황금 물고기 포획', short:'황금', goal:()=>1, val:()=>run.goldfish||0},
   {id:'post',  from:5, name:()=>'작업 거점 확보', short:'거점', goal:()=>1, val:()=>run.posts},
+  {id:'rush',  from:2, name:n=>`마감 러시 중 물고기 ${n}마리 처치`, short:'러시', goal:s=>Math.min(260,Math.round((20+s*2.4)/5)*5), val:()=>run.rushKills||0},
+  {id:'chal',  from:7, name:()=>'긴급 공정 완수', short:'긴급', goal:()=>1, val:()=>run.chals},
 ];
 function pickOrder(stage){ const L=ORDERS.filter(o=>stage>=o.from); const o=L[Math.floor(Math.random()*L.length)]; const goal=o.goal(stage); return {def:o,goal,done:false,name:o.name(goal)}; }
 function orderVal(){ const o=run&&run.order; return o?Math.min(o.goal,o.def.val()|0):0; }
@@ -2144,7 +2150,7 @@ function spawnEnemy(ti,ang){
   if(run.enemies.length>=(run.boss?CFG.BOSS_ADD_MAX:CFG.MAX_ENEMIES)) return;
   const f=FISH[ti], a=ang??rand(0,TAU), R=spawnRadius()+rand(0,60), hp=f.hp*run.scale*mobHpMul(run.stage);
   run.enemies.push({f,x:P.x+Math.cos(a)*R,y:P.y+Math.sin(a)*R,hp,maxHp:hp,r:f.r,spd:f.spd*(1+CFG.MOB_SPD_STAGE*run.stage)*rand(.9,1.1)*nightK('spd'),
-    dmg:Math.round(f.dmg*run.scale*CFG.MONSTER_DMG_MUL*nightK('dmg')),xp:f.xp,flash:0,ang:a+Math.PI,wob:rand(0,TAU),slowT:0,dotT:0,dotDps:0,orbitCd:0,
+    dmg:Math.round(f.dmg*run.scale*CFG.MONSTER_DMG_MUL*nightK('dmg')),xp:f.xp*(run.chal?CFG.CHAL_XP:1),flash:0,ang:a+Math.PI,wob:rand(0,TAU),slowT:0,dotT:0,dotDps:0,orbitCd:0,
     spitter:run.stage>=CFG.SPIT_FROM&&f.kind!=='plankton'&&Math.random()<spitChance(run.stage)?1:0, spitT:rand(.6,CFG.SPIT_CD[1])});
 }
 function spawnElite(){
@@ -2216,6 +2222,37 @@ function drawOutpost(o,time){
   ctx.fillStyle='#1b1506'; ctx.fillRect(8,-42+wv*.5,8,3);
   ctx.font=`700 12px ${FB}`; ctx.textAlign='center'; ctx.lineWidth=3; ctx.strokeStyle='rgba(0,0,0,.7)'; const tx=p>0?`확보 ${Math.round(p*100)}%`:`작업 거점 · ${Math.ceil(o.life)}초`;
   ctx.strokeText(tx,0,o.r+16); ctx.fillStyle=p>0?'#5fd39a':'#ffd84a'; ctx.fillText(tx,0,o.r+16);
+  ctx.restore();
+}
+/* 긴급 공정 표지판: 일반 공정마다 한 번 바닥에 경고 표지판이 서고, 밟으면 12초 동안 물고기 떼가 몰려옴(출현 ×2.6 + 포위 웨이브).
+   끝까지 버티면 현장 지원 상자 + 골드. 안 밟아도 그만인 '스스로 고르는 위험' — Megabonk의 도전 성소·뱀서류의 저주 선택에서 착안 */
+function spawnSign(){
+  const a=rand(0,TAU), d=Math.min(V.w,V.h)/2/V.zoom*.5+rand(40,140);
+  run.sign={x:P.x+Math.cos(a)*d,y:P.y+Math.sin(a)*d,r:26,life:CFG.CHALLENGE[5],t:0};
+  if(!SIM.on){ SND.play('elite'); toast('긴급 공정 표지판',`밟으면 ${CFG.CHALLENGE[3]}초 동안 물고기 떼가 몰려옵니다 — 버티면 현장 지원 상자`,'#ff8a3d'); }
+}
+function updateChallenge(dt){
+  const C=CFG.CHALLENGE;
+  if(run.signT>0){ run.signT-=dt; if(run.signT<=0){ run.signT=-1; if(run.duration-run.t>C[3]+4) spawnSign(); } }
+  const sg=run.sign;
+  if(sg){ sg.t+=dt; sg.life-=dt;
+    if(sg.life<=0||run.duration-run.t<C[3]+2){ run.sign=null; if(!SIM.on) toast('긴급 공정 표지판이 사라졌습니다','다음 공정에서 도전해 보세요','#c9a64a'); }
+    else if((P.x-sg.x)**2+(P.y-sg.y)**2<(sg.r+CFG.PLAYER_R)**2){ run.sign=null; run.chal={t:C[3]}; spawnWave();
+      if(!SIM.on){ SND.play('bossWind'); run.banner={title:'긴급 공정',sub:`${C[3]}초 동안 버티세요 — 물고기 떼 ×${C[4]}`,t:1.6,boss:true}; run.fx.push({type:'ring',x:P.x,y:P.y,t:0,life:.6,r:240,color:'#ff8a3d'}); run.shake=reduceMotion?0:6; } } }
+  const ch=run.chal;
+  if(ch){ ch.t-=dt; if(ch.t<=0){ run.chal=null; run.chals++; dropChest(P.x+rand(-30,30),P.y-50); addGold(C[6]*(1+run.stage*C[7]),P.x,P.y,10); checkOrder();
+      if(!SIM.on){ SND.play('chest'); burst(P.x,P.y,'#ff8a3d',22,16); toast('긴급 공정 완수','현장 지원 상자와 보너스 골드를 받았습니다','#5fd39a'); } } }
+}
+function drawSign(sg,time){
+  const blink=sg.life<5&&!reduceMotion?.5+.5*Math.sin(time*10):1, bob=reduceMotion?0:Math.sin(time*3)*2;
+  ctx.save(); ctx.translate(sg.x,sg.y);
+  const g=ctx.createRadialGradient(0,0,6,0,0,62); g.addColorStop(0,'rgba(255,138,61,.35)'); g.addColorStop(1,'rgba(255,138,61,0)'); ctx.fillStyle=g; ctx.beginPath(); ctx.arc(0,0,62,0,TAU); ctx.fill();
+  ctx.strokeStyle=`rgba(255,138,61,${.6*blink})`; ctx.lineWidth=3; ctx.setLineDash([8,6]); ctx.lineDashOffset=reduceMotion?0:-time*20; ctx.beginPath(); ctx.arc(0,0,sg.r+14,0,TAU); ctx.stroke(); ctx.setLineDash([]);
+  ctx.fillStyle='rgba(0,0,0,.35)'; ctx.beginPath(); ctx.ellipse(4,6,16,5,0,0,TAU); ctx.fill();
+  ctx.fillStyle='#8a9096'; ctx.fillRect(-2,-30+bob,4,34);
+  ctx.translate(0,-38+bob); ctx.rotate(Math.PI/4); ctx.fillStyle='#ffc21a'; ctx.fillRect(-15,-15,30,30); ctx.strokeStyle='#1b1506'; ctx.lineWidth=3; ctx.strokeRect(-12,-12,24,24); ctx.rotate(-Math.PI/4);
+  ctx.fillStyle='#1b1506'; ctx.font=`900 20px ${FB}`; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('!',0,1);
+  ctx.translate(0,38-bob); ctx.font=`700 12px ${FB}`; ctx.lineWidth=3; ctx.strokeStyle='rgba(0,0,0,.7)'; const tx=`긴급 공정 · ${Math.ceil(sg.life)}초`; ctx.strokeText(tx,0,sg.r+20); ctx.fillStyle='#ffb070'; ctx.fillText(tx,0,sg.r+20);
   ctx.restore();
 }
 function spawnCrate(){
@@ -2522,7 +2559,7 @@ function update(dt){
     if(run.goldT>0){ run.goldT-=dt; if(run.goldT<=0){ run.goldT=-1; spawnGoldfish(); } }
     if(run.postT>0){ run.postT-=dt; if(run.postT<=0){ run.postT=-1; spawnOutpost(); } }
     if(run.migT>0){ run.migT-=dt; if(run.migT<=0){ run.migT=-1; spawnMigration(); } }
-    updateOutpost(dt); updateSubside(dt);
+    updateOutpost(dt); updateSubside(dt); if(!run.boss) updateChallenge(dt);
   }
   if(run.postBuff>0) run.postBuff-=dt;
   for(const c of run.crates){ c.t+=dt; if((c.x-P.x)**2+(c.y-P.y)**2<(c.r+CFG.PLAYER_R)**2) breakCrate(c); if(Math.hypot(c.x-P.x,c.y-P.y)>spawnRadius()*1.8) c.dead=true; }
@@ -2541,7 +2578,7 @@ function update(dt){
     const prog=run.boss?Math.min(1,run.t/60):run.t/run.duration;
     const rush=!run.boss&&run.duration-run.t<=CFG.RUSH[0]; // 마감 러시: 마지막 10초
     if(rush&&!run.rush){ run.rush=true; if(!SIM.on){ run.banner={title:'마감 러시',sub:`남은 ${CFG.RUSH[0]}초 — 물고기 떼 ×${CFG.RUSH[1]} · 골드 드랍 ×${CFG.RUSH[2]}`,t:1.6}; SND.play('combo'); run.fx.push({type:'ring',x:P.x,y:P.y,t:0,life:.5,r:200,color:'#ffb347'}); } }
-    const rate=(CFG.SPAWN_BASE+run.stage*CFG.SPAWN_PER_STAGE)*(1+prog)*(run.boss?.7:1)*(rush?CFG.RUSH[1]:1);
+    const rate=(CFG.SPAWN_BASE+run.stage*CFG.SPAWN_PER_STAGE)*(1+prog)*(run.boss?.7:1)*(rush?CFG.RUSH[1]:1)*(run.chal?CFG.CHALLENGE[4]:1);
     run.spawnAcc+=rate*dt;
     while(run.spawnAcc>=1){run.spawnAcc-=1; spawnEnemy(pickType());}
     run.waveT-=dt;
@@ -2893,6 +2930,7 @@ function drawOffscreen(time){ // 화면 밖 보스·정예·지원 상자 방향
   for(const it of run.items) if(it.kind==='chest') list.push({x:it.x,y:it.y,c:'#ffc21a',lb:'지원'});
   for(const e of run.enemies) if(e.gold&&!e.dead) list.push({x:e.x,y:e.y,c:'#ffe066',lb:'황금'});
   if(run.post) list.push({x:run.post.x,y:run.post.y,c:'#5fd39a',lb:'거점'});
+  if(run.sign) list.push({x:run.sign.x,y:run.sign.y,c:'#ff8a3d',lb:'긴급'});
   if(!list.length) return;
   const narrow=V.w<640, top=narrow?(b&&!b.dead?168:118):(b&&!b.dead?92:84), m=22, cx=V.w/2, cy=V.h/2;
   ctx.setTransform(V.dpr,0,0,V.dpr,0,0); ctx.textAlign='center'; ctx.textBaseline='middle';
@@ -2961,7 +2999,7 @@ function drawHUD(time,dt){
   const bbest=run.boss&&save.bossBest?save.bossBest[String(run.stage)]:null; // 보스전 경과 시간 + 최고 기록 (기록 경쟁 — 뱀서류·DRG: Survivor의 타이머처럼)
   ctx.fillText((run.boss?(narrow?`BOSS ${fmtTime(run.t)}${bbest!=null?` · 최고 ${fmtTime(bbest)}`:''}`:`STAGE ${run.stage} · BOSS`):`STAGE ${run.stage}`)+(run.night?' ☾':''),V.w/2,sy-(narrow?0:6));
   if(run.boss&&!narrow){ ctx.font=`700 15px ${FB}`; const ahead=bbest!=null&&run.t<=bbest; ctx.fillStyle=bbest==null?'rgba(233,242,247,.8)':ahead?'#5fd39a':'#ff9d84'; ctx.fillText(`${fmtTime(run.t)}${bbest!=null?` · 최고 ${fmtTime(bbest)}`:''}`,V.w/2,sy+14); }
-  if(!run.boss){const left=Math.max(0,run.duration-run.t), rs=run.rush&&!run.ending; ctx.font=`700 ${(narrow?14:15)+(rs&&!reduceMotion?Math.round(2*Math.max(0,Math.sin(time*8))):0)}px ${FB}`; ctx.fillStyle=rs?'#ffb347':left<10?'#ffc21a':'rgba(233,242,247,.8)'; ctx.fillText(fmtTime(Math.ceil(left))+(rs&&!narrow?' · 마감 러시':''),V.w/2,sy+(narrow?18:14));} // 모바일은 콤보 표시와 겹치지 않게 시간만 주황색으로
+  if(!run.boss){const left=Math.max(0,run.duration-run.t), rs=run.rush&&!run.ending; ctx.font=`700 ${(narrow?14:15)+(rs&&!reduceMotion?Math.round(2*Math.max(0,Math.sin(time*8))):0)}px ${FB}`; ctx.fillStyle=run.chal?'#ff8a3d':rs?'#ffb347':left<10?'#ffc21a':'rgba(233,242,247,.8)'; ctx.fillText(fmtTime(Math.ceil(left))+(run.chal?(narrow?` · 긴급 ${Math.ceil(run.chal.t)}`:` · 긴급 공정 ${Math.ceil(run.chal.t)}초`):rs&&!narrow?' · 마감 러시':''),V.w/2,sy+(narrow?18:14));} // 긴급 공정 남은 시간도 시간 줄에 (화면 가운데를 가리지 않게) // 모바일은 콤보 표시와 겹치지 않게 시간만 주황색으로
   const b=run.bossRef;
   if(b&&!b.dead){
     const w=Math.min(460,V.w-28), x=(V.w-w)/2, y=narrow?132:58;
@@ -3069,6 +3107,7 @@ function render(dt,time){
     ctx.strokeStyle=`rgba(150,90,180,${.4*a})`; ctx.lineWidth=4; ctx.beginPath(); ctx.arc(f.x,f.y,Math.max(0,f.r-10),0,TAU); ctx.stroke();
   }
   if(run.post&&vis(run.post.x,run.post.y,run.post.r)) drawOutpost(run.post,time);
+  if(run.sign&&vis(run.sign.x,run.sign.y,80)) drawSign(run.sign,time);
   for(const c of run.crates) if(vis(c.x,c.y,30)) drawCrate(c);
   for(const br of run.barrels) if(vis(br.x,br.y,40)) drawBarrel(br,time);
   for(const it of run.items) if(vis(it.x,it.y,30)) drawItem(it,time);
@@ -3810,7 +3849,7 @@ function showClear(cleared,promos,last){
     ${run.nightRec?`<div class="note" style="border-color:rgba(127,140,255,.6);color:var(--ink)">☾ 야간 작업 완료${run.nightRec.gold?` · 첫 야간 클리어 보너스 <b style="color:#ffd84a">+${fmt(run.nightRec.gold)} G</b>`:' · 이미 야간 클리어한 공정입니다'}</div>`:''}
     <div class="report"><div><small>작업 시간</small><b>${fmtTime(run.t)}</b></div><div><small>처치 수</small><b>${fmt(run.kills)}</b></div>
       <div><small>골드</small><b>+${fmt(run.goldEarned)}</b></div><div><small>레벨</small><b>Lv ${save.level}${run.levelsGained?` <span style="font-size:13px;color:var(--ok)">+${run.levelsGained}</span>`:''}</b></div></div>
-    <p style="font-size:13px">최고 콤보 ${run.bestCombo}${run.frenzies?` · 몰아치기 ${run.frenzies}회`:''}${run.goldfish?` · 황금 물고기 ${run.goldfish}마리`:''}${run.posts?` · 작업 거점 확보 ${run.posts}`:''}${run.subs?` · 지반 침하 ${run.subs}회`:''}${run.rushKills?` · 마감 러시 처치 ${fmt(run.rushKills)}`:''}${run.migKills?` · 회유 떼 처치 ${fmt(run.migKills)}`:''}${run.jackpots?` · 대박 상자 ${run.jackpots}`:''}${run.barrelsBlown?` · 가스통 폭발 ${run.barrelsBlown}(처치 ${fmt(run.barrelKills)})`:''} · 정예 처치 ${run.elitesKilled}${Object.keys(run.boons).length?` · 받은 현장 지원 ${Object.values(run.boons).reduce((a,b)=>a+b,0)}개`:''}</p>
+    <p style="font-size:13px">최고 콤보 ${run.bestCombo}${run.frenzies?` · 몰아치기 ${run.frenzies}회`:''}${run.goldfish?` · 황금 물고기 ${run.goldfish}마리`:''}${run.posts?` · 작업 거점 확보 ${run.posts}`:''}${run.subs?` · 지반 침하 ${run.subs}회`:''}${run.rushKills?` · 마감 러시 처치 ${fmt(run.rushKills)}`:''}${run.migKills?` · 회유 떼 처치 ${fmt(run.migKills)}`:''}${run.jackpots?` · 대박 상자 ${run.jackpots}`:''}${run.chals?` · 긴급 공정 완수 ${run.chals}`:''}${run.barrelsBlown?` · 가스통 폭발 ${run.barrelsBlown}(처치 ${fmt(run.barrelKills)})`:''} · 정예 처치 ${run.elitesKilled}${Object.keys(run.boons).length?` · 받은 현장 지원 ${Object.values(run.boons).reduce((a,b)=>a+b,0)}개`:''}</p>
     ${run.bossRec?`<div class="note" style="${run.bossRec.best?'border-color:var(--hazard);color:var(--ink)':''}">보스 처치 시간 <b>${fmtTime(run.bossRec.t)}</b>${run.bossRec.best?(run.bossRec.prev!=null?` · <b style="color:var(--hazard)">최고 기록 갱신!</b> (이전 ${fmtTime(run.bossRec.prev)})`:' · 첫 기록'):` · 최고 기록 ${fmtTime(run.bossRec.prev)}`}</div>`:''}
     ${run.xpGold?`<div class="note">최대 레벨 이후 얻은 경험치 ${fmt(run.xpOver)} → <b style="color:#ffd84a">+${fmt(run.xpGold)} G</b> (사무소 '본사 투자'에서 쓸 수 있습니다)</div>`:''}
     ${dmgReport()}
@@ -3976,7 +4015,7 @@ Object.defineProperty(window,'__JOGONG_SIM__',{value:{
     SIM.on=true; SIM.bot=true; SIM.result=null; startStage(stage,night); hideAll();
     const dt=1/30; let n=0; const lim=(maxSec||200)*30;
     while(!SIM.result&&n++<lim) update(dt);
-    const r=SIM.result||{cleared:false,timeout:true,stage,level:save.level}; r.elites=run.elitesKilled; r.combo=run.bestCombo; r.frenzies=run.frenzies||0; r.goldfish=run.goldfish||0; r.posts=run.posts||0; r.subs=run.subs||0; r.goldRun=run.goldEarned; r.night=!!run.night; r.mig=run.migKills||0; r.jack=run.jackpots||0;
+    const r=SIM.result||{cleared:false,timeout:true,stage,level:save.level}; r.elites=run.elitesKilled; r.combo=run.bestCombo; r.frenzies=run.frenzies||0; r.goldfish=run.goldfish||0; r.posts=run.posts||0; r.subs=run.subs||0; r.goldRun=run.goldEarned; r.night=!!run.night; r.mig=run.migKills||0; r.jack=run.jackpots||0; r.rk=run.rushKills||0; r.chal=run.chals||0;
     r.src=Object.fromEntries(Object.entries(run.dmg).map(([k,v])=>[k,Math.round(v)])); r.lvAfter=save.level; r.gold=save.gold; r.sp=save.sp; r.spent=SKILLS.reduce((a,x)=>a+sk(x.id),0); r.weapon=equipped().type+'+'+equipped().plus; r.hp=P?Math.round(P.hp):0; r.maxHp=stats().maxHp;
     return r;
   },
