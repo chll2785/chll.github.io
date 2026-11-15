@@ -313,6 +313,14 @@ details.dev summary{cursor:pointer}
 .nightopt{display:flex;gap:10px;align-items:flex-start;margin:4px 0 10px;padding:10px 12px;border:1px solid rgba(127,140,255,.45);border-radius:4px;background:rgba(127,140,255,.08);font-size:12px;color:var(--muted);line-height:1.5;cursor:pointer}
 .nightopt input{width:18px;height:18px;margin:1px 0 0;flex:none;accent-color:#7f8cff}
 .nightopt b{color:#c9d0ff}
+/* 어종 도감 */
+.dexgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:6px}
+.dexcard{border:1px solid var(--line);border-radius:4px;padding:6px 4px;display:flex;flex-direction:column;align-items:center;gap:2px;background:var(--panel-2);min-width:0;text-align:center}
+.dexcard canvas{width:88px;height:52px}
+.dexcard b{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.dexcard small{font-size:11px;color:var(--muted)}
+.dexcard.boss{border-color:rgba(255,107,107,.45)}
+.dexcard.unk b{color:var(--muted)}
 /* 사무소 탭 알림 점: 지금 골드로 강화·투자할 수 있을 때 */
 .tabs .badge.dot{background:var(--hazard);color:var(--hazard-ink)}
 /* 원클릭 정비 '강화 포함' 옵션 */
@@ -787,6 +795,10 @@ function bossDef(k){
     dmg:Math.round(14*sc*(CFG.BOSS_DMG_TUNE[k-1]||1)*CFG.BOSS_DMG_ALL), spd:54+k*CFG.BOSS_SPD_K, gold:Math.round((500*k+150*k*k)*CFG.BOSS_GOLD_MUL), xp:Math.round(xpToNext(Math.min(CFG.MAX_LEVEL-1,Math.round(st*CFG.EXPECTED_LV_PER_STAGE)))*1.2)}; // S100 기대 레벨 320 → 299로 제한 (최대 레벨의 필요 경험치는 무한대라 경험치가 Infinity가 되던 것)
 }
 
+/* 어종 도감: 물고기 20종 + 홍어 보스 10종. 처음 잡으면 등록되고 종류별 처치 수가 쌓임 (뱀파이어 서바이버즈의 '적 도감'처럼 수집 목표 + 다음에 나올 어종 예고) */
+const DEX=[...FISH.map((f,i)=>({id:f.id,name:f.name,from:i*5+1,fish:f})),...BOSS_NAMES.map((n,i)=>({id:'ray'+(i+1),name:n,from:(i+1)*10,boss:i+1}))];
+const dexCount=()=>DEX.filter(x=>save.dex&&save.dex[x.id]>0).length;
+
 /* =====================================================================
    3. 직급 (승진 조건 유지) + 직급별 복장
    ===================================================================== */
@@ -892,6 +904,7 @@ const ACH_GROUPS=[
   {id:'star', name:'무사고 평가',   unit:'별',   val:()=>starTotal(), goals:[[30,600],[150,8000],[300,40000]]},
   {id:'night',name:'야간 작업',     unit:'공정', val:()=>Object.keys(save.night||{}).length, goals:[[1,2000],[10,15000],[30,50000]]},
   {id:'evo',  name:'스킬 진화',     unit:'종',   val:()=>evoCount(), goals:[[1,10000],[3,25000],[5,50000]]},
+  {id:'dex',  name:'어종 도감',     unit:'종',   val:()=>dexCount(), goals:[[5,600],[15,6000],[30,50000]]}, // 도감 등록 수 (물고기 20종 + 홍어 보스 10종)
   {id:'enh',  name:'장비 강화 장인',unit:'강',   val:()=>Math.max(0,...(save.inv||[]).map(x=>x.plus|0),...(save.gear||[]).map(x=>x.plus|0)), goals:[[7,3000],[10,15000]]},
 ];
 const ACH=ACH_GROUPS.flatMap(g=>g.goals.map(([goal,gold],i)=>({id:g.id+i,g,goal,gold,tier:i})));
@@ -954,7 +967,13 @@ const gearBetter=(a,b)=>!b||a.tier>b.tier||(a.tier===b.tier&&a.plus>b.plus);
 function isJunkGear(g){ const on=gearOn(g.slot); if(!on||g.uid===on.uid) return false; return g.tier<on.tier||(g.tier===on.tier&&g.plus<=on.plus); }
 function bestGear(slot){ return (save.gear||[]).filter(g=>g.slot===slot&&GEAR_REQ[g.tier]<=save.level).sort((a,b)=>b.tier-a.tier||b.plus-a.plus)[0]||null; }
 function betterGearList(){ return GEAR_SLOTS.map(sl=>{ const b=bestGear(sl), on=gearOn(sl); return b&&b.uid!==(on&&on.uid)&&gearBetter(b,on)?b:null; }).filter(Boolean); }
+/* 보호구 보급 보장(불운 보정): 지금 레벨로 낄 수 있는 최고 등급 보호구가 없는 부위가 있으면 그 부위·등급을 돌려줌 —
+   보스는 반드시 보호구를 떨어뜨리고, 그때(정예·일반 드랍 포함) 나오는 보호구는 그 부위·등급으로 확정. 무기 보급 보장과 같은 방식
+   (시뮬에서 작업화만 유리 구간 S15~24 내내 1등급에 머무는 등 부위별로 10공정 가까이 뒤처지던 것) */
+function missingGear(){ const top=GEAR_REQ.filter(r=>r<=save.level).length-1; if(top<=0) return null;
+  const sl=GEAR_SLOTS.find(s=>!(save.gear||[]).some(g=>g.slot===s&&g.tier>=top)); return sl?{slot:sl,tier:top}:null; }
 function rollGear(stage){
+  const mg=missingGear(); if(mg) return mg;
   const top=Math.max(save.level,stage*CFG.EXPECTED_LV_PER_STAGE)+15, el=GEAR_REQ.map((r,i)=>i).filter(i=>GEAR_REQ[i]<=top);
   const tier=Math.random()<.55?el[el.length-1]:el[Math.floor(Math.random()*el.length)];
   return {slot:GEAR_SLOTS[Math.floor(Math.random()*3)],tier};
@@ -1029,7 +1048,7 @@ const PICKUPS=[
    6. 세이브 데이터 / 계정 / 저장소
    ===================================================================== */
 const freshSave=()=>({v:3,stage:1,maxCleared:0,level:1,xp:0,gold:0,rank:0,sp:0,skills:{},
-  inv:[{uid:'w1',type:'scrap',plus:0}],equip:{weapon:'w1',helmet:'g1',gloves:'g2',shoes:'g3'},nextUid:2,gear:starterGear(),nextGid:4,totalKills:0,bossKills:0,invest:{},bossBest:{},stars:{},night:{},ach:{}});
+  inv:[{uid:'w1',type:'scrap',plus:0}],equip:{weapon:'w1',helmet:'g1',gloves:'g2',shoes:'g3'},nextUid:2,gear:starterGear(),nextGid:4,totalKills:0,bossKills:0,invest:{},bossBest:{},stars:{},night:{},ach:{},dex:{}});
 let save=freshSave();
 let session=null;      // {id, key, salt, hash}
 let guest=false, testMode=false;
@@ -1164,6 +1183,8 @@ function normalizeSave(s){
   for(const k in d.night){ if(+k<1||+k>CFG.MAX_STAGE||+k>(d.maxCleared|0)) delete d.night[k]; else d.night[k]=1; }
   if(!d.ach||typeof d.ach!=='object'||Array.isArray(d.ach)) d.ach={}; // 현장 표창(업적) 받은 기록 — 예전 세이브는 빈 값
   for(const k in d.ach){ if(!ACH.find(a=>a.id===k)) delete d.ach[k]; else d.ach[k]=1; }
+  if(!d.dex||typeof d.dex!=='object'||Array.isArray(d.dex)) d.dex={}; // 어종 도감(종류별 처치 수) — 예전 세이브는 빈 값
+  for(const k in d.dex){ if(!DEX.find(x=>x.id===k)) delete d.dex[k]; else d.dex[k]=Math.max(0,Math.floor(+d.dex[k]||0)); }
   d.stage=clamp(d.stage|0||1,1,Math.min(CFG.MAX_STAGE,(d.maxCleared|0)+1));
   for(const k in d.skills) if(!SKILL[k]){ d.sp+=d.skills[k]; delete d.skills[k]; }
   for(const k in d.skills) if(d.skills[k]>SKILL[k].max){ d.sp+=d.skills[k]-SKILL[k].max; d.skills[k]=SKILL[k].max; }
@@ -2347,6 +2368,8 @@ function dropWeapon(x,y){
 function killEnemy(e){
   if(e.dead) return;
   e.dead=true; run.kills++; save.totalKills++;
+  { const id=e.boss?'ray'+e.def.k:e.f.id; save.dex=save.dex||{}; const first=!save.dex[id]; save.dex[id]=(save.dex[id]|0)+1; // 어종 도감 등록·처치 수
+    if(first&&!SIM.on){ SND.play('boon'); toast(`어종 도감 등록 · ${e.boss?e.def.name:e.f.name}`,`도감 ${dexCount()} / ${DEX.length} · 사무소 '직급' 탭에서 볼 수 있습니다`,'#9fe8ff'); } }
   if(!SIM.on) burst(e.x,e.y,e.boss?'#ffd2dc':'#bfefff',e.boss?40:6,e.r);
   // 처치 연출: 물고기가 하얗게 번쩍이며 부풀었다 사라지는 잔상 (뱀서류의 '터지는' 처치감), 보스·정예는 짧은 슬로 모션
   if(!SIM.on){
@@ -2360,7 +2383,7 @@ function killEnemy(e){
     run.fx.push({type:'chest',x:e.x,y:e.y,t:0,life:2.4});
     addGold(Math.round(e.def.gold*ST.goldMul*ST.bonusGold),e.x,e.y,36);
     if(missingTier()||Math.random()<CFG.BOSS_WEAPON_DROP*ST.dropMul) dropWeapon(e.x,e.y); // 무기 보급 보장: 낄 수 있는 최고 등급이 없으면 보스가 반드시 그 무기를 떨어뜨림
-    if(Math.random()<CFG.BOSS_GEAR_DROP*ST.dropMul) dropGear(e.x,e.y);
+    if(missingGear()||Math.random()<CFG.BOSS_GEAR_DROP*ST.dropMul) dropGear(e.x,e.y); // 보호구 보급 보장
     run.ending=true; run.endT=2.6;
     for(const o of run.enemies) if(!o.dead){o.dead=true; if(!SIM.on) burst(o.x,o.y,'#bfefff',3,o.r);}
     run.shake=reduceMotion?0:14;
@@ -2569,7 +2592,7 @@ function update(dt){
     updateOutpost(dt); updateSubside(dt); if(!run.boss) updateChallenge(dt);
   }
   if(run.postBuff>0) run.postBuff-=dt;
-  for(const c of run.crates){ c.t+=dt; if((c.x-P.x)**2+(c.y-P.y)**2<(c.r+CFG.PLAYER_R)**2) breakCrate(c); if(Math.hypot(c.x-P.x,c.y-P.y)>spawnRadius()*1.8) c.dead=true; }
+  for(const c of run.crates){ c.t+=dt; if(c.flash>0) c.flash-=dt; /* 맞은 상자 번쩍임: 실제 프레임 시간으로 (이전엔 그릴 때마다 1/60씩 줄어 120Hz 화면에서 절반만 보임) */if((c.x-P.x)**2+(c.y-P.y)**2<(c.r+CFG.PLAYER_R)**2) breakCrate(c); if(Math.hypot(c.x-P.x,c.y-P.y)>spawnRadius()*1.8) c.dead=true; }
   for(const it of run.items){
     it.t+=dt; const dx=P.x-it.x, dy=P.y-it.y, d=Math.hypot(dx,dy)||1;
     if(it.pull||d<70){ const sp=it.pull?700:260; it.x+=dx/d*Math.min(d,sp*dt); it.y+=dy/d*Math.min(d,sp*dt); }
@@ -2840,7 +2863,7 @@ function drawCrate(c){
   ctx.fillStyle='#7a5129'; ctx.fillRect(-17,-13,34,4); ctx.fillRect(-17,9,34,4); ctx.fillRect(-3,-13,6,26);
   ctx.strokeStyle='#4a3018'; ctx.lineWidth=1.5; ctx.strokeRect(-17,-13,34,26);
   ctx.fillStyle='#ffc21a'; ctx.fillRect(-12,-3,7,6); ctx.fillStyle='#1b1506'; ctx.font='bold 6px sans-serif'; ctx.fillText('!',-10,2);
-  ctx.restore(); if(c.flash>0) c.flash-=.016;
+  ctx.restore();
 }
 function drawItem(it,time){
   const pk=PICKUPS.find(p=>p.id===it.kind), y=it.y+Math.sin(time*4+it.x)*3;
@@ -3324,7 +3347,8 @@ $('#btnDev').onclick=()=>{
 function testSave(stage,lv){
   const s=freshSave(); s.level=lv; s.maxCleared=stage-1; s.sp=lv-1; s.stage=stage;
   const prev=save; save=s; while(s.rank<RANKS.length-1&&meetsRank(RANKS[s.rank+1])) s.rank++;
-  autoSkills(); const best=[...WEAPONS].reverse().find(w=>w.req<=lv);
+  autoSkills(); evoJust=''; // 테스트 시작의 자동 스킬 배분이 '스킬 진화 달성' 알림을 남겨 다음 사무소 화면에 엉뚱하게 뜨던 것 방지
+  const best=[...WEAPONS].reverse().find(w=>w.req<=lv);
   if(best&&best.id!=='scrap'){const it=addWeapon(best.id,Math.min(6,Math.floor(lv/50))); s.equip.weapon=it.uid;}
   { const t=GEAR_REQ.filter(r=>r<=lv).length-1, pl=Math.min(5,Math.floor(lv/60)); s.gear=GEAR_SLOTS.map((sl,i)=>({uid:'g'+(i+1),slot:sl,tier:t,plus:pl})); }
   save=prev; return s;
@@ -3729,8 +3753,8 @@ function renderCode(body){
 function renderRanks(body){
   const nx=RANKS[save.rank+1];
   body.innerHTML=`${nx?`<div class="req" style="margin-bottom:14px"><h3>다음 승진: ${nx.name}</h3>${reqList(nx)}</div>`:'<div class="note" style="margin-bottom:14px">최고 직급 PM에 도달했습니다.</div>'}
-    ${achHtml()}<div class="ladder" id="ladder"></div>${stageLogHtml()}`;
-  bindStageLog(body); bindAch(body);
+    ${achHtml()}<div class="ladder" id="ladder"></div>${stageLogHtml()}${dexHtml()}`;
+  bindStageLog(body); bindAch(body); fillDex(body);
   const L=$('#ladder');
   RANKS.forEach((r,i)=>{
     const d=document.createElement('div'); d.className='rankcard'+(i===save.rank?' cur':'')+(i>save.rank?' lock':'');
@@ -3750,7 +3774,7 @@ function achHtml(){
       <div class="skeff">${done?'모든 표창을 받았습니다':`${fmt(v)} / ${fmt(tgt.goal)} ${g.unit} · 보상 <span>${fmt(rd.length?rd.reduce((s,a)=>s+a.gold,0):tgt.gold)} G</span>${rd.length>1?` (${rd.length}단계)`:''}`}</div></div>
       <div class="skbtns">${rd.length?`<button class="btn small" type="button" data-ach="${g.id}" style="min-width:76px">받기</button>`:''}</div></div>`; }).join('');
   return `<div class="buildsec" style="margin-bottom:16px"><h3>현장 표창 <span style="font-family:var(--f-body);font-size:13px;color:var(--muted)">${got} / ${ACH.length}</span></h3>
-    <div class="row" style="justify-content:space-between"><p style="font-size:12px;flex:1;min-width:180px">처치·보스·준공·레벨·별·야간 작업·진화·강화 기록이 목표에 닿으면 보너스 골드를 받습니다.</p>${ready.length>1?`<button class="btn small" type="button" id="btnAchAll">모두 받기 (${ready.length})</button>`:''}</div>
+    <div class="row" style="justify-content:space-between"><p style="font-size:12px;flex:1;min-width:180px">처치·보스·준공·레벨·별·야간 작업·진화·도감·강화 기록이 목표에 닿으면 보너스 골드를 받습니다.</p>${ready.length>1?`<button class="btn small" type="button" id="btnAchAll">모두 받기 (${ready.length})</button>`:''}</div>
     <div class="list">${rows}</div></div>`;
 }
 function bindAch(body){
@@ -3777,6 +3801,21 @@ function bindStageLog(body){
   body.querySelectorAll('[data-stg]').forEach(b=>b.onclick=()=>{ const n=+b.dataset.stg;
     if(armed!==n){ armed=n; body.querySelectorAll('.stg.arm').forEach(x=>x.classList.remove('arm')); b.classList.add('arm'); toastOffice(nightOpt?`☾ STAGE ${n} 야간 작업 — 한 번 더 누르면 출근합니다 (고난도, 골드 감액 없음)`:`STAGE ${n} 다시 하기 — 한 번 더 누르면 출근합니다 (골드 절반)`); return; }
     startStage(n,nightOpt); });
+}
+/* 어종 도감 목록: 잡은 종은 그림·처치 수, 아직 못 잡은 종은 검은 실루엣과 등장 공정 */
+function dexHtml(){
+  const cells=DEX.map(x=>{ const n=(save.dex&&save.dex[x.id])|0;
+    return `<div class="dexcard${n?'':' unk'}${x.boss?' boss':''}"><canvas data-dex="${x.id}" width="176" height="104"></canvas><b>${n?x.name:'???'}</b><small>${n?`처치 ${fmt(n)}`:`STAGE ${x.from}부터`}</small></div>`; }).join('');
+  return `<div class="buildsec" style="margin-top:18px"><h3>어종 도감 <span style="font-family:var(--f-body);font-size:13px;color:var(--muted)">${dexCount()} / ${DEX.length}</span></h3>
+    <p style="font-size:12px">물고기와 홍어 보스를 처음 잡으면 등록됩니다. 아직 만나지 못한 어종은 실루엣으로 보입니다.</p><div class="dexgrid">${cells}</div></div>`;
+}
+function fillDex(body){
+  body.querySelectorAll('canvas[data-dex]').forEach(cv=>{ const x=DEX.find(d=>d.id===cv.dataset.dex); if(!x) return; const known=(save.dex&&save.dex[x.id])>0, c=cv.getContext('2d');
+    c.save(); c.translate(cv.width/2,cv.height/2);
+    if(x.boss){ const def=bossDef(x.boss), s=40/def.r; c.scale(s,s); drawRay(c,{r:def.r,def,flash:0,mode:'chase',ang:-Math.PI/2},1.2); }
+    else{ const S=getSprites(x.fish), sc=Math.min(cv.width*1.3/S.w,cv.height*1.35/S.h); c.drawImage(S.normal[1],-S.w*sc/2,-S.h*sc/2,S.w*sc,S.h*sc); }
+    c.restore();
+    if(!known){ c.globalCompositeOperation='source-atop'; c.fillStyle='#071622'; c.fillRect(0,0,cv.width,cv.height); c.globalCompositeOperation='source-over'; } });
 }
 function reqList(r){
   const items=[[save.level>=r.minLevel,`레벨 ${r.minLevel} 달성 (현재 ${save.level})`],[save.maxCleared>=r.minStage,`스테이지 ${r.minStage} 클리어 (최고 ${save.maxCleared})`],...r.conditions.map(c=>[c.check(save),c.label])];
