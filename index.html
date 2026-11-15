@@ -266,6 +266,7 @@ details.dev summary{cursor:pointer}
   .tabbody{order:3;padding:12px 12px 16px}
   .office-cta{order:4;flex-direction:column;align-items:stretch;gap:6px;padding:8px 12px calc(10px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line);border-bottom:0}
   .office-cta .btn{width:100%;font-size:18px;padding:13px}
+  .office-cta #btnPrep{font-size:14px;padding:8px}
   .office-cta p{order:-1;min-width:0;font-size:12px;text-align:center}
   .saveinfo{text-align:center;font-size:10px}
   .slot.empty{display:none}
@@ -316,8 +317,6 @@ details.dev summary{cursor:pointer}
 .tabs .badge.dot{background:var(--hazard);color:var(--hazard-ink)}
 @media (prefers-reduced-motion:reduce){.btn{transition:none}}
 </style></head><body>
-
-
 
 <div id="wrap">
   <canvas id="cv" aria-label="게임 화면"></canvas>
@@ -372,6 +371,7 @@ details.dev summary{cursor:pointer}
       </div>
       <div class="office-cta">
         <button class="btn" type="button" id="btnGo">출근하기</button>
+        <button class="btn ghost small" type="button" id="btnPrep" hidden title="남은 스킬 포인트 추천 배분 + 더 좋은 무기·보호구 장착 + 현장 표창 받기를 한 번에">원클릭 정비</button>
         <p id="goInfo"></p>
         <span class="saveinfo" id="saveInfo"></span>
       </div>
@@ -710,6 +710,7 @@ const CFG={
   MIGRATE:[6,.4,.65,22,.35,48,.5,1.25], // 회유 떼: [시작 스테이지, 등장 시점(공정 길이 비율) 최소·최대, 기본 마릿수, 스테이지당 추가, 최대, 체력 배율, 속도 배율] — 일반 공정 중반에 물고기 떼가 화면을 가로질러 일직선으로 지나감 (쫓아오지 않음). 뱀파이어 서바이버즈의 박쥐 떼·꽃 벽 같은 스테이지 이벤트에서 착안 — 한 번에 쓸어 담는 맛
   MIGRATE_XP:.5,             // 회유 떼 물고기 경험치·골드 드랍 확률 배율 (보너스 무리라 레벨·강화가 너무 당겨지지 않게)
   JACKPOT:[5,.12],           // 대박 지원 상자: 5스테이지부터 정예 상자의 12%가 지원 3장을 모두 줌 (뱀파이어 서바이버즈 보물 상자의 1·3·5개 개봉에서 착안)
+  BOSS_GROGGY:[1.3,1.35],     // 보스 빈틈: 돌진(연속 돌진이면 마지막 돌진)이 끝나면 1.3초 동안 멈춰 숨을 고르고 받는 피해 ×1.35 — 액션·DRG: Survivor 보스의 '공격 후 빈틈(반격 타이밍)'에서 착안, 돌진을 피한 뒤 몰아칠 이유
   GOLD_EARLY:[-.2,70,95],     // (2026-11-14 .6→-.2: 다음 장비 직전 4부위 강화가 +9~10으로 목표 +6~8보다 높아서 — 이제 S1~70 ×0.8, S95까지 서서히 ×1) 골드 추가 배율 [A, 전부 적용하는 마지막 스테이지, 0이 되는 스테이지]: S1~70 ×(1+A), S95까지 서서히 줄어듦 (다음 장비 직전 무기·보호구 평균 +8 목표, 사람처럼 4부위를 고르게 강화하는 기준)
 };
 const stageDuration=s=>40+Math.min(18,Math.floor((s-1)/10)*2);
@@ -895,7 +896,7 @@ const investCost=d=>Math.round(d.base*Math.pow(INV_GROWTH,invLv(d.id))/100)*100;
    5. 무기 — 레벨 제한, 공격력 계수, 추가 마법 공격
    ===================================================================== */
 const WEAPONS=[
-  {id:'scrap',  name:'폐 파이프',      req:1,  coef:1.0, magicPct:.15, magic:'rust',   mName:'녹물 부식', mDesc:p=>`적중 시 3초간 초당 공격력의 ${p}% 지속 피해`, cost:30,   color:'#b5683a'}, // 2026-11-14 강화 비용 20→30: 폐 파이프 구간(S1~14) 골드로 +10까지 차던 것(목표 +6~8)
+  {id:'scrap',  name:'폐 파이프',      req:1,  coef:1.0, magicPct:.15, magic:'rust',   mName:'녹물 부식', mDesc:p=>`적중 시 3초간 초당 공격력의 ${p}% 지속 피해`, cost:38,   color:'#b5683a'}, // 2026-11-15 30→38: 시뮬에서 S14 4부위 +9로 목표(+6~8) 위 // 2026-11-14 강화 비용 20→30: 폐 파이프 구간(S1~14) 골드로 +10까지 차던 것(목표 +6~8)
   {id:'glass',  name:'유리 파이프',    req:45, coef:1.35,magicPct:.35, magic:'shard',  mName:'파편 비산', mDesc:p=>`25% 확률로 유리 파편 3개가 튀어 각각 공격력의 ${p}% 마법 피해`, cost:80, color:'#9fe8ff'},
   {id:'plastic',name:'플라스틱 파이프',req:90, coef:1.8, magicPct:.6,  magic:'bounce', mName:'탄성 반동', mDesc:p=>`적중할 때마다 탄성 고무 조각이 근처 적에게 튕겨 공격력의 ${p}% 마법 피해 (연쇄 확장만큼 더 튕김)`, cost:250, color:'#5aa8ff'},
   {id:'galva',  name:'갈바 파이프',    req:150,coef:2.5, magicPct:.45, magic:'chain',  mName:'아연 전류', mDesc:p=>`근처 적 2마리에게 전류가 이어져 공격력의 ${p}% 마법 피해`, cost:600, color:'#e9f27a'},
@@ -926,7 +927,7 @@ const GEAR={
   shoes:{name:'작업화',names:['고무 장화','안전화','경량 안전화','방수 안전화','철심 작업화','심해 잠수화'],
     main:{key:'speed',label:'이동 속도',v:[.03,.05,.07,.09,.11,.13]}, sub:{key:'dodge',label:'회피 확률',v:[.005,.01,.015,.02,.025,.03]}},
 };
-const GEAR_COST=[22,60,180,450,1100,2600]; // 1등급 15→22 (2026-11-14, 폐 파이프 구간 강화 과다) // 강화 비용 기준 (같은 등급 무기보다 낮음)
+const GEAR_COST=[28,60,180,450,1100,2600]; // 1등급 15→22 (2026-11-14, 폐 파이프 구간 강화 과다) // 강화 비용 기준 (같은 등급 무기보다 낮음)
 const GEAR_MAX=30;                         // 보호구 가방 칸 수
 const gMul=g=>1+.06*g.plus;
 const gVal=(g,which)=>GEAR[g.slot][which].v[g.tier]*gMul(g);
@@ -2203,6 +2204,7 @@ function gainXp(n){
     save.xp-=need; save.level++; save.sp++; run.levelsGained++;
     const before=ST.maxHp; ST=stats(); P.hp=Math.min(ST.maxHp,P.hp+(ST.maxHp-before));
     floater(P.x,P.y-46,`LEVEL ${save.level}`,'#ffc21a',20);
+    if(!SIM.on&&!run.fx.some(f=>f.type==='pillar')) run.fx.push({type:'pillar',x:P.x,y:P.y,t:0,life:.7}); // 레벨업 빛기둥 (뱀서류의 레벨업 연출처럼 성장 순간을 눈에 띄게)
     toast(`레벨 업! Lv ${save.level}`,`스킬 포인트 +1 (보유 ${save.sp}) · 사무소에서 사용`,'#ffc21a');
     levelShock(); SND.play('level');
     need=xpToNext(save.level);
@@ -2329,6 +2331,7 @@ function fire(){
   return true;
 }
 function damage(e,d,crit,src){
+  if(e.boss&&e.groggy>0) d*=CFG.BOSS_GROGGY[1]; // 보스 빈틈: 받는 피해 증가
   if(run&&run.dmg){ const k=src||'pipe'; run.dmg[k]=(run.dmg[k]||0)+Math.min(d,Math.max(0,e.hp)); }
   e.hp-=d; e.flash=.08;
   if(!SIM.on){
@@ -2598,14 +2601,16 @@ function updateBoss(b,dt){
     if(!SIM.on) run.fx.push({type:'ring',x:b.x,y:b.y,t:0,life:.6,r:b.r+220,color:'#ff4d5e'});
     for(const e of run.enemies){ if(e.dead||e.boss) continue; const ex=e.x-b.x, ey=e.y-b.y, ed=Math.hypot(ex,ey)||1; if(ed<b.r+220){ e.x+=ex/ed*50; e.y+=ey/ed*50; } } }
   const eCd=b.enraged?CFG.BOSS_ENRAGE_CD:1;
-  if(b.mode==='chase'){
+  if(b.mode==='chase'&&b.groggy>0){ b.groggy-=dt; } // 빈틈: 쫓아오지 않고 숨 고르기
+  else if(b.mode==='chase'){
     b.x+=dx/d*b.spd*dt; b.y+=dy/d*b.spd*dt; b.ang=Math.atan2(dy,dx);
     b.cd-=dt/eCd; if(b.cd<=0){SND.play('bossWind'); b.mode='wind'; b.tm=.85; b.dx=dx/d; b.dy=dy/d; b.ang=Math.atan2(dy,dx);}
   }else if(b.mode==='wind'){ b.tm-=dt; if(b.tm<=0){b.mode='dash'; b.tm=.7;} }
   else{ b.x+=b.dx*b.spd*4.4*dt; b.y+=b.dy*b.spd*4.4*dt; b.tm-=dt;
     if(b.tm<=0){ // 대왕 홍어(7등급)부터 연속 돌진
       if(b.def.k>=7&&!b.second){ b.second=true; b.mode='wind'; b.tm=.4; b.dx=dx/d; b.dy=dy/d; b.ang=Math.atan2(dy,dx); }
-      else { b.second=false; b.mode='chase'; b.cd=rand(3,4.4)-b.def.k*.12; } } }
+      else { b.second=false; b.mode='chase'; b.cd=rand(3,4.4)-b.def.k*.12; b.groggy=CFG.BOSS_GROGGY[0]; // 돌진 뒤 빈틈: 잠시 멈춰 숨 고르기 (받는 피해 증가)
+        if(!SIM.on){ floater(b.x,b.y-b.r-20,'빈틈!','#ffe066',20,.9); run.fx.push({type:'ring',x:b.x,y:b.y,t:0,life:.35,r:b.r+30,color:'#ffe066'}); } } } }
   const k=b.def.k;
   b.stinkCd-=dt/eCd;
   if(b.stinkCd<=0){b.stinkCd=7-Math.min(3,k*.3);
@@ -2897,10 +2902,10 @@ function drawHUD(time,dt){
     ctx.fillStyle='rgba(0,0,0,.6)'; rrect(x,y,w,14,3); ctx.fill();
     const hf=clamp(b.hp/b.maxHp,0,1), tf=clamp((b.trail??b.hp)/b.maxHp,hf,1);
     if(tf>hf){ ctx.fillStyle='rgba(255,236,200,.85)'; rrect(x,y,w*tf,14,3); ctx.fill(); } // 방금 깎인 만큼 밝은 잔상이 남았다가 따라 줄어듦
-    ctx.fillStyle=b.flash>0?'#ff7aa6':b.enraged?'#e8203c':'#c0396b'; rrect(x,y,w*hf,14,3); ctx.fill();
+    ctx.fillStyle=b.flash>0?'#ff7aa6':b.groggy>0?'#e0a52a':b.enraged?'#e8203c':'#c0396b'; rrect(x,y,w*hf,14,3); ctx.fill();
     ctx.strokeStyle='rgba(255,255,255,.25)'; ctx.lineWidth=1; rrect(x,y,w,14,3); ctx.stroke();
     ctx.fillStyle='rgba(255,255,255,.35)'; for(let i=1;i<4;i++) ctx.fillRect(x+w*i/4-.5,y+2,1,10); // 25% 눈금
-    ctx.fillStyle='#fff'; ctx.font=`14px ${FD}`; ctx.fillText(`${b.def.name}${b.enraged?' · 격노':''} · ${Math.ceil(hf*100)}%`,V.w/2,y+28);
+    ctx.fillStyle='#fff'; ctx.font=`14px ${FD}`; ctx.fillText(`${b.def.name}${b.enraged?' · 격노':''}${b.groggy>0?' · 빈틈! 피해 ×'+CFG.BOSS_GROGGY[1]:''} · ${Math.ceil(hf*100)}%`,V.w/2,y+28);
     if(!b.enraged&&b.def.k>=2){ ctx.fillStyle='rgba(255,90,90,.8)'; ctx.fillRect(x+w*CFG.BOSS_ENRAGE-1,y-3,2,20); } // 격노 시작 지점 표시
   }
   // 토스트
@@ -3014,6 +3019,11 @@ function render(dt,time){
     if(b.enraged){ const p=reduceMotion?.5:.5+.5*Math.sin(time*7), eg=ctx.createRadialGradient(b.x,b.y,b.r*.5,b.x,b.y,b.r*1.75); // 격노: 붉은 열기 오라
       eg.addColorStop(0,`rgba(255,60,70,${.22+.18*p})`); eg.addColorStop(1,'rgba(255,60,70,0)'); ctx.fillStyle=eg; ctx.beginPath(); ctx.arc(b.x,b.y,b.r*1.75,0,TAU); ctx.fill(); }
     ctx.save(); ctx.translate(b.x+(b.mode==='wind'||b.enraged&&!reduceMotion?rand(-2,2):0),b.y); drawRay(ctx,b,time); ctx.restore();
+    if(b.groggy>0){ // 빈틈: 머리 위를 도는 노란 별 + 점선 고리 (지금 몰아치라는 신호)
+      const k=clamp(b.groggy/CFG.BOSS_GROGGY[0],0,1), rot=reduceMotion?0:time*4;
+      ctx.save(); ctx.strokeStyle=`rgba(255,224,102,${.35+.4*k})`; ctx.lineWidth=3; ctx.setLineDash([10,8]); ctx.lineDashOffset=-rot*10; ctx.beginPath(); ctx.arc(b.x,b.y,b.r*1.15,0,TAU); ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle='#ffe066'; for(let i=0;i<3;i++){ const a=rot+i/3*TAU, sx=b.x+Math.cos(a)*b.r*.55, sy=b.y-b.r*.95+Math.sin(a)*b.r*.18; ctx.beginPath(); for(let j=0;j<10;j++){ const aa=j/10*TAU-Math.PI/2, rr=j%2?3.5:8; ctx.lineTo(sx+Math.cos(aa)*rr,sy+Math.sin(aa)*rr); } ctx.closePath(); ctx.fill(); }
+      ctx.restore(); }
     if(b.slowT>0){ctx.fillStyle='rgba(150,220,255,.2)'; ctx.beginPath(); ctx.arc(b.x,b.y,b.r,0,TAU); ctx.fill();}
   }
   if(ST.orbit>0){ const orR=orbitRadius(); // 회전 배관: 궤도 잔상 + 파이프
@@ -3050,6 +3060,14 @@ function render(dt,time){
         for(let s=1;s<=4;s++){ const d=f.r*k*s/4, j=Math.sin(i*7.3+s*3.1)*.32; x=f.x+Math.cos(a+j)*d; y=f.y+Math.sin(a+j)*d; ctx.lineTo(x,y); }
         ctx.strokeStyle=`rgba(20,10,30,${.55*fade})`; ctx.lineWidth=4; ctx.stroke(); ctx.strokeStyle=`rgba(170,180,255,${.75*fade})`; ctx.lineWidth=1.6; ctx.stroke(); }
       ctx.fillStyle=`rgba(160,150,190,${.18*fade})`; ctx.beginPath(); ctx.arc(f.x,f.y,f.r*(.6+.5*t),0,TAU); ctx.arc(f.x,f.y,f.r*(.35+.5*t),0,TAU,true); ctx.fill('evenodd');
+      ctx.restore(); }
+    else if(f.type==='pillar'){ // 레벨업 빛기둥: 발밑에서 위로 솟는 금빛 기둥 + 떠오르는 불티
+      const fx=P.x, fy=P.y+14, a=1-t, w=34*(1-.5*t);
+      ctx.save(); ctx.globalCompositeOperation='lighter';
+      const g=ctx.createLinearGradient(0,fy,0,fy-260); g.addColorStop(0,`rgba(255,214,90,${.55*a})`); g.addColorStop(1,'rgba(255,214,90,0)');
+      ctx.fillStyle=g; ctx.fillRect(fx-w/2,fy-260,w,260);
+      ctx.fillStyle=`rgba(255,240,180,${.8*a})`; ctx.beginPath(); ctx.ellipse(fx,fy,w*.9,w*.28,0,0,TAU); ctx.fill();
+      for(let i=0;i<6;i++){ const sx=fx+Math.sin(i*2.4)*w*.4, sy=fy-40-((t*220+i*37)%200); ctx.fillStyle=`rgba(255,230,140,${.9*a})`; ctx.fillRect(sx-1.5,sy-1.5,3,3); }
       ctx.restore(); }
     else if(f.type==='boom'){ctx.strokeStyle=`rgba(95,240,255,${1-t})`; ctx.lineWidth=6*(1-t)+1; ctx.beginPath(); ctx.arc(f.x,f.y,80*Math.sqrt(t),0,TAU); ctx.stroke(); ctx.fillStyle=`rgba(95,240,255,${.25*(1-t)})`; ctx.fill();}
     else if(f.type==='corpse'){
@@ -3216,11 +3234,22 @@ function refreshOffice(){
     const na=achReady().length, ab=$('#achBadge'); if(ab){ ab.hidden=!na; ab.textContent=na; ab.title=`받을 수 있는 현장 표창 ${na}개`; } }
   const next=save.stage;
   $('#btnGo').textContent=`STAGE ${next} 출근하기`;
+  { const td=prepTodo(), bp=$('#btnPrep'); bp.hidden=!td.length; bp.textContent=`원클릭 정비 (${td.join(' · ')})`; }
   $('#goInfo').innerHTML=isBossStage(next)?`보스 <b style="color:#ff9d84">${BOSS_NAMES[next/10-1]}</b> 출현 공정입니다.`:`${FISH[speciesOf(next)].name} 구간 · ${stageDuration(next)}초 버티기`+(save.sp?` · 스킬 포인트 ${save.sp}개를 먼저 사용하세요`:'');
   paintAvatar($('#officeAvatar'),save.rank);
   updateSaveInfo();
 }
 $('#btnGo').onclick=()=>startStage(save.stage);
+/* 원클릭 정비: 출근 전 할 일(SP 추천 배분·더 좋은 장비 장착·표창 받기)을 한 번에 — 모바일 뱀서류(Survivor.io 등)의 '원터치 장착/일괄 수령' 편의에서 착안. 강화는 골드 사용 선택이라 넣지 않음 */
+function prepTodo(){ const t=[]; if(save.sp&&SKILLS.some(canLearn)) t.push(`SP ${save.sp}`); if(betterWeapon()||betterGearList().length) t.push('장비'); if(!testMode&&achReady().length) t.push(`표창 ${achReady().length}`); return t; }
+$('#btnPrep').onclick=()=>{
+  const out=[]; const n=autoSpend(); if(n) out.push(`스킬 ${n}개 배분`);
+  const bw=betterWeapon(); if(bw){ save.equip.weapon=bw.uid; out.push(`${WEAPON[bw.type].name} +${bw.plus} 장착`); }
+  const bg=betterGearList(); for(const g of bg) save.equip[g.slot]=g.uid; if(bg.length) out.push(`보호구 ${bg.length}개 장착`);
+  if(!testMode){ let g=0; for(const a of achReady()) g+=claimAch(a); if(g) out.push(`표창 +${fmt(g)} G`); }
+  if(out.length){ SND.play('weapon'); persist(); }
+  refreshOffice(); renderTab(); toastOffice(out.length?`정비 완료 · ${out.join(' · ')}${evoJust?` · 진화: ${evoJust}`:''}`:'정비할 것이 없습니다.'); evoJust='';
+};
 $('#btnLogout').onclick=()=>{ persist(); if(Store.mode==='firebase'&&Store.fb&&session){ const f=()=>{ if(saving||pendingSave) return setTimeout(f,300); Store.fb.auth.signOut().catch(()=>{}); }; f(); } session=null; testMode=false; state='login'; show('#login'); authMsg(guest?'체험 진행은 이 화면을 닫기 전까지 유지됩니다. 계정을 만들면 그대로 저장됩니다.':''); };
 $$('.tabs button').forEach(b=>b.onclick=()=>{ tab=b.dataset.tab; $$('.tabs button').forEach(x=>x.setAttribute('aria-selected',x===b?'true':'false')); renderTab(); });
 function renderTab(){
@@ -3886,5 +3915,4 @@ Object.defineProperty(window,'__JOGONG_SIM__',{value:{
 
 })();
 </script>
-
 </body></html>
