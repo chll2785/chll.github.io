@@ -315,8 +315,14 @@ details.dev summary{cursor:pointer}
 .nightopt b{color:#c9d0ff}
 /* 사무소 탭 알림 점: 지금 골드로 강화·투자할 수 있을 때 */
 .tabs .badge.dot{background:var(--hazard);color:var(--hazard-ink)}
+/* 원클릭 정비 '강화 포함' 옵션 */
+.prepopt{display:inline-flex;gap:6px;align-items:center;font-size:12px;color:var(--muted);cursor:pointer;white-space:nowrap}
+.prepopt input{width:16px;height:16px;margin:0;accent-color:var(--hazard)}
+@media (max-width:640px){.office-cta .prepopt{justify-content:center}}
 @media (prefers-reduced-motion:reduce){.btn{transition:none}}
 </style></head><body>
+
+
 
 <div id="wrap">
   <canvas id="cv" aria-label="게임 화면"></canvas>
@@ -372,6 +378,7 @@ details.dev summary{cursor:pointer}
       <div class="office-cta">
         <button class="btn" type="button" id="btnGo">출근하기</button>
         <button class="btn ghost small" type="button" id="btnPrep" hidden title="남은 스킬 포인트 추천 배분 + 더 좋은 무기·보호구 장착 + 현장 표창 받기를 한 번에">원클릭 정비</button>
+        <label class="prepopt" id="prepOpt" title="원클릭 정비 때 무기·안전모·장갑·작업화 중 강화 수치가 낮은 것부터 고르게, 골드가 닿는 만큼 강화합니다"><input type="checkbox" id="optPrepEnh"><span>정비에 강화 포함</span></label>
         <p id="goInfo"></p>
         <span class="saveinfo" id="saveInfo"></span>
       </div>
@@ -622,7 +629,7 @@ const SND=(()=>{
   };
 })();
 /* 화면 표시 설정 (브라우저에 저장): 일반 타격 피해 숫자 표시 — 다른 뱀서류처럼 타격마다 숫자가 튀어 성장이 눈에 보이게 */
-const UIP={dmgNum:true,hpBar:true,shake:true}; // hpBar: 플레이어 머리 위 체력바, shake: 화면 흔들림 (끄면 피격·폭발 때 화면이 흔들리지 않음 — 다른 뱀서류의 화면 흔들림·번쩍임 옵션처럼 멀미·눈 피로 줄이기)
+const UIP={dmgNum:true,hpBar:true,shake:true,prepEnh:false}; // hpBar: 플레이어 머리 위 체력바, shake: 화면 흔들림 (끄면 피격·폭발 때 화면이 흔들리지 않음 — 다른 뱀서류의 화면 흔들림·번쩍임 옵션처럼 멀미·눈 피로 줄이기)
 try{ Object.assign(UIP,JSON.parse(localStorage.getItem('jogong_ui')||'{}')); }catch(e){}
 const saveUIP=()=>{ try{ localStorage.setItem('jogong_ui',JSON.stringify(UIP)); }catch(e){} };
 const fmtTime=s=>`${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,'0')}`;
@@ -711,6 +718,8 @@ const CFG={
   MIGRATE_XP:.5,             // 회유 떼 물고기 경험치·골드 드랍 확률 배율 (보너스 무리라 레벨·강화가 너무 당겨지지 않게)
   JACKPOT:[5,.12],           // 대박 지원 상자: 5스테이지부터 정예 상자의 12%가 지원 3장을 모두 줌 (뱀파이어 서바이버즈 보물 상자의 1·3·5개 개봉에서 착안)
   BOSS_GROGGY:[1.3,1.35],     // 보스 빈틈: 돌진(연속 돌진이면 마지막 돌진)이 끝나면 1.3초 동안 멈춰 숨을 고르고 받는 피해 ×1.35 — 액션·DRG: Survivor 보스의 '공격 후 빈틈(반격 타이밍)'에서 착안, 돌진을 피한 뒤 몰아칠 이유
+  BARREL:[3,2,9,4,135,5,.35], // 폭발 가스통: [등장 스테이지, 시작 개수, 추가 간격(초), 최대 수, 폭발 반경, 공격력 배율, 점화 후 폭발까지(초)] — 파이프·회전 배관에 맞으면 터져 주변 물고기에게 큰 피해, 옆 가스통도 연쇄 폭발 (플레이어는 다치지 않음). DRG: Survivor·뱀서류의 '환경 오브젝트' 구조에서 착안 — 물고기 떼를 가스통 쪽으로 끌고 가는 위치 선정의 재미
+  ORDER_GOLD:[10,.4],         // 공정 특별 지시(일반 공정마다 무작위 목표 1개) 달성 보상 골드 = 10×(1+스테이지×0.4) (12·0.45로는 다음 장비 직전 강화가 +8~9로 살짝 올라 낮춤) (골드 배율·다시 하기 감액 적용)
   GOLD_EARLY:[-.2,70,95],     // (2026-11-14 .6→-.2: 다음 장비 직전 4부위 강화가 +9~10으로 목표 +6~8보다 높아서 — 이제 S1~70 ×0.8, S95까지 서서히 ×1) 골드 추가 배율 [A, 전부 적용하는 마지막 스테이지, 0이 되는 스테이지]: S1~70 ×(1+A), S95까지 서서히 줄어듦 (다음 장비 직전 무기·보호구 평균 +8 목표, 사람처럼 4부위를 고르게 강화하는 기준)
 };
 const stageDuration=s=>40+Math.min(18,Math.floor((s-1)/10)*2);
@@ -2044,7 +2053,55 @@ function newRun(stage){
     ending:false,endT:0,dead:false,deadT:0,revived:false,bossRef:null,shake:0,banner:null,shadowT:rand(8,20),shadow:null,
     goldT:(!isBossStage(stage)&&stage>=CFG.GOLDFISH[0])?rand(CFG.GOLDFISH[1],CFG.GOLDFISH[2]):-1,
     postT:(!isBossStage(stage)&&stage>=CFG.OUTPOST[0])?rand(CFG.OUTPOST[1],CFG.OUTPOST[2]):-1, post:null, posts:0, postBuff:0,
-    migT:(!isBossStage(stage)&&stage>=CFG.MIGRATE[0])?stageDuration(stage)*rand(CFG.MIGRATE[1],CFG.MIGRATE[2]):-1, migKills:0};
+    migT:(!isBossStage(stage)&&stage>=CFG.MIGRATE[0])?stageDuration(stage)*rand(CFG.MIGRATE[1],CFG.MIGRATE[2]):-1, migKills:0,
+    barrels:[], barrelT:CFG.BARREL[2], barrelsBlown:0, barrelKills:0, cratesBroken:0, order:null};
+}
+/* 공정 특별 지시: 일반 공정마다 무작위 목표 1개 — 달성하면 클리어 때 보너스 골드 (Halls of Torment의 퀘스트·뱀서류의 스테이지 도전 목표처럼 공정마다 '이번엔 이것' 하는 작은 목표) */
+const ORDERS=[
+  {id:'elite', from:1, name:n=>`정예 몬스터 ${n}마리 처치`, short:'정예', goal:()=>2, val:()=>run.elitesKilled},
+  {id:'combo', from:1, name:n=>`최고 콤보 ${n} 달성`, short:'콤보', goal:s=>Math.min(450,Math.round((60+s*4)/10)*10), val:()=>run.bestCombo},
+  {id:'crate', from:1, name:n=>`보급 상자 ${n}개 부수기`, short:'상자', goal:()=>4, val:()=>run.cratesBroken},
+  {id:'barrel',from:3, name:n=>`가스통 폭발로 물고기 ${n}마리 처치`, short:'가스통', goal:s=>Math.min(30,6+Math.floor(s/5)), val:()=>run.barrelKills},
+  {id:'gold',  from:3, name:()=>'황금 물고기 포획', short:'황금', goal:()=>1, val:()=>run.goldfish||0},
+  {id:'post',  from:5, name:()=>'작업 거점 확보', short:'거점', goal:()=>1, val:()=>run.posts},
+];
+function pickOrder(stage){ const L=ORDERS.filter(o=>stage>=o.from); const o=L[Math.floor(Math.random()*L.length)]; const goal=o.goal(stage); return {def:o,goal,done:false,name:o.name(goal)}; }
+function orderVal(){ const o=run&&run.order; return o?Math.min(o.goal,o.def.val()|0):0; }
+function checkOrder(){ const o=run.order; if(!o||o.done) return; if(orderVal()>=o.goal){ o.done=true; if(!SIM.on){ SND.play('boon'); toast('특별 지시 달성',`${o.name} · 클리어하면 보너스 골드`,'#5fd39a'); } } }
+/* 폭발 가스통 */
+function spawnBarrel(){
+  if(run.barrels.length>=CFG.BARREL[3]) return;
+  const a=rand(0,TAU), d=rand(180,Math.min(V.w,V.h)/2/V.zoom*.85+100);
+  run.barrels.push({x:P.x+Math.cos(a)*d,y:P.y+Math.sin(a)*d,r:15,fuse:-1,t:rand(0,9),rot:rand(-.25,.25)});
+}
+function igniteBarrel(br){ if(br.fuse<0&&!br.dead){ br.fuse=CFG.BARREL[6]; if(!SIM.on) SND.play('zap'); } }
+function blowBarrel(br){
+  br.dead=true; run.barrelsBlown++; const R=CFG.BARREL[4], dm=ST.dmg*CFG.BARREL[5]*(1+.03*run.stage);
+  for(const e of enemiesNear(br.x,br.y,R)){ if(e.dead) continue; const was=e.dead; damage(e,dm,false,'barrel'); if(!was&&e.dead&&!e.boss) run.barrelKills++;
+    if(!e.dead&&!e.boss&&e.afx!=='armor'){ const dx=e.x-br.x, dy=e.y-br.y, dd=Math.hypot(dx,dy)||1; e.x+=dx/dd*40; e.y+=dy/dd*40; } }
+  for(const o of run.barrels) if(o!==br&&!o.dead&&(o.x-br.x)**2+(o.y-br.y)**2<(R*1.15)**2) igniteBarrel(o); // 연쇄 폭발
+  for(const c of run.crates) if(!c.dead&&(c.x-br.x)**2+(c.y-br.y)**2<R*R) breakCrate(c);
+  checkOrder();
+  if(!SIM.on){ SND.play('boom'); run.fx.push({type:'blast2',x:br.x,y:br.y,r:R,t:0,life:.5}); burst(br.x,br.y,'#ffb347',14,14); run.shake=Math.max(run.shake,reduceMotion?0:5); }
+}
+function updateBarrels(dt){
+  if(run.stage<CFG.BARREL[0]) return;
+  if(!run.ending){ run.barrelT-=dt; if(run.barrelT<=0){ run.barrelT=CFG.BARREL[2]; spawnBarrel(); } }
+  for(const br of run.barrels){ br.t+=dt; if(br.fuse>=0){ br.fuse-=dt; if(br.fuse<=0) blowBarrel(br); } else if(Math.hypot(br.x-P.x,br.y-P.y)>spawnRadius()*1.8) br.dead=true; }
+  run.barrels=run.barrels.filter(b=>!b.dead);
+}
+function drawBarrel(br,time){
+  const lit=br.fuse>=0, bl=lit&&Math.floor(time*20)%2===0;
+  ctx.save(); ctx.translate(br.x,br.y); ctx.rotate(br.rot);
+  ctx.fillStyle='rgba(0,0,0,.35)'; ctx.beginPath(); ctx.ellipse(5,15,15,5,0,0,TAU); ctx.fill();
+  if(lit){ const g=ctx.createRadialGradient(0,0,4,0,0,40); g.addColorStop(0,'rgba(255,120,40,.6)'); g.addColorStop(1,'rgba(255,120,40,0)'); ctx.fillStyle=g; ctx.beginPath(); ctx.arc(0,0,40,0,TAU); ctx.fill(); }
+  const g=ctx.createLinearGradient(-12,0,12,0); g.addColorStop(0,'#7a1c12'); g.addColorStop(.35,bl?'#fff0c0':'#e0402a'); g.addColorStop(.6,'#b52a1a'); g.addColorStop(1,'#4a0e08');
+  ctx.fillStyle=g; rrect(-11,-15,22,30,5); ctx.fill(); ctx.strokeStyle='#2a0804'; ctx.lineWidth=1.4; ctx.stroke();
+  ctx.fillStyle='#ffc21a'; ctx.fillRect(-11,-4,22,6); ctx.fillStyle='#1b1506'; for(let i=0;i<4;i++) ctx.fillRect(-10+i*6,-4,3,6); // 경고 띠
+  ctx.fillStyle='#8a9096'; ctx.fillRect(-4,-20,8,5); ctx.fillStyle='#c9cfd4'; ctx.fillRect(-2,-23,4,3); // 밸브
+  ctx.fillStyle='rgba(255,255,255,.35)'; ctx.fillRect(-7,-12,2.5,22);
+  if(!lit){ const p=.5+.5*Math.sin(br.t*3); ctx.strokeStyle=`rgba(255,140,60,${.25+.35*p})`; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(0,0,21,0,TAU); ctx.stroke(); }
+  ctx.restore();
 }
 function startStage(n,night){
   hideAll(); newRun(n); run.replay=n<=save.maxCleared; run.night=!!night&&run.replay; if(!run.replay) save.stage=n; state='play'; // 지난 공정 다시 하기는 진행 위치(save.stage)를 바꾸지 않음 · 야간 작업은 클리어한 공정에서만
@@ -2052,6 +2109,8 @@ function startStage(n,night){
   for(let i=0;i<8;i++) spawnEnemy(pickType());
   ST=stats(); P.hp=ST.maxHp; P.shield=ST.shield>0;
   for(let i=0;i<2;i++) spawnCrate();
+  if(n>=CFG.BARREL[0]) for(let i=0;i<CFG.BARREL[1];i++) spawnBarrel();
+  if(!isBossStage(n)) run.order=pickOrder(n);
   if(run.boss){
     const b=bossDef(n/10), R=spawnRadius()*.85;
     const nh=nightK('hp'), e={boss:true,def:b,x:R,y:0,hp:b.hp*nh,maxHp:b.hp*nh,r:b.r,spd:b.spd*nightK('spd'),dmg:Math.round(b.dmg*nightK('dmg')),xp:b.xp,flash:0,ang:Math.PI,wob:0,mode:'chase',cd:3.5,tm:0,dx:0,dy:0,stinkCd:5,slowT:0,dotT:0,dotDps:0,orbitCd:0};
@@ -2060,6 +2119,7 @@ function startStage(n,night){
     SND.play('bossIntro');
   }else run.banner={title:`STAGE ${n}`,sub:(n%5===1&&n>1?`새 어종 출현 — ${FISH[run.spc].name} · `:`${FISH[run.spc].name} 무리 접근 중 · `)+`${run.duration}초 버티기`,t:2.6};
   if(run.night){ run.banner.title=`☾ STAGE ${n}`; run.banner.sub=`야간 작업 · 물고기 체력 ×${CFG.NIGHT.hp} · 공격력 ×${CFG.NIGHT.dmg} · 골드 감액 없음`; }
+  if(run.order) toast('공정 특별 지시',`${run.order.name} — 달성하면 클리어 때 보너스 골드`,'#7fe3ff');
 }
 const nightK=k=>run&&run.night?CFG.NIGHT[k]:1; // 야간 작업 배율 (평소 1)
 function spawnRadius(){ return Math.hypot(V.w,V.h)/2/V.zoom+50; }
@@ -2164,7 +2224,7 @@ function spawnCrate(){
   run.crates.push({x:P.x+Math.cos(a)*d,y:P.y+Math.sin(a)*d,hp:2,r:16,t:0,rot:rand(-.3,.3)});
 }
 function breakCrate(c){
-  c.dead=true; SND.play('crate'); if(!SIM.on) burst(c.x,c.y,'#c8a46a',10,10);
+  if(c.dead) return; c.dead=true; run.cratesBroken++; SND.play('crate'); if(!SIM.on) burst(c.x,c.y,'#c8a46a',10,10);
   let tot=0; for(const p of PICKUPS) tot+=p.w;
   let r=Math.random()*tot, pk=PICKUPS[0]; for(const p of PICKUPS){ if((r-=p.w)<=0){pk=p; break;} }
   run.items.push({x:c.x,y:c.y,kind:pk.id,t:0});
@@ -2551,7 +2611,8 @@ function update(dt){
       for(const e of enemiesNear(ox,oy,CFG.ORBIT_HIT_R)) if(e.orbitCd<=0){e.orbitCd=CFG.ORBIT_HIT_CD; damage(e,ST.dmg*ST.orbitMul,false,'orbit'); SND.play('orbit');
         if(!e.dead&&!e.boss){const kx=e.x-P.x, ky=e.y-P.y, kd=Math.hypot(kx,ky)||1, kn=e.afx==='armor'?0:e.elite?CFG.ORBIT_KNOCK*.4:CFG.ORBIT_KNOCK; e.x+=kx/kd*kn; e.y+=ky/kd*kn;}
         if(!SIM.on&&run.fx.length<260) run.fx.push({type:'spark',x:e.x,y:e.y,t:0,life:.22,a:a+Math.PI/2});}
-      for(const c of run.crates) if((c.x-ox)**2+(c.y-oy)**2<(c.r+12)**2) breakCrate(c);}
+      for(const c of run.crates) if((c.x-ox)**2+(c.y-oy)**2<(c.r+12)**2) breakCrate(c);
+      for(const br of run.barrels) if(br.fuse<0&&(br.x-ox)**2+(br.y-oy)**2<(br.r+12)**2) igniteBarrel(br);}
   }
   // 파이프
   const boss=run.bossRef&&!run.bossRef.dead?run.bossRef:null;
@@ -2568,6 +2629,7 @@ function update(dt){
     }
     if(!hitE&&boss&&!s.hit.has(boss)){const r=boss.r*.85+s.r; if((boss.x-s.x)**2+(boss.y-s.y)**2<r*r) hitE=boss;}
     if(!hitE) for(const c of run.crates) if(!c.dead&&(c.x-s.x)**2+(c.y-s.y)**2<(c.r+s.r)**2){ c.hp--; c.flash=.1; if(c.hp<=0) breakCrate(c); s.life=0; break; }
+    if(!hitE&&s.life>0) for(const br of run.barrels) if(br.fuse<0&&(br.x-s.x)**2+(br.y-s.y)**2<(br.r+s.r)**2){ igniteBarrel(br); s.life=0; break; } // 가스통에 맞으면 점화
     if(hitE){
       s.hit.add(hitE); onPipeHit(hitE,s);
       if(s.pierce>0) s.pierce--;
@@ -2579,8 +2641,9 @@ function update(dt){
     }
   }
   run.shots=run.shots.filter(s=>s.life>0);
+  updateBarrels(dt);
   run.enemies=run.enemies.filter(e=>!e.dead);
-  updateFx(dt);
+  updateFx(dt); checkOrder();
 
   if(!run.boss&&!run.ending&&run.t>=run.duration){
     run.ending=true; run.endT=1.4;
@@ -2872,6 +2935,9 @@ function drawHUD(time,dt){
   ctx.fillText(`처치 ${fmt(run.kills)} · XP ${save.level>=CFG.MAX_LEVEL?`MAX → 골드 ${fmt((run.xpOver||0)*CFG.XP_OVER_GOLD*CFG.GOLD_MUL)}`:fmt(save.xp)+'/'+fmt(need)}`,14,82);
   { const mh=run.minHp??1, sn=run.revived?1:mh>=CFG.STAR_HP[1]?3:mh>=CFG.STAR_HP[0]?2:1, sw=ctx.measureText(`처치 ${fmt(run.kills)} · XP ${save.level>=CFG.MAX_LEVEL?`MAX → 골드 ${fmt((run.xpOver||0)*CFG.XP_OVER_GOLD*CFG.GOLD_MUL)}`:fmt(save.xp)+'/'+fmt(need)}`).width; // 현재 평가(별): 피해를 받으면 줄어드는 걸 바로 보여 줌
     ctx.font=`700 12px ${FB}`; ctx.fillStyle='#ffc21a'; ctx.fillText('★'.repeat(sn),14+sw+10,82); const s1=ctx.measureText('★'.repeat(sn)).width; ctx.fillStyle='rgba(120,150,170,.55)'; ctx.fillText('★'.repeat(3-sn),14+sw+10+s1,82); }
+  if(run.order){ const o=run.order, v=orderVal(); ctx.font=`700 ${narrow?11:12}px ${FB}`; ctx.textAlign='left'; // 공정 특별 지시 진행도
+    const t=o.done?`✓ 지시 달성 · ${narrow?o.def.short:o.name}`:narrow?`지시 · ${o.def.short} ${fmt(v)}/${fmt(o.goal)}`:`특별 지시 · ${o.name} (${fmt(v)}/${fmt(o.goal)})`;
+    ctx.lineWidth=3; ctx.strokeStyle='rgba(0,0,0,.55)'; ctx.strokeText(t,14,100); ctx.fillStyle=o.done?'#5fd39a':'#7fe3ff'; ctx.fillText(t,14,100); }
   const gtxt=fmt(displayGold);
   ctx.font=`${22+goldPulse*14}px ${FD}`; ctx.textAlign='right';
   const gw=ctx.measureText(gtxt).width;
@@ -2924,7 +2990,7 @@ function drawHUD(time,dt){
     ctx.globalAlpha=1;
   }
   // 일반 알림: 왼쪽 가장자리(체력·처치 표시 아래)에 작게, 최대 2개
-  let ly=narrow?(bAlive?196:144):96; const lw=narrow?Math.min(V.w-28,V.w-130):Math.min(300,V.w*.3);
+  let ly=narrow?(bAlive?196:144):(run.order?114:96); const lw=narrow?Math.min(V.w-28,V.w-130):Math.min(300,V.w*.3);
   for(const t of toasts){ if(t.big) continue;
     const a=clamp(Math.min(t.t*5,(t.life-t.t)*3),0,1); ctx.globalAlpha=a*.95;
     ctx.fillStyle='rgba(4,16,26,.8)'; rrect(14,ly,lw,34,4); ctx.fill(); ctx.fillStyle=t.color; ctx.fillRect(14,ly,3,34);
@@ -3004,6 +3070,7 @@ function render(dt,time){
   }
   if(run.post&&vis(run.post.x,run.post.y,run.post.r)) drawOutpost(run.post,time);
   for(const c of run.crates) if(vis(c.x,c.y,30)) drawCrate(c);
+  for(const br of run.barrels) if(vis(br.x,br.y,40)) drawBarrel(br,time);
   for(const it of run.items) if(vis(it.x,it.y,30)) drawItem(it,time);
   ctx.fillStyle='rgba(0,8,12,.28)'; ctx.beginPath(); // 물고기 그림자 (바닥 위를 헤엄치는 높이감)
   for(const e of run.enemies) if(!e.boss&&vis(e.x,e.y,e.r*2)){ const sx=e.x+e.r*.55+6, sy=e.y+e.r*.8+9; ctx.moveTo(sx+e.r*.9,sy); ctx.ellipse(sx,sy,e.r*.9,e.r*.32,0,0,TAU); }
@@ -3069,6 +3136,10 @@ function render(dt,time){
       ctx.fillStyle=`rgba(255,240,180,${.8*a})`; ctx.beginPath(); ctx.ellipse(fx,fy,w*.9,w*.28,0,0,TAU); ctx.fill();
       for(let i=0;i<6;i++){ const sx=fx+Math.sin(i*2.4)*w*.4, sy=fy-40-((t*220+i*37)%200); ctx.fillStyle=`rgba(255,230,140,${.9*a})`; ctx.fillRect(sx-1.5,sy-1.5,3,3); }
       ctx.restore(); }
+    else if(f.type==='blast2'){ // 가스통 폭발: 주황 불꽃 원 + 충격 고리
+      ctx.save(); ctx.globalCompositeOperation='lighter'; const rr=f.r*(.35+.65*Math.sqrt(t)), g=ctx.createRadialGradient(f.x,f.y,0,f.x,f.y,rr);
+      g.addColorStop(0,`rgba(255,240,180,${.7*(1-t)})`); g.addColorStop(.5,`rgba(255,140,40,${.45*(1-t)})`); g.addColorStop(1,'rgba(255,80,20,0)'); ctx.fillStyle=g; ctx.beginPath(); ctx.arc(f.x,f.y,rr,0,TAU); ctx.fill(); ctx.restore();
+      ctx.strokeStyle=`rgba(255,190,90,${1-t})`; ctx.lineWidth=6*(1-t)+1; ctx.beginPath(); ctx.arc(f.x,f.y,f.r*Math.sqrt(t),0,TAU); ctx.stroke(); }
     else if(f.type==='boom'){ctx.strokeStyle=`rgba(95,240,255,${1-t})`; ctx.lineWidth=6*(1-t)+1; ctx.beginPath(); ctx.arc(f.x,f.y,80*Math.sqrt(t),0,TAU); ctx.stroke(); ctx.fillStyle=`rgba(95,240,255,${.25*(1-t)})`; ctx.fill();}
     else if(f.type==='corpse'){
       const S=getSprites(f.f), k=1+.35*t; ctx.save(); ctx.globalAlpha=(1-t)*(1-t); ctx.translate(f.x,f.y); ctx.rotate(f.ang); if(Math.cos(f.ang)<0) ctx.scale(1,-1);
@@ -3241,12 +3312,21 @@ function refreshOffice(){
 }
 $('#btnGo').onclick=()=>startStage(save.stage);
 /* 원클릭 정비: 출근 전 할 일(SP 추천 배분·더 좋은 장비 장착·표창 받기)을 한 번에 — 모바일 뱀서류(Survivor.io 등)의 '원터치 장착/일괄 수령' 편의에서 착안. 강화는 골드 사용 선택이라 넣지 않음 */
-function prepTodo(){ const t=[]; if(save.sp&&SKILLS.some(canLearn)) t.push(`SP ${save.sp}`); if(betterWeapon()||betterGearList().length) t.push('장비'); if(!testMode&&achReady().length) t.push(`표창 ${achReady().length}`); return t; }
+/* 고르게 강화: 장착한 무기·안전모·장갑·작업화 중 강화 수치가 가장 낮은 것부터(같으면 싼 것부터), 골드가 모자라면 멈춤 — 봇과 원클릭 정비 '강화 포함'이 같이 씀. 확률·비용은 직접 강화와 같음 */
+const evenList=()=>[equipped(),...GEAR_SLOTS.map(gearOn)].filter(x=>x&&x.uid!=='_'&&x.plus<MAX_PLUS).sort((a,b)=>a.plus-b.plus||enhCostOf(a)-enhCostOf(b));
+const canEnhEven=()=>{ const x=evenList()[0]; return !!x&&save.gold>=enhCostOf(x); };
+function enhanceEven(){ let g=0, tries=0, ok=0, spent=0; while(g++<400){ const x=evenList()[0];
+    if(!x||save.gold<enhCostOf(x)) break; const c=enhCostOf(x); save.gold-=c; spent+=c; tries++; if(Math.random()<ENH_RATE[x.plus]){ x.plus++; ok++; } }
+  return {tries,ok,spent}; }
+function prepTodo(){ const t=[]; if(save.sp&&SKILLS.some(canLearn)) t.push(`SP ${save.sp}`); if(betterWeapon()||betterGearList().length) t.push('장비'); if(!testMode&&achReady().length) t.push(`표창 ${achReady().length}`); if(UIP.prepEnh&&canEnhEven()) t.push('강화'); return t; }
+$('#optPrepEnh').checked=!!UIP.prepEnh;
+$('#optPrepEnh').onchange=e=>{ UIP.prepEnh=e.target.checked; saveUIP(); refreshOffice(); };
 $('#btnPrep').onclick=()=>{
   const out=[]; const n=autoSpend(); if(n) out.push(`스킬 ${n}개 배분`);
   const bw=betterWeapon(); if(bw){ save.equip.weapon=bw.uid; out.push(`${WEAPON[bw.type].name} +${bw.plus} 장착`); }
   const bg=betterGearList(); for(const g of bg) save.equip[g.slot]=g.uid; if(bg.length) out.push(`보호구 ${bg.length}개 장착`);
   if(!testMode){ let g=0; for(const a of achReady()) g+=claimAch(a); if(g) out.push(`표창 +${fmt(g)} G`); }
+  if(UIP.prepEnh){ const r=enhanceEven(); if(r.tries){ out.push(`강화 ${r.tries}회(성공 ${r.ok}) ${fmt(r.spent)} G`); SND.play(r.ok?'enhOk':'enhFail'); } }
   if(out.length){ SND.play('weapon'); persist(); }
   refreshOffice(); renderTab(); toastOffice(out.length?`정비 완료 · ${out.join(' · ')}${evoJust?` · 진화: ${evoJust}`:''}`:'정비할 것이 없습니다.'); evoJust='';
 };
@@ -3693,10 +3773,11 @@ function stageCleared(){
     if(st>prev&&(!testMode||SIM.on)){ save.stars[k]=st; const g=Math.round(CFG.STAR_GOLD[0]*(1+cleared*CFG.STAR_GOLD[1])*(st-prev)*CFG.GOLD_MUL*(1+.03*invLv('gold'))); save.gold+=g; run.goldEarned+=g; run.stars.gold=g; } }
   if(run.night){ const k=String(cleared); save.night=save.night||{}; run.nightRec={first:!save.night[k],gold:0}; // 야간 작업: 공정마다 첫 클리어 보너스
     if(run.nightRec.first&&(!testMode||SIM.on)){ save.night[k]=1; const g=Math.round(CFG.STAR_GOLD[0]*(1+cleared*CFG.STAR_GOLD[1])*CFG.NIGHT.first*CFG.GOLD_MUL*(1+.03*invLv('gold'))); save.gold+=g; run.goldEarned+=g; run.nightRec.gold=g; } }
+  if(run.order){ checkOrder(); if(run.order.done){ const before=save.gold; addGold(CFG.ORDER_GOLD[0]*(1+cleared*CFG.ORDER_GOLD[1]),P.x,P.y,6); run.order.gold=save.gold-before; } } // 공정 특별 지시 보상
   const promos=checkPromotion(), last=cleared>=CFG.MAX_STAGE;
   save.stage=Math.min(CFG.MAX_STAGE,save.maxCleared+1); // 지난 공정을 다시 해도 다음 진행 공정으로 돌아옴
   persist();
-  if(SIM.on){ SIM.result={cleared:true,stage:cleared,t:run.t,kills:run.kills,xp:run.xpEarned,level:save.level,promos:promos.length,stars:run.stars?run.stars.n:0,starGold:run.stars?run.stars.gold:0,dmgTaken:Math.round(run.dmgTaken||0),minHp:Math.round((run.minHp??1)*100)}; return; }
+  if(SIM.on){ SIM.result={cleared:true,stage:cleared,t:run.t,kills:run.kills,xp:run.xpEarned,level:save.level,promos:promos.length,stars:run.stars?run.stars.n:0,starGold:run.stars?run.stars.gold:0,dmgTaken:Math.round(run.dmgTaken||0),minHp:Math.round((run.minHp??1)*100),order:run.order?(run.order.def.id+(run.order.done?':ok':':no')):null,orderGold:run.order&&run.order.gold||0,barrels:run.barrelsBlown,barrelKills:run.barrelKills}; return; }
   SND.mood('calm'); SND.play('clear'); if(promos.length) SND.play('promo');
   showClear(cleared,promos,last);
 }
@@ -3704,7 +3785,7 @@ function stageCleared(){
 function dmgReport(){
   const d=run&&run.dmg; if(!d) return '';
   const w=WEAPON[equipped().type];
-  const L={pipe:['파이프 투척','#ffc21a'],magic:[`무기 마법 · ${w.mName}`,w.color],orbit:['회전 배관','#4dc3ff'],bolt:['낙뢰 호출','#b9c4ff'],shock:['충격파','#7f8cff'],lvl:['레벨업 충격파','#ffd84a'],post:['거점 충격파','#5fd39a'],item:['발파 신호탄','#ff5d4d'],evo:['진화 · 급소 폭발','#ffb04d']};
+  const L={pipe:['파이프 투척','#ffc21a'],magic:[`무기 마법 · ${w.mName}`,w.color],orbit:['회전 배관','#4dc3ff'],bolt:['낙뢰 호출','#b9c4ff'],shock:['충격파','#7f8cff'],lvl:['레벨업 충격파','#ffd84a'],post:['거점 충격파','#5fd39a'],item:['발파 신호탄','#ff5d4d'],evo:['진화 · 급소 폭발','#ffb04d'],barrel:['폭발 가스통','#ff8a3d']};
   const rows=Object.entries(d).filter(([k,v])=>v>=1&&L[k]).sort((a,b)=>b[1]-a[1]);
   const tot=rows.reduce((a,r)=>a+r[1],0); if(!tot) return '';
   return `<div class="dmgrep"><div class="eyebrow" style="color:var(--muted)">피해 기여 · 총 ${fmt(tot)} · 초당 ${fmt(tot/Math.max(1,run.t))}</div>${rows.map(([k,v])=>{const p=v/tot*100;
@@ -3725,10 +3806,11 @@ function showClear(cleared,promos,last){
     <h2>${last?'준공 완료. 모든 공정을 마쳤습니다':`STAGE ${cleared} 공정 완료`}</h2>
     ${run.stars?`<div class="starline" aria-label="공정 평가 별 ${run.stars.n}개">${[1,2,3].map(i=>`<i class="${i<=run.stars.n?'on':''}${i<=run.stars.n&&i>run.stars.prev?' new':''}" style="animation-delay:${.15+i*.18}s">★</i>`).join('')}
       <span>${run.stars.gold?`새 별 +${fmt(run.stars.gold)} G`:run.stars.n<3?'':'최고 평가'}${run.stars.n<3?`${run.stars.gold?' · ':''}${run.revived?'부활 없이':''}${run.stars.n<2?`최저 체력 ${Math.round(CFG.STAR_HP[0]*100)}% 이상이면 ★2`:`최저 체력 ${Math.round(CFG.STAR_HP[1]*100)}% 이상이면 ★3`}`:''}${run.replay?(run.night?' · ☾ 야간 작업':' · 다시 하기(골드 ½)'):''}</span></div>`:''}
+    ${run.order?`<div class="note" style="${run.order.done?'border-color:var(--ok);color:var(--ink)':''}">공정 특별 지시 · ${esc(run.order.name)} ${run.order.done?`<b style="color:var(--ok)">달성</b> · 보너스 <b style="color:#ffd84a">+${fmt(run.order.gold||0)} G</b>`:`<span style="color:#ff9d84">미달성</span> (${fmt(orderVal())}/${fmt(run.order.goal)})`}</div>`:''}
     ${run.nightRec?`<div class="note" style="border-color:rgba(127,140,255,.6);color:var(--ink)">☾ 야간 작업 완료${run.nightRec.gold?` · 첫 야간 클리어 보너스 <b style="color:#ffd84a">+${fmt(run.nightRec.gold)} G</b>`:' · 이미 야간 클리어한 공정입니다'}</div>`:''}
     <div class="report"><div><small>작업 시간</small><b>${fmtTime(run.t)}</b></div><div><small>처치 수</small><b>${fmt(run.kills)}</b></div>
       <div><small>골드</small><b>+${fmt(run.goldEarned)}</b></div><div><small>레벨</small><b>Lv ${save.level}${run.levelsGained?` <span style="font-size:13px;color:var(--ok)">+${run.levelsGained}</span>`:''}</b></div></div>
-    <p style="font-size:13px">최고 콤보 ${run.bestCombo}${run.frenzies?` · 몰아치기 ${run.frenzies}회`:''}${run.goldfish?` · 황금 물고기 ${run.goldfish}마리`:''}${run.posts?` · 작업 거점 확보 ${run.posts}`:''}${run.subs?` · 지반 침하 ${run.subs}회`:''}${run.rushKills?` · 마감 러시 처치 ${fmt(run.rushKills)}`:''}${run.migKills?` · 회유 떼 처치 ${fmt(run.migKills)}`:''}${run.jackpots?` · 대박 상자 ${run.jackpots}`:''} · 정예 처치 ${run.elitesKilled}${Object.keys(run.boons).length?` · 받은 현장 지원 ${Object.values(run.boons).reduce((a,b)=>a+b,0)}개`:''}</p>
+    <p style="font-size:13px">최고 콤보 ${run.bestCombo}${run.frenzies?` · 몰아치기 ${run.frenzies}회`:''}${run.goldfish?` · 황금 물고기 ${run.goldfish}마리`:''}${run.posts?` · 작업 거점 확보 ${run.posts}`:''}${run.subs?` · 지반 침하 ${run.subs}회`:''}${run.rushKills?` · 마감 러시 처치 ${fmt(run.rushKills)}`:''}${run.migKills?` · 회유 떼 처치 ${fmt(run.migKills)}`:''}${run.jackpots?` · 대박 상자 ${run.jackpots}`:''}${run.barrelsBlown?` · 가스통 폭발 ${run.barrelsBlown}(처치 ${fmt(run.barrelKills)})`:''} · 정예 처치 ${run.elitesKilled}${Object.keys(run.boons).length?` · 받은 현장 지원 ${Object.values(run.boons).reduce((a,b)=>a+b,0)}개`:''}</p>
     ${run.bossRec?`<div class="note" style="${run.bossRec.best?'border-color:var(--hazard);color:var(--ink)':''}">보스 처치 시간 <b>${fmtTime(run.bossRec.t)}</b>${run.bossRec.best?(run.bossRec.prev!=null?` · <b style="color:var(--hazard)">최고 기록 갱신!</b> (이전 ${fmtTime(run.bossRec.prev)})`:' · 첫 기록'):` · 최고 기록 ${fmtTime(run.bossRec.prev)}`}</div>`:''}
     ${run.xpGold?`<div class="note">최대 레벨 이후 얻은 경험치 ${fmt(run.xpOver)} → <b style="color:#ffd84a">+${fmt(run.xpGold)} G</b> (사무소 '본사 투자'에서 쓸 수 있습니다)</div>`:''}
     ${dmgReport()}
@@ -3807,6 +3889,7 @@ function togglePause(){
       <div class="row"><button class="btn" id="btnResume" type="button">계속하기</button>
         <button class="btn ghost" id="btnQuit" type="button">사무소로 (이번 스테이지 포기)</button>
         <button class="btn ghost small fsonly" id="btnPsFull" type="button"><span class="fslabel">${FS.el()?'전체화면 끄기':'전체화면으로 하기'}</span></button><span class="msg" id="fsMsg" role="status"></span></div>
+      ${run.order?`<div class="note">공정 특별 지시 · ${esc(run.order.name)} — ${run.order.done?'<b style="color:var(--ok)">달성</b>':`${fmt(orderVal())}/${fmt(run.order.goal)}`}</div>`:''}
       ${save.sp?`<div class="note">사용하지 않은 스킬 포인트 ${save.sp}개가 있습니다. 스테이지를 마친 뒤 사무소에서 사용하세요.</div>`:''}
       ${buildSummary(st)}
       <label class="vol" style="grid-template-columns:auto 1fr;cursor:pointer"><input type="checkbox" id="optDmgNum" ${UIP.dmgNum?'checked':''} style="width:18px;height:18px;margin:0"><span>타격 피해 숫자 표시 (치명타 숫자는 항상 표시)</span></label>
@@ -3903,8 +3986,7 @@ Object.defineProperty(window,'__JOGONG_SIM__',{value:{
     const best=[...save.inv].filter(it=>WEAPON[it.type].req<=save.level).sort((a,b)=>tierIdx(b.type)-tierIdx(a.type)||b.plus-a.plus)[0]; if(best) save.equip.weapon=best.uid;
     for(const sl of GEAR_SLOTS){ const b=bestGear(sl); if(b&&gearBetter(b,gearOn(sl))) save.equip[sl]=b.uid; }
     // 사람처럼 강화: 무기·안전모·장갑·작업화 중 강화 수치가 가장 낮은 것부터 고르게 (같으면 싼 것부터), 골드가 모자라면 멈춤
-    let g=0; while(g++<400){ const list=[equipped(),...GEAR_SLOTS.map(gearOn)].filter(x=>x&&x.uid!=='_'&&x.plus<MAX_PLUS).sort((a,b)=>a.plus-b.plus||enhCostOf(a)-enhCostOf(b)); const x=list[0];
-      if(!x||save.gold<enhCostOf(x)) break; save.gold-=enhCostOf(x); if(Math.random()<ENH_RATE[x.plus]) x.plus++; }
+    enhanceEven();
     for(const x of save.gear.filter(isJunkGear)) save.gold+=gearSell(x); save.gear=save.gear.filter(x=>!isJunkGear(x));
     // 사람처럼 남는 골드로 본사 투자 (강화가 막힌 뒤 남은 골드만, 싼 것부터)
     let h=0; while(h++<60){ const c=INVEST.filter(d=>d.id!=='reroll'&&invLv(d.id)<d.max).sort((a,b)=>investCost(a)-investCost(b))[0]; if(!c||!buyInvest(c.id)) break; }
@@ -3915,4 +3997,5 @@ Object.defineProperty(window,'__JOGONG_SIM__',{value:{
 
 })();
 </script>
+
 </body></html>
