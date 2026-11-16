@@ -321,6 +321,10 @@ details.dev summary{cursor:pointer}
 .dexcard small{font-size:11px;color:var(--muted)}
 .dexcard.boss{border-color:rgba(255,107,107,.45)}
 .dexcard.unk b{color:var(--muted)}
+.dexcard.mst{border-color:#ffd84a;background:linear-gradient(180deg,rgba(255,216,74,.12),var(--panel-2))}
+.dexcard .mtag{color:#ffd84a;font-weight:700}
+.dexbar{display:block;width:80%;height:4px;border-radius:2px;background:rgba(255,255,255,.08);overflow:hidden;margin-top:2px}
+.dexbar b{display:block;height:100%;background:#ffd84a;opacity:.75}
 /* 사무소 탭 알림 점: 지금 골드로 강화·투자할 수 있을 때 */
 .tabs .badge.dot{background:var(--hazard);color:var(--hazard-ink)}
 /* 원클릭 정비 '강화 포함' 옵션 */
@@ -728,6 +732,8 @@ const CFG={
   ORDER_GOLD:[10,.4],         // 공정 특별 지시(일반 공정마다 무작위 목표 1개) 달성 보상 골드 = 10×(1+스테이지×0.4) (12·0.45로는 다음 장비 직전 강화가 +8~9로 살짝 올라 낮춤) (골드 배율·다시 하기 감액 적용)
   CHALLENGE:[7,8,20,12,2.6,24,25,.5], // 긴급 공정 표지판: [시작 스테이지, 등장 시각 최소·최대(초), 버틸 시간(초), 출현 배율, 표지판이 남아 있는 시간(초), 보상 골드 기본, 스테이지당] — 밟으면 12초 동안 물고기 떼가 몰려오고, 버티면 현장 지원 상자 + 골드 (Megabonk의 도전 성소처럼 스스로 위험을 골라 보상을 얻는 선택지)
   CHAL_XP:.4,                // 긴급 공정 중 나온 물고기 경험치 배율 (보너스 무리라 레벨이 너무 당겨지지 않게 — 첫 시뮬에서 S30 Lv 115~118, 만렙 S95로 당겨져서)
+  ELITE_GEAR_PITY:.5,        // 보호구 보급 보장 중(최고 등급이 없는 부위가 있을 때) 정예 보호구 드랍 확률
+  DEX_MASTER:[1000,.05],     // 어종 숙련: 한 어종을 1,000마리 잡으면 그 어종에게 주는 피해 +5% (Idle Champions의 '숙적'·Terraria 도감처럼 처치 수가 쌓일수록 보상)
   GOLD_EARLY:[-.3,70,95],     // (2026-11-15 4차 -.2→-.3: 다음 장비 직전 4부위 +8로 목표 상한, 무기 보급 보장으로 전환이 앞당겨지는 것까지 감안) (2026-11-14 .6→-.2: 다음 장비 직전 4부위 강화가 +9~10으로 목표 +6~8보다 높아서 — 이제 S1~70 ×0.8, S95까지 서서히 ×1) 골드 추가 배율 [A, 전부 적용하는 마지막 스테이지, 0이 되는 스테이지]: S1~70 ×(1+A), S95까지 서서히 줄어듦 (다음 장비 직전 무기·보호구 평균 +8 목표, 사람처럼 4부위를 고르게 강화하는 기준)
 };
 const stageDuration=s=>40+Math.min(18,Math.floor((s-1)/10)*2);
@@ -798,6 +804,8 @@ function bossDef(k){
 /* 어종 도감: 물고기 20종 + 홍어 보스 10종. 처음 잡으면 등록되고 종류별 처치 수가 쌓임 (뱀파이어 서바이버즈의 '적 도감'처럼 수집 목표 + 다음에 나올 어종 예고) */
 const DEX=[...FISH.map((f,i)=>({id:f.id,name:f.name,from:i*5+1,fish:f})),...BOSS_NAMES.map((n,i)=>({id:'ray'+(i+1),name:n,from:(i+1)*10,boss:i+1}))];
 const dexCount=()=>DEX.filter(x=>save.dex&&save.dex[x.id]>0).length;
+const dexMaster=id=>((save.dex&&save.dex[id])|0)>=CFG.DEX_MASTER[0]; // 어종 숙련 (물고기만)
+const dexMasterCount=()=>FISH.filter(f=>dexMaster(f.id)).length;
 
 /* =====================================================================
    3. 직급 (승진 조건 유지) + 직급별 복장
@@ -2369,7 +2377,8 @@ function killEnemy(e){
   if(e.dead) return;
   e.dead=true; run.kills++; save.totalKills++;
   { const id=e.boss?'ray'+e.def.k:e.f.id; save.dex=save.dex||{}; const first=!save.dex[id]; save.dex[id]=(save.dex[id]|0)+1; // 어종 도감 등록·처치 수
-    if(first&&!SIM.on){ SND.play('boon'); toast(`어종 도감 등록 · ${e.boss?e.def.name:e.f.name}`,`도감 ${dexCount()} / ${DEX.length} · 사무소 '직급' 탭에서 볼 수 있습니다`,'#9fe8ff'); } }
+    if(first&&!SIM.on){ SND.play('boon'); toast(`어종 도감 등록 · ${e.boss?e.def.name:e.f.name}`,`도감 ${dexCount()} / ${DEX.length} · 사무소 '직급' 탭에서 볼 수 있습니다`,'#9fe8ff'); }
+    if(!e.boss&&save.dex[id]===CFG.DEX_MASTER[0]&&!SIM.on){ SND.play('weapon'); run.fx.push({type:'ring',x:P.x,y:P.y,t:0,life:.5,r:150,color:'#ffd84a'}); toast(`어종 숙련 · ${e.f.name} ${fmt(CFG.DEX_MASTER[0])}마리`,`이제 ${e.f.name}에게 주는 피해 +${Math.round(CFG.DEX_MASTER[1]*100)}% (영구)`,'#ffd84a'); } }
   if(!SIM.on) burst(e.x,e.y,e.boss?'#ffd2dc':'#bfefff',e.boss?40:6,e.r);
   // 처치 연출: 물고기가 하얗게 번쩍이며 부풀었다 사라지는 잔상 (뱀서류의 '터지는' 처치감), 보스·정예는 짧은 슬로 모션
   if(!SIM.on){
@@ -2402,7 +2411,7 @@ function killEnemy(e){
     if(e.afx==='split'){ const n=6, ti=Math.max(0,run.spc-1); for(let i=0;i<n;i++){ spawnEnemy(ti,0); const m=run.enemies[run.enemies.length-1]; if(m&&!m.elite&&!m.boss){ const a=i/n*TAU; m.x=e.x+Math.cos(a)*(e.r+14); m.y=e.y+Math.sin(a)*(e.r+14); } } if(!SIM.on) run.fx.push({type:'ring',x:e.x,y:e.y,t:0,life:.4,r:e.r+40,color:'#ff9de0'}); }
     addGold(Math.round(20*Math.pow(tier,1.3)*ST.goldMul*ST.bonusGold),e.x,e.y,12);
     if(Math.random()<CFG.ELITE_WEAPON_DROP*ST.dropMul) dropWeapon(e.x,e.y);
-    if(Math.random()<CFG.ELITE_GEAR_DROP*ST.dropMul) dropGear(e.x,e.y);
+    if(Math.random()<(missingGear()?CFG.ELITE_GEAR_PITY:CFG.ELITE_GEAR_DROP)*ST.dropMul) dropGear(e.x,e.y); // 보호구 보급 보장: 낄 수 있는 최고 등급이 없는 부위가 있으면 정예 드랍 확률 50% (보스 사이 공정에서 보호구만 뒤처지던 것)
     if(!SIM.on) burst(e.x,e.y,'#ffd84a',18,e.r);
     return;
   }
@@ -2457,6 +2466,7 @@ function fire(){
 }
 function damage(e,d,crit,src){
   if(e.boss&&e.groggy>0) d*=CFG.BOSS_GROGGY[1]; // 보스 빈틈: 받는 피해 증가
+  else if(!e.boss&&e.f&&dexMaster(e.f.id)) d*=1+CFG.DEX_MASTER[1]; // 어종 숙련: 그 어종에게 주는 피해 증가
   if(run&&run.dmg){ const k=src||'pipe'; run.dmg[k]=(run.dmg[k]||0)+Math.min(d,Math.max(0,e.hp)); }
   e.hp-=d; e.flash=.08;
   if(!SIM.on){
@@ -3393,7 +3403,8 @@ function refreshOffice(){
   const next=save.stage;
   $('#btnGo').textContent=`STAGE ${next} 출근하기`;
   { const td=prepTodo(), bp=$('#btnPrep'); bp.hidden=!td.length; bp.textContent=`원클릭 정비 (${td.join(' · ')})`; }
-  $('#goInfo').innerHTML=isBossStage(next)?`보스 <b style="color:#ff9d84">${BOSS_NAMES[next/10-1]}</b> 출현 공정입니다.`:`${FISH[speciesOf(next)].name} 구간 · ${stageDuration(next)}초 버티기`+(save.sp?` · 스킬 포인트 ${save.sp}개를 먼저 사용하세요`:'');
+  $('#goInfo').innerHTML=isBossStage(next)?`보스 <b style="color:#ff9d84">${BOSS_NAMES[next/10-1]}</b> 출현 공정입니다.`:`${FISH[speciesOf(next)].name} 구간 · ${stageDuration(next)}초 버티기`+(save.sp?` · 스킬 포인트 ${save.sp}개를 먼저 사용하세요`:'')
+    +(()=>{ const nw=WEAPONS.find(w=>w.req>save.level); return nw&&nw.req-save.level<=12?` · <span style="color:${nw.color}">${nw.name}·${GEAR_REQ[tierIdx(nw.id)]>0?'새 보호구':''}</span> 착용까지 ${nw.req-save.level}레벨`:''; })(); // 다음 장비 등급 예고 (곧 강화 골드를 아껴 둘지 판단)
   paintAvatar($('#officeAvatar'),save.rank);
   updateSaveInfo();
 }
@@ -3804,10 +3815,11 @@ function bindStageLog(body){
 }
 /* 어종 도감 목록: 잡은 종은 그림·처치 수, 아직 못 잡은 종은 검은 실루엣과 등장 공정 */
 function dexHtml(){
-  const cells=DEX.map(x=>{ const n=(save.dex&&save.dex[x.id])|0;
-    return `<div class="dexcard${n?'':' unk'}${x.boss?' boss':''}"><canvas data-dex="${x.id}" width="176" height="104"></canvas><b>${n?x.name:'???'}</b><small>${n?`처치 ${fmt(n)}`:`STAGE ${x.from}부터`}</small></div>`; }).join('');
-  return `<div class="buildsec" style="margin-top:18px"><h3>어종 도감 <span style="font-family:var(--f-body);font-size:13px;color:var(--muted)">${dexCount()} / ${DEX.length}</span></h3>
-    <p style="font-size:12px">물고기와 홍어 보스를 처음 잡으면 등록됩니다. 아직 만나지 못한 어종은 실루엣으로 보입니다.</p><div class="dexgrid">${cells}</div></div>`;
+  const M=CFG.DEX_MASTER[0];
+  const cells=DEX.map(x=>{ const n=(save.dex&&save.dex[x.id])|0, ms=!x.boss&&n>=M;
+    return `<div class="dexcard${n?'':' unk'}${x.boss?' boss':''}${ms?' mst':''}"><canvas data-dex="${x.id}" width="176" height="104"></canvas><b>${ms?'✦ ':''}${n?x.name:'???'}</b><small>${n?`처치 ${fmt(n)}`:`STAGE ${x.from}부터`}</small>${n&&!x.boss?(ms?`<small class="mtag">숙련 · 피해 +${Math.round(CFG.DEX_MASTER[1]*100)}%</small>`:`<i class="dexbar"><b style="width:${(n/M*100).toFixed(1)}%"></b></i>`):''}</div>`; }).join('');
+  return `<div class="buildsec" style="margin-top:18px"><h3>어종 도감 <span style="font-family:var(--f-body);font-size:13px;color:var(--muted)">${dexCount()} / ${DEX.length} · 숙련 ${dexMasterCount()} / ${FISH.length}</span></h3>
+    <p style="font-size:12px">물고기와 홍어 보스를 처음 잡으면 등록됩니다. 아직 만나지 못한 어종은 실루엣으로 보입니다. 한 어종을 ${fmt(M)}마리 잡으면 <b style="color:#ffd84a">숙련</b> — 그 어종에게 주는 피해가 영구히 ${Math.round(CFG.DEX_MASTER[1]*100)}% 늘어납니다.</p><div class="dexgrid">${cells}</div></div>`;
 }
 function fillDex(body){
   body.querySelectorAll('canvas[data-dex]').forEach(cv=>{ const x=DEX.find(d=>d.id===cv.dataset.dex); if(!x) return; const known=(save.dex&&save.dex[x.id])>0, c=cv.getContext('2d');
