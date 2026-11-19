@@ -1,0 +1,1205 @@
+<title>헤즈업 홀덤 클럽</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="color-scheme" content="only dark">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=IBM+Plex+Mono:wght@500;600&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<style>
+/* Layout: one-screen stadium felt table — opponent on top, board in the middle, you at the bottom, action rail under the table */
+:root{
+  --night:#0a1210; --night-2:#121d19; --felt:#12553a; --felt-hi:#1c7a51; --felt-lo:#0b3a27;
+  --rail:#2b1a10; --rail-hi:#4e321d; --gold:#e3b95e; --gold-dim:#a8873f;
+  --cream:#f4ecd8; --muted:#9fb3a6; --ink:#15161a; --danger:#d4564f; --call:#e9e1cc;
+  --f-display:'Black Han Sans','Noto Sans KR',system-ui,sans-serif;
+  --f-body:'Noto Sans KR',system-ui,-apple-system,sans-serif;
+  --f-num:'IBM Plex Mono',ui-monospace,Menlo,monospace;
+  --cw:clamp(46px,12.6vw,84px);
+  color-scheme:only dark;
+}
+html,body{height:100%}
+[hidden]{display:none!important}
+body{background:radial-gradient(ellipse at 50% -10%,#1a2b24 0%,var(--night) 60%);background-color:var(--night);color:var(--cream);font-family:var(--f-body);overflow-x:hidden}
+button{font-family:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.screen{min-height:100%;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:14px}
+.wrap{max-width:900px;margin:0 auto;display:flex;flex-direction:column;gap:10px;min-height:100%}
+
+/* ---------- Start ---------- */
+#start .wrap{justify-content:center;align-items:center;text-align:center;gap:22px;padding-block:24px}
+.fan{position:relative;height:calc(var(--cw)*1.9);width:calc(var(--cw)*4.2);margin-top:8px}
+.fan .card{position:absolute;left:50%;bottom:0;transform-origin:50% 120%;--cw:clamp(64px,17vw,96px)}
+.brand-eyebrow{font-family:var(--f-num);letter-spacing:.24em;font-size:12px;color:var(--gold);text-transform:uppercase}
+h1{font-family:var(--f-display);font-weight:400;font-size:clamp(40px,10vw,72px);line-height:1;margin:6px 0 0;text-wrap:balance;color:var(--cream);text-shadow:0 2px 0 #000}
+.lede{color:var(--muted);max-width:30em;margin:0 auto;line-height:1.6}
+.menu{display:flex;flex-direction:column;gap:10px;width:min(320px,100%)}
+.btn{border:0;border-radius:12px;padding:14px 18px;font-size:16px;font-weight:700;transition:transform .12s,filter .12s;color:var(--ink)}
+.btn:hover{filter:brightness(1.08)}
+.btn:active{transform:translateY(1px)}
+.btn:disabled{opacity:.38;cursor:not-allowed;filter:none}
+.btn-gold{background:linear-gradient(180deg,#f1cf7c,var(--gold));box-shadow:0 3px 0 #8a6a28}
+.btn-cream{background:var(--call);box-shadow:0 3px 0 #9d9480}
+.btn-ghost{background:transparent;color:var(--cream);border:1.5px solid rgba(244,236,216,.3)}
+.btn-danger{background:transparent;color:#ffb3ad;border:1.5px solid rgba(212,86,79,.7)}
+.save-info{font-family:var(--f-num);font-size:13px;color:var(--muted);line-height:1.7}
+.save-info b{color:var(--gold);font-weight:600}
+.toast{min-height:1.4em;color:var(--gold);font-size:14px}
+.auth{width:min(360px,100%);display:flex;flex-direction:column;gap:12px;text-align:left;background:rgba(6,14,11,.72);border:1px solid rgba(227,185,94,.25);border-radius:16px;padding:18px}
+.field{display:flex;flex-direction:column;gap:5px;font-size:13px;color:var(--muted)}
+.field small{font-size:11px;opacity:.85}
+.field input{padding:11px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.16);background:#08110e;color:var(--cream);font:inherit;font-size:16px}
+.auth-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.auth-btns .btn{padding:12px 8px;font-size:15px}
+.linkbtn{background:none;border:0;color:var(--muted);text-decoration:underline;font-size:13px;padding:2px;align-self:center}
+.authmsg{font-size:13px;min-height:1.2em;color:var(--muted);text-align:center;line-height:1.5}
+.authmsg.err{color:#ffb3ad}.authmsg.ok{color:#8fe0b0}
+.mode{display:flex;gap:6px;align-items:center;justify-content:center;font-size:11.5px;color:var(--muted)}
+.mode i{width:7px;height:7px;border-radius:50%;background:var(--muted);flex:none}
+.mode.on i{background:#5fd39a}
+.acct{font-size:14px;color:var(--muted);text-align:center;line-height:1.6}
+.acct b{color:var(--cream)}
+.msgsub{font-size:12px;color:var(--muted);min-height:1.2em;text-align:center}
+.tag .ok{color:#8fe0b0}.tag .err{color:#ffb3ad}
+
+/* ---------- Header ---------- */
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between}
+.chips-info{display:flex;flex-wrap:wrap;gap:6px}
+.tag{font-family:var(--f-num);font-size:12px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);padding:5px 9px;border-radius:999px;color:var(--muted);white-space:nowrap}
+.tag b{color:var(--cream);font-weight:600}
+.bar-btns{display:flex;gap:6px}
+.mini-btn{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:var(--cream);border-radius:9px;padding:6px 11px;font-size:13px}
+.mini-btn:hover{background:rgba(255,255,255,.12)}
+
+/* ---------- Table ---------- */
+.table{position:relative;flex:1;min-height:470px;border-radius:clamp(90px,22vw,180px);
+  background:radial-gradient(ellipse at 50% 45%,var(--felt-hi) 0%,var(--felt) 55%,var(--felt-lo) 100%);
+  border:clamp(9px,2vw,14px) solid var(--rail);
+  box-shadow:inset 0 0 0 2px rgba(227,185,94,.35),inset 0 0 70px rgba(0,0,0,.5),0 0 0 1px var(--rail-hi),0 24px 50px rgba(0,0,0,.55);
+  display:grid;grid-template-rows:auto 1fr auto;justify-items:center;align-items:center;padding:clamp(14px,3vw,24px) 10px;gap:6px}
+.seat{display:flex;flex-direction:column;align-items:center;gap:8px;position:relative}
+.plate{display:flex;align-items:center;gap:9px;background:rgba(6,14,11,.72);border:1px solid rgba(227,185,94,.25);border-radius:999px;padding:5px 14px 5px 5px;min-width:0;max-width:100%}
+.avatar{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;font-family:var(--f-display);font-size:18px;color:#fff;flex:none;border:2px solid rgba(255,255,255,.25)}
+.who{display:flex;flex-direction:column;line-height:1.25;min-width:0}
+.who .nm{font-weight:700;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.who .st{font-size:11px;color:var(--muted);white-space:nowrap}
+.stack{font-family:var(--f-num);font-weight:600;color:var(--gold);font-size:14px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.dealer{width:22px;height:22px;border-radius:50%;background:#fff;color:#111;font:700 11px var(--f-num);display:grid;place-items:center;box-shadow:0 2px 0 #999;flex:none}
+.dealer[hidden]{display:none}
+.cards{display:flex;gap:6px;min-height:calc(var(--cw)*1.4)}
+.bet{display:inline-flex;align-items:center;gap:6px;font-family:var(--f-num);font-size:13px;background:rgba(0,0,0,.35);border-radius:999px;padding:3px 10px 3px 3px;min-height:24px;font-variant-numeric:tabular-nums}
+.bet.empty{visibility:hidden}
+.chip{width:18px;height:18px;border-radius:50%;background:repeating-conic-gradient(#c73a3a 0 30deg,#f4ecd8 30deg 45deg);box-shadow:inset 0 0 0 3px #c73a3a,0 1px 0 #000}
+.bubble{position:absolute;top:-6px;right:-8px;transform:translate(40%,-60%);background:var(--cream);color:var(--ink);font-weight:700;font-size:13px;border-radius:12px;padding:4px 10px;white-space:nowrap;box-shadow:0 4px 10px rgba(0,0,0,.35);animation:pop .25s ease-out}
+.bubble[hidden]{display:none}
+.you .bubble{top:auto;bottom:-4px;transform:translate(40%,60%)}
+.handname{font-size:13px;color:var(--cream);background:rgba(0,0,0,.3);padding:3px 10px;border-radius:999px;min-height:24px}
+.handname:empty{visibility:hidden}
+.center{display:flex;flex-direction:column;align-items:center;gap:10px;width:100%}
+.board{display:flex;gap:6px}
+.pot{font-family:var(--f-num);font-size:14px;background:rgba(0,0,0,.4);border:1px solid rgba(227,185,94,.35);border-radius:999px;padding:5px 14px;color:var(--gold);font-variant-numeric:tabular-nums}
+.msg{font-size:14px;color:var(--cream);text-align:center;min-height:1.5em;max-width:28em;line-height:1.5;padding:0 8px}
+.msg.win{color:var(--gold);font-weight:700}
+.thinking::after{content:"";display:inline-block;width:1.2em;text-align:left;animation:dots 1.2s steps(4) infinite}
+@keyframes dots{0%{content:""}25%{content:"."}50%{content:".."}75%{content:"..."}}
+
+/* ---------- Cards ---------- */
+.card{width:var(--cw);aspect-ratio:5/7;border-radius:7%;box-shadow:0 2px 0 rgba(0,0,0,.25),0 6px 14px rgba(0,0,0,.35);position:relative;flex:none;transition:transform .25s,box-shadow .25s,filter .25s;max-width:100%}
+.card svg{display:block;width:100%;height:100%;color-scheme:only light;forced-color-adjust:none}
+.card{background:#fffdf7;-webkit-tap-highlight-color:transparent}
+.card.slot{background:rgba(0,0,0,.08)}
+.card.slot{border:2px dashed rgba(255,255,255,.14);box-shadow:none;background:rgba(0,0,0,.08)}
+.card.deal{animation:deal .38s cubic-bezier(.2,.8,.3,1) both}
+.card.flip{animation:flip .42s ease-out both}
+.card.win{box-shadow:0 0 0 3px var(--gold),0 0 22px rgba(227,185,94,.75);transform:translateY(-6px)}
+.card.dim{filter:brightness(.5) saturate(.6)}
+.card.mini{--cw:34px;border-radius:4px;box-shadow:0 1px 2px rgba(0,0,0,.4)}
+@keyframes deal{from{transform:translateY(-60px) rotate(-10deg) scale(.9);opacity:0}to{transform:none;opacity:1}}
+@keyframes flip{0%{transform:rotateY(90deg)}100%{transform:rotateY(0)}}
+@keyframes pop{from{transform:translate(40%,-60%) scale(.6);opacity:0}}
+
+/* ---------- Actions ---------- */
+.actions{display:flex;flex-direction:column;gap:10px;background:var(--night-2);border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:12px}
+.raise-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.raise-row input[type=range]{flex:1 1 160px;accent-color:var(--gold);min-width:0}
+.quick{display:flex;gap:6px}
+.qbtn{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);color:var(--cream);border-radius:8px;padding:6px 10px;font-size:13px;font-family:var(--f-num)}
+.qbtn:disabled{opacity:.35;cursor:not-allowed}
+.act-row{display:grid;grid-template-columns:1fr 1.2fr 1.4fr;gap:8px}
+.act-row .btn{padding:14px 8px;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.next-row{display:grid}
+.status{font-size:13px;color:var(--muted);text-align:center;min-height:1.3em}
+details.log{font-size:12.5px;color:var(--muted)}
+details.log summary{cursor:pointer;padding:4px 2px}
+details.log ol{margin:6px 0 0;padding-left:20px;max-height:160px;overflow:auto;font-family:var(--f-num);line-height:1.7}
+
+/* ---------- Modals ---------- */
+.modal-back{position:fixed;inset:0;background:rgba(3,8,6,.78);display:grid;place-items:center;z-index:50;padding:max(16px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(16px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));backdrop-filter:blur(3px)}
+.modal{background:#141f1a;border:1px solid rgba(227,185,94,.3);border-radius:18px;max-width:600px;width:100%;max-height:86vh;overflow:auto;padding:22px clamp(16px,4vw,28px);box-shadow:0 30px 60px rgba(0,0,0,.6)}
+.modal h2{font-family:var(--f-display);font-weight:400;font-size:28px;margin:0 0 6px;color:var(--gold)}
+.modal h3{font-size:16px;margin:22px 0 8px;color:var(--cream)}
+.modal p,.modal li{line-height:1.7;color:#d6d9cf;font-size:14.5px}
+.modal ul,.modal ol{padding-left:20px;margin:6px 0}
+.modal .btns{display:flex;gap:8px;justify-content:flex-end;margin-top:20px;flex-wrap:wrap}
+.rank-list{display:flex;flex-direction:column;gap:8px;margin-top:6px}
+.rank-item{display:grid;grid-template-columns:2em 1fr;gap:4px 10px;align-items:center;padding:8px 10px;background:rgba(255,255,255,.04);border-radius:10px}
+.rank-item .no{font-family:var(--f-num);color:var(--gold);grid-row:span 2}
+.rank-item .t{font-weight:700;font-size:14px}
+.rank-item .t small{font-weight:400;color:var(--muted);margin-left:6px}
+.rank-item .cs{display:flex;gap:3px;flex-wrap:wrap}
+.big-result{font-family:var(--f-display);font-size:clamp(34px,8vw,48px);color:var(--gold);margin:4px 0 8px;line-height:1.1}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font-family:var(--f-num);font-size:14px;margin-top:10px}
+.kv dt{color:var(--muted)}.kv dd{margin:0;color:var(--cream);text-align:right}
+
+@media (max-width:520px){
+  .table{min-height:430px;border-radius:70px;padding:16px 6px}
+  .plate{padding-right:10px}
+  .avatar{width:32px;height:32px;font-size:15px}
+  .who .st{display:none}
+  .bubble{right:0;transform:translate(10%,-70%)}
+  .you .bubble{transform:translate(10%,70%)}
+  .act-row .btn{font-size:14px}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+
+<!-- ============ START SCREEN ============ -->
+<section id="start" class="screen">
+  <div class="wrap">
+    <div class="fan" id="fan"></div>
+    <div>
+      <div class="brand-eyebrow">No-Limit Texas Hold'em · 1 : 1</div>
+      <h1>헤즈업 홀덤 클럽</h1>
+    </div>
+    <p class="lede">1,000만원을 들고 테이블에 앉으세요. 상대를 파산시키면 다음 상대가 기다립니다. 내 칩이 바닥나면 처음부터 다시 시작합니다.</p>
+    <form class="auth" id="authForm" autocomplete="on">
+      <label class="field" for="inId">아이디 <small>영문·숫자·밑줄 3~16자</small><input id="inId" name="username" autocomplete="username" maxlength="16" spellcheck="false" autocapitalize="off"></label>
+      <label class="field" for="inPw">비밀번호 <small id="pwHint">4자 이상</small><input id="inPw" name="password" type="password" autocomplete="current-password" maxlength="40"></label>
+      <div class="auth-btns">
+        <button class="btn btn-gold" type="submit" id="btnLogin">로그인</button>
+        <button class="btn btn-cream" type="button" id="btnSignup">계정 만들기</button>
+      </div>
+      <button class="linkbtn" type="button" id="btnGuest">게스트로 하기 (이 브라우저에만 저장)</button>
+      <div class="authmsg" id="authMsg" role="status"></div>
+      <div class="mode" id="modeLine"><i></i><span>저장소 확인 중…</span></div>
+    </form>
+    <div class="menu" id="menu" hidden>
+      <div class="acct" id="acctLine"></div>
+      <button class="btn btn-gold" id="btnStart">게임 시작</button>
+      <button class="btn btn-danger" id="btnResetStart">초기화</button>
+      <button class="btn btn-ghost" id="btnLogout">로그아웃</button>
+    </div>
+    <div class="menu"><button class="btn btn-ghost" id="btnRulesStart">설명서</button></div>
+    <div class="save-info" id="saveInfo"></div>
+    <div class="toast" id="toast" role="status"></div>
+  </div>
+</section>
+
+<!-- ============ GAME SCREEN ============ -->
+<section id="game" class="screen" hidden>
+  <div class="wrap">
+    <div class="bar">
+      <div class="chips-info">
+        <span class="tag"><b id="hUser">게스트</b> <span id="hSave"></span></span>
+        <span class="tag">상대 <b id="hOpp">1</b>번째 · 처치 <b id="hBeaten">0</b></span>
+        <span class="tag">블라인드 <b id="hBlinds">10만/20만</b></span>
+        <span class="tag">핸드 <b id="hHand">1</b> · <span id="hNext"></span></span>
+      </div>
+      <div class="bar-btns">
+        <button class="mini-btn" id="btnRules">설명서</button>
+        <button class="mini-btn" id="btnReset">초기화</button>
+        <button class="mini-btn" id="btnMenu">메뉴</button>
+      </div>
+    </div>
+
+    <div class="table">
+      <div class="seat cpu">
+        <div class="plate">
+          <div class="avatar" id="cAvatar">?</div>
+          <div class="who"><span class="nm" id="cName">상대</span><span class="st" id="cStyle"></span></div>
+          <span class="stack" id="cChips">0</span>
+          <span class="dealer" id="cDealer" hidden>D</span>
+        </div>
+        <div class="bubble" id="cBubble" hidden></div>
+        <div class="cards" id="cCards"></div>
+        <div class="bet empty" id="cBet"><span class="chip"></span><span></span></div>
+      </div>
+
+      <div class="center">
+        <div class="pot" id="pot">팟 0원</div>
+        <div class="board" id="board"></div>
+        <div class="msg" id="msg"></div>
+        <div class="msgsub" id="msgSub"></div>
+      </div>
+
+      <div class="seat you">
+        <div class="bet empty" id="pBet"><span class="chip"></span><span></span></div>
+        <div class="handname" id="pHandName"></div>
+        <div class="cards" id="pCards"></div>
+        <div class="plate">
+          <div class="avatar" style="background:#7a5a1e">나</div>
+          <div class="who"><span class="nm">나</span><span class="st">플레이어</span></div>
+          <span class="stack" id="pChips">0</span>
+          <span class="dealer" id="pDealer" hidden>D</span>
+        </div>
+        <div class="bubble" id="pBubble" hidden></div>
+      </div>
+    </div>
+
+    <div class="actions" id="actions">
+      <div class="raise-row" id="raiseRow">
+        <input type="range" id="raiseRange" min="0" max="1000" step="1" value="0" aria-label="베팅 금액">
+        <div class="quick">
+          <button class="qbtn" id="qHalf">½팟</button>
+          <button class="qbtn" id="qPot">팟</button>
+          <button class="qbtn" id="qAll">올인</button>
+        </div>
+      </div>
+      <div class="act-row" id="actRow">
+        <button class="btn btn-danger" id="bFold">폴드</button>
+        <button class="btn btn-cream" id="bCall">체크</button>
+        <button class="btn btn-gold" id="bRaise">레이즈</button>
+      </div>
+      <div class="next-row" id="nextRow" hidden>
+        <button class="btn btn-gold" id="bNext">다음 핸드 ▶</button>
+      </div>
+      <div class="status" id="status"></div>
+      <details class="log"><summary>핸드 기록</summary><ol id="logList"></ol></details>
+    </div>
+  </div>
+</section>
+
+<!-- ============ MODALS ============ -->
+<div class="modal-back" id="mRules" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="rulesTitle">
+    <h2 id="rulesTitle">설명서</h2>
+    <p>텍사스 홀덤은 내 손의 카드 2장과 테이블 가운데 공용 카드 5장 중에서 가장 좋은 5장으로 족보를 만들어 겨루는 포커입니다. 이 게임은 컴퓨터와 1:1(헤즈업)로, 베팅 한도가 없는 노리밋 방식으로 진행됩니다.</p>
+
+    <h3>이 게임의 규칙</h3>
+    <ul>
+      <li>1,000만원으로 시작합니다. 남은 칩은 다음 상대에게 그대로 이어집니다.</li>
+      <li>상대를 파산시키면 새로운 상대가 무작위로 등장합니다. 뒤로 갈수록 상대의 칩이 많아지고 실력도 좋아집니다.</li>
+      <li>내 칩이 0원이 되면 1번째 상대, 1,000만원부터 다시 시작합니다.</li>
+      <li>블라인드는 10만/20만원에서 시작해 같은 상대와 8핸드마다 올라갑니다.</li>
+      <li>계정을 만들면 진행 상황이 핸드가 끝날 때마다 계정에 저장되어, 다른 기기에서도 이어서 할 수 있습니다. 게스트는 지금 쓰는 브라우저에만 저장됩니다. <b>초기화</b>를 누르면 그 계정이 처음 상태로 돌아갑니다.</li>
+      <li>쇼다운에서 금색 테두리로 빛나는 카드는 이긴 쪽의 최종 5장입니다. 족보가 같으면 남은 카드(키커)를 큰 것부터 비교합니다.</li>
+    </ul>
+
+    <h3>한 핸드의 진행</h3>
+    <ol>
+      <li><b>블라인드</b> — 딜러 버튼(D)을 가진 쪽이 스몰 블라인드, 상대가 빅 블라인드를 강제로 냅니다.</li>
+      <li><b>프리플랍</b> — 각자 카드 2장을 받고 베팅합니다. 딜러(스몰 블라인드)가 먼저 행동합니다.</li>
+      <li><b>플랍</b> — 공용 카드 3장이 깔리고 베팅합니다. 이후로는 빅 블라인드 쪽이 먼저 행동합니다.</li>
+      <li><b>턴</b> — 4번째 공용 카드, 베팅.</li>
+      <li><b>리버</b> — 5번째 공용 카드, 마지막 베팅.</li>
+      <li><b>쇼다운</b> — 카드를 공개해 더 높은 족보가 팟을 가져갑니다. 같으면 나눠 갖습니다.</li>
+    </ol>
+
+    <h3>할 수 있는 행동</h3>
+    <ul>
+      <li><b>체크</b> — 걸린 베팅이 없을 때 돈을 내지 않고 넘깁니다.</li>
+      <li><b>벳 / 레이즈</b> — 금액을 걸거나 올립니다. 슬라이더나 ½팟·팟·올인 버튼으로 금액을 정하세요. 최소 레이즈는 직전에 올린 금액만큼입니다.</li>
+      <li><b>콜</b> — 상대가 건 금액만큼 맞춥니다.</li>
+      <li><b>폴드</b> — 카드를 버리고 이번 팟을 포기합니다.</li>
+      <li><b>올인</b> — 가진 칩 전부를 겁니다. 콜할 칩이 모자라면 가진 만큼만 걸고, 남는 금액은 상대에게 돌아갑니다.</li>
+    </ul>
+
+    <h3>족보 (높은 순)</h3>
+    <div class="rank-list" id="rankList"></div>
+
+    <div class="btns"><button class="btn btn-gold" data-close>닫기</button></div>
+  </div>
+</div>
+
+<div class="modal-back" id="mReset" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="resetTitle" style="max-width:420px">
+    <h2 id="resetTitle">초기화할까요?</h2>
+    <p>지금 로그인한 계정의 칩, 상대 진행 상황, 기록이 모두 지워지고 1,000만원으로 처음부터 시작합니다. 진행 중인 핸드도 취소됩니다.</p>
+    <div class="btns">
+      <button class="btn btn-ghost" data-close>취소</button>
+      <button class="btn btn-danger" id="bResetConfirm">초기화</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-back" id="mResult" hidden>
+  <div class="modal" role="dialog" aria-modal="true" style="max-width:440px;text-align:center">
+    <div class="brand-eyebrow" id="rEyebrow"></div>
+    <div class="big-result" id="rTitle"></div>
+    <p id="rText"></p>
+    <dl class="kv" id="rKv"></dl>
+    <div class="btns" style="justify-content:center"><button class="btn btn-gold" id="rBtn">계속</button></div>
+  </div>
+</div>
+
+<script>
+/* ===== GitHub(웹사이트) 버전 설정 =====
+   claude.ai에서는 null 그대로 두세요. (Claude 로그인 저장소를 씁니다)
+   GitHub Pages에 올릴 때만 아래 null을 Firebase 설정으로 바꾸세요.
+   예) window.HOLDEM_FIREBASE = { apiKey: "AIza...", authDomain: "내프로젝트.firebaseapp.com", projectId: "내프로젝트", appId: "1:...:web:..." }; */
+window.HOLDEM_FIREBASE = { apiKey: "...", authDomain: "...", projectId: "...", appId: "..." };
+</script>
+<script>
+(() => {
+"use strict";
+/* ================= Utilities ================= */
+const $ = id => document.getElementById(id);
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const rnd = (a, b) => a + Math.random() * (b - a);
+const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+const r10 = x => Math.round(x / 10) * 10;
+// money is stored in 만원 units
+function won(m) {
+  m = Math.round(m);
+  if (m <= 0) return '0원';
+  if (m >= 10000) { const e = Math.floor(m / 10000), r = m % 10000; return e + '억' + (r ? ' ' + r.toLocaleString() + '만' : '') + '원'; }
+  return m.toLocaleString() + '만원';
+}
+const wonShort = m => { m = Math.round(m); if (m >= 10000) { const e = Math.floor(m / 10000), r = m % 10000; return e + '억' + (r ? r.toLocaleString() + '만' : ''); } return m.toLocaleString() + '만'; };
+
+/* ================= Cards ================= */
+const SUITS = ['s', 'h', 'd', 'c'];
+const SUIT_CH = { s: '♠', h: '♥', d: '♦', c: '♣' };
+const FULL = []; for (const s of SUITS) for (let r = 2; r <= 14; r++) FULL.push({ r, s, id: r + s });
+const rankLabel = r => ({ 14: 'A', 13: 'K', 12: 'Q', 11: 'J' })[r] || String(r);
+const cardStr = c => rankLabel(c.r) + SUIT_CH[c.s];
+function parseCard(t) { const m = { A: 14, K: 13, Q: 12, J: 11, T: 10 }; const r = m[t[0]] || +t[0]; return { r, s: t[1], id: r + t[1] }; }
+function shuffle(a) { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+
+const PIPS = {
+  2: [[100, 52], [100, 228]],
+  3: [[100, 52], [100, 140], [100, 228]],
+  4: [[62, 52], [138, 52], [62, 228], [138, 228]],
+  5: [[62, 52], [138, 52], [100, 140], [62, 228], [138, 228]],
+  6: [[62, 52], [138, 52], [62, 140], [138, 140], [62, 228], [138, 228]],
+  7: [[62, 52], [138, 52], [100, 96], [62, 140], [138, 140], [62, 228], [138, 228]],
+  8: [[62, 52], [138, 52], [100, 96], [62, 140], [138, 140], [100, 184], [62, 228], [138, 228]],
+  9: [[62, 52], [138, 52], [62, 111], [138, 111], [100, 140], [62, 169], [138, 169], [62, 228], [138, 228]],
+  10: [[62, 52], [138, 52], [100, 81], [62, 111], [138, 111], [62, 169], [138, 169], [100, 199], [62, 228], [138, 228]]
+};
+const isRed = s => s === 'h' || s === 'd';
+/* Each card SVG is fully self-contained (no shared <use>/pattern/clip refs) so mobile browsers render it reliably */
+const SUIT_SHAPE = {
+  h: '<path d="M50 90 C22 68 4 50 4 30 C4 15 16 5 29 5 C39 5 46 11 50 20 C54 11 61 5 71 5 C84 5 96 15 96 30 C96 50 78 68 50 90Z"/>',
+  d: '<path d="M50 2 L86 50 L50 98 L14 50Z"/>',
+  s: '<path d="M50 3 C62 22 94 40 94 62 C94 76 83 85 71 85 C62 85 56 81 53 75 C54 86 58 93 67 98 L33 98 C42 93 46 86 47 75 C44 81 38 85 29 85 C17 85 6 76 6 62 C6 40 38 22 50 3Z"/>',
+  c: '<circle cx="50" cy="28" r="21"/><circle cx="27" cy="58" r="21"/><circle cx="73" cy="58" r="21"/><path d="M45 48 C45 74 40 88 30 98 L70 98 C60 88 55 74 55 48Z"/>'
+};
+function pip(suit, x, y, size, col, rot) {
+  const k = size / 100;
+  const tf = rot ? `translate(${x + size} ${y + size}) rotate(180) scale(${k})` : `translate(${x} ${y}) scale(${k})`;
+  return `<g transform="${tf}" fill="${col}" stroke="none">${SUIT_SHAPE[suit]}</g>`;
+}
+let backSeq = 0;
+
+function faceArt(c, col) {
+  const robe = isRed(c.s) ? '#b3192f' : '#22396b';
+  const trim = '#d9a93a', line = '#16171b';
+  let hat, extra = '';
+  if (c.r === 13) {
+    hat = `<path d="M80 82 L75 56 L88 69 L100 50 L112 69 L125 56 L120 82Z" fill="${trim}" stroke="#6b4a10" stroke-width="2"/><circle cx="100" cy="52" r="3.5" fill="${robe}"/>`;
+    extra = `<path d="M85 104 Q100 128 115 104 Q100 113 85 104Z" fill="#7a5a33"/>`;
+  } else if (c.r === 12) {
+    hat = `<path d="M82 82 Q84 66 92 68 Q100 54 108 68 Q116 66 118 82Z" fill="${trim}" stroke="#6b4a10" stroke-width="2"/><circle cx="100" cy="66" r="4" fill="${robe}"/>`;
+    extra = `<path d="M83 92 Q78 112 87 122 M117 92 Q122 112 113 122" stroke="#6b3d1a" stroke-width="5" fill="none" stroke-linecap="round"/>`;
+  } else {
+    hat = `<path d="M78 84 Q86 60 106 62 Q122 64 126 76 L133 72 L129 86Z" fill="${robe}" stroke="${line}" stroke-width="2"/><path d="M118 64 Q130 46 141 50" stroke="${trim}" stroke-width="4" fill="none" stroke-linecap="round"/>`;
+    extra = `<path d="M84 92 Q82 104 88 110 M116 92 Q118 104 112 110" stroke="#8a5a2a" stroke-width="4" fill="none" stroke-linecap="round"/>`;
+  }
+  const half = `<g>
+    <rect x="40" y="34" width="120" height="106" fill="#f8f0dc"/>
+    <path d="M40 34 L160 34 L160 140 L40 140Z" fill="none"/>
+    <path d="M56 140 Q60 116 100 114 Q140 116 144 140Z" fill="${robe}" stroke="${line}" stroke-width="2"/>
+    <path d="M100 115 L100 140" stroke="${trim}" stroke-width="4"/>
+    <path d="M68 131 Q100 121 132 131" stroke="${trim}" stroke-width="3" fill="none"/>
+    <circle cx="100" cy="99" r="18" fill="#f3d6b4" stroke="${line}" stroke-width="2"/>
+    ${extra}
+    <circle cx="94" cy="97" r="1.9" fill="${line}"/><circle cx="106" cy="97" r="1.9" fill="${line}"/>
+    <path d="M95 106 Q100 109 105 106" stroke="${line}" stroke-width="1.6" fill="none"/>
+    ${hat}
+    ${pip(c.s, 46, 40, 22, col)}
+  </g>`;
+  return `<rect x="40" y="34" width="120" height="212" rx="6" fill="#f8f0dc"/>${half}<g transform="rotate(180 100 140)">${half}</g>
+    <line x1="40" y1="140" x2="160" y2="140" stroke="${col}" stroke-width="1.5"/>
+    <rect x="40" y="34" width="120" height="212" rx="6" fill="none" stroke="${col}" stroke-width="2.5"/>`;
+}
+
+function cardSVG(c) {
+  const col = isRed(c.s) ? '#c8102e' : '#16171b';
+  const lab = rankLabel(c.r);
+  const txt = lab === '10'
+    ? `<text x="22" y="42" font-size="32" textLength="34" lengthAdjust="spacingAndGlyphs" text-anchor="middle" font-family="Georgia,'Times New Roman',serif" font-weight="700" fill="${col}">10</text>`
+    : `<text x="22" y="42" font-size="36" text-anchor="middle" font-family="Georgia,'Times New Roman',serif" font-weight="700" fill="${col}">${lab}</text>`;
+  const corner = `${txt}${pip(c.s, 9, 48, 26, col)}`;
+  let mid = '';
+  if (c.r <= 10) {
+    for (const [x, y] of PIPS[c.r]) {
+      mid += pip(c.s, x - 18, y - 18, 36, col, y > 140);
+    }
+  } else if (c.r === 14) {
+    const sz = c.s === 's' ? 96 : 80;
+    mid = (c.s === 's' ? `<circle cx="100" cy="140" r="58" fill="none" stroke="${col}" stroke-width="1.5" stroke-dasharray="3 5"/>` : '') +
+      pip(c.s, 100 - sz / 2, 140 - sz / 2, sz, col);
+  } else mid = faceArt(c, col);
+  return `<svg viewBox="0 0 200 280" role="img" aria-label="${cardStr(c)}">
+    <rect x="1.5" y="1.5" width="197" height="277" rx="14" fill="#fffdf7" stroke="#cfc8b8" stroke-width="2"/>
+    ${mid}${corner}<g transform="rotate(180 100 140)">${corner}</g></svg>`;
+}
+function backSVG() {
+  const pid = 'bp' + (++backSeq);
+  return `<svg viewBox="0 0 200 280" role="img" aria-label="뒷면">
+    <rect x="1.5" y="1.5" width="197" height="277" rx="14" fill="#fffdf7" stroke="#cfc8b8" stroke-width="2"/>
+    <rect x="12" y="12" width="176" height="256" rx="8" fill="#9e1b2a"/>
+    <defs><pattern id="${pid}" width="14" height="14" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><path d="M0 7 H14 M7 0 V14" stroke="#d9a0a0" stroke-opacity=".45" stroke-width="2"/></pattern></defs><rect x="12" y="12" width="176" height="256" rx="8" fill="url(#${pid})"/>
+    <rect x="20" y="20" width="160" height="240" rx="5" fill="none" stroke="#f3e6c8" stroke-width="2"/>
+    <g transform="translate(100 140)"><circle r="40" fill="#9e1b2a" stroke="#f3e6c8" stroke-width="2"/><path d="M0 -30 L21 0 L0 30 L-21 0Z" fill="#f3e6c8"/><path d="M0 -18 L12 0 L0 18 L-12 0Z" fill="#9e1b2a"/></g></svg>`;
+}
+
+/* Render a list of card descriptors into a container, reusing nodes whose key matches */
+function setCards(el, list) {
+  const kids = [...el.children];
+  list.forEach((it, i) => {
+    let key, html, cls = '';
+    if (!it.card) { key = 'slot' + i; html = ''; cls = 'slot'; }
+    else if (it.up) { key = 'u' + it.card.id + '#' + G.handId; html = cardSVG(it.card); }
+    else { key = 'b' + i + '#' + G.handId; html = backSVG(); }
+    let node = kids[i];
+    if (!node || node.dataset.key !== key) {
+      const n = document.createElement('div');
+      n.className = 'card' + (cls ? ' ' + cls : '');
+      n.dataset.key = key; n.innerHTML = html;
+      if (it.card) {
+        const wasBack = node && node.dataset.key.startsWith('b');
+        n.classList.add(wasBack && it.up ? 'flip' : 'deal');
+        if (it.delay) n.style.animationDelay = it.delay + 'ms';
+      }
+      if (node) el.replaceChild(n, node); else el.appendChild(n);
+      node = n;
+    }
+    node.classList.toggle('win', !!it.win);
+    node.classList.toggle('dim', !!it.dim);
+  });
+  while (el.children.length > list.length) el.lastChild.remove();
+}
+
+/* ================= Hand evaluation ================= */
+const P5 = 15 ** 5, P4 = 15 ** 4, P3 = 15 ** 3;
+function eval5(cs) {
+  const rs = cs.map(c => c.r).sort((a, b) => b - a);
+  const s0 = cs[0].s;
+  const flush = cs[1].s === s0 && cs[2].s === s0 && cs[3].s === s0 && cs[4].s === s0;
+  const cnt = {};
+  for (const r of rs) cnt[r] = (cnt[r] || 0) + 1;
+  const g = Object.keys(cnt).map(r => [+r, cnt[r]]).sort((a, b) => b[1] - a[1] || b[0] - a[0]);
+  let sh = 0;
+  if (g.length === 5) { if (rs[0] - rs[4] === 4) sh = rs[0]; else if (rs[0] === 14 && rs[1] === 5) sh = 5; }
+  let cat, ord;
+  if (sh && flush) { cat = 8; ord = [sh]; }
+  else if (g[0][1] === 4) { cat = 7; ord = [g[0][0], g[1][0]]; }
+  else if (g[0][1] === 3 && g[1][1] === 2) { cat = 6; ord = [g[0][0], g[1][0]]; }
+  else if (flush) { cat = 5; ord = rs; }
+  else if (sh) { cat = 4; ord = [sh]; }
+  else if (g[0][1] === 3) { cat = 3; ord = g.map(x => x[0]); }
+  else if (g[0][1] === 2 && g[1][1] === 2) { cat = 2; ord = g.map(x => x[0]); }
+  else if (g[0][1] === 2) { cat = 1; ord = g.map(x => x[0]); }
+  else { cat = 0; ord = rs; }
+  let sc = cat;
+  for (let i = 0; i < 5; i++) sc = sc * 15 + (ord[i] || 0);
+  return sc;
+}
+const COMBO_CACHE = {};
+function combos(n) {
+  if (COMBO_CACHE[n]) return COMBO_CACHE[n];
+  const out = [];
+  for (let a = 0; a < n; a++) for (let b = a + 1; b < n; b++) for (let c = b + 1; c < n; c++) for (let d = c + 1; d < n; d++) for (let e = d + 1; e < n; e++) out.push([a, b, c, d, e]);
+  return (COMBO_CACHE[n] = out);
+}
+function best(cards) {
+  let bs = -1, bc = null;
+  for (const cb of combos(cards.length)) {
+    const five = cb.map(i => cards[i]);
+    const s = eval5(five);
+    if (s > bs) { bs = s; bc = five; }
+  }
+  return { score: bs, cards: bc };
+}
+function scoreDigits(sc) { const d = []; for (let i = 0; i < 6; i++) { d.unshift(sc % 15); sc = Math.floor(sc / 15); } return d; }
+function describe(score) {
+  const cat = Math.floor(score / P5);
+  const r1 = Math.floor(score / P4) % 15, r2 = Math.floor(score / P3) % 15;
+  const n = rankLabel;
+  switch (cat) {
+    case 8: return r1 === 14 ? '로열 플러시' : `${n(r1)} 하이 스트레이트 플러시`;
+    case 7: return `${n(r1)} 포카드`;
+    case 6: return `${n(r1)} 풀하우스`;
+    case 5: return `${n(r1)} 하이 플러시`;
+    case 4: return `${n(r1)} 하이 스트레이트`;
+    case 3: return `${n(r1)} 트리플`;
+    case 2: return `${n(r1)}·${n(r2)} 투페어`;
+    case 1: return `${n(r1)} 원페어`;
+    default: return `${n(r1)} 하이카드`;
+  }
+}
+function equity(hole, board, iters) {
+  const used = new Set(hole.concat(board).map(c => c.id));
+  const rest = FULL.filter(c => !used.has(c.id));
+  const need = 5 - board.length, k = need + 2, n = rest.length;
+  let w = 0;
+  for (let i = 0; i < iters; i++) {
+    for (let j = 0; j < k; j++) { const x = j + Math.floor(Math.random() * (n - j)); const t = rest[j]; rest[j] = rest[x]; rest[x] = t; }
+    const b = board.concat(rest.slice(2, 2 + need));
+    const me = best(hole.concat(b)).score, op = best([rest[0], rest[1]].concat(b)).score;
+    if (me > op) w += 1; else if (me === op) w += 0.5;
+  }
+  return w / iters;
+}
+
+/* ================= Opponents ================= */
+const NAMES = ['동네 타짜 김씨', '강남 큰손 박', '은둔 고수 서', '블러퍼 장', '최 교수', '라스베이거스 윤', '무표정 한', '올인왕 오', '계산기 문', '심야의 류', '부산 갈매기 배', '포커페이스 신', '신입 딜러 정', '카지노 왕 남궁'];
+const STYLES = [
+  { key: 'rock', label: '타이트·패시브', tight: .8, aggr: .25, bluff: .04 },
+  { key: 'tag', label: '타이트·공격형', tight: .6, aggr: .7, bluff: .14 },
+  { key: 'lag', label: '루즈·공격형', tight: .2, aggr: .8, bluff: .32 },
+  { key: 'station', label: '콜링 스테이션', tight: .05, aggr: .15, bluff: .05 },
+  { key: 'maniac', label: '매니악', tight: 0, aggr: .95, bluff: .5 }
+];
+function makeOpp(n, prevName) {
+  let name; do { name = pick(NAMES); } while (name === prevName);
+  const st = pick(STYLES);
+  return { name, style: st.key, skill: Math.min(.95, .3 + n * .1), chips: 1000 + (n - 1) * 500, hue: Math.floor(Math.random() * 360) };
+}
+const styleOf = o => STYLES.find(s => s.key === o.style) || STYLES[1];
+
+/* ================= Game state ================= */
+const LEVELS = [[10, 20], [20, 40], [30, 60], [50, 100], [100, 200], [150, 300], [200, 400], [300, 600], [500, 1000], [1000, 2000]];
+const HPL = 8;
+const SAVE_KEY = 'hu-holdem-club-v1';
+const G = {
+  handId: 0, seats: [{ chips: 1000 }, { chips: 1000 }], opp: null, oppNo: 1, beaten: 0, best: 0, handNo: 0, dealer: 0,
+  deck: [], board: [], pot: 0, street: 0, minRaise: 20, toAct: 0, phase: 'idle', reveal: false,
+  bubbles: ['', ''], msg: '', msgSub: '', msgWin: false, winIds: null, thinking: false, log: [],
+  stats: { hands: 0, won: 0, biggest: 0 }
+};
+const blinds = () => LEVELS[Math.min(Math.floor(G.handNo / HPL), LEVELS.length - 1)];
+
+/* ================= Accounts & storage =================
+   firebase: GitHub 웹사이트 버전 (window.HOLDEM_FIREBASE 설정 시) — 조공부터 소장까지와 같은 계정 체계
+   cloud   : claude.ai 아티팩트 (Claude 로그인 저장소)
+   local   : 둘 다 없을 때 이 브라우저 */
+const FB_DOMAIN = '@jogong.game';
+const FB_COL = 'holdem_saves';
+const LOCAL_ACCTS = 'holdem_accounts_v1';
+const ID_RE = /^[A-Za-z0-9_]{3,16}$/;
+let session = null, guest = false, lastSaved = null;
+function loadScript(src) { return new Promise((res, rej) => { const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = () => rej(new Error('script ' + src)); document.head.appendChild(s); }); }
+const Store = {
+  mode: 'local', db: null, fb: null, ready: false,
+  key: id => id.toLowerCase(),
+  get minPw() { return this.mode === 'firebase' ? 6 : 4; },
+  async init() {
+    const cfg = window.HOLDEM_FIREBASE;
+    if (cfg && cfg.apiKey) {
+      try {
+        if (!window.firebase || !window.firebase.firestore) {
+          const v = '10.12.2';
+          for (const f of ['firebase-app-compat.js', 'firebase-auth-compat.js', 'firebase-firestore-compat.js']) await loadScript(`https://cdn.jsdelivr.net/npm/firebase@${v}/${f}`);
+        }
+        const app = firebase.apps.length ? firebase.app() : firebase.initializeApp(cfg);
+        this.fb = { auth: firebase.auth(app), fs: firebase.firestore(app) };
+        this.mode = 'firebase';
+        await new Promise(res => { const off = this.fb.auth.onAuthStateChanged(() => { off(); res(); }); });
+        this.ready = true; return;
+      } catch (e) { console.warn('Firebase 초기화 실패, 다른 저장소로 전환', e); this.fb = null; this.mode = 'local'; }
+    }
+    for (let i = 0; i < 15 && !(window.claude && typeof window.claude.use === 'function'); i++) await sleep(100);
+    if (window.claude && typeof window.claude.use === 'function') {
+      try { const db = await Promise.race([window.claude.use('db'), sleep(9000).then(() => null)]); if (db) { this.db = db; this.mode = 'cloud'; } } catch (e) { }
+    }
+    this.ready = true;
+  },
+  localAll() { try { return JSON.parse(localStorage.getItem(LOCAL_ACCTS) || '{}'); } catch (e) { return {}; } },
+  async get(id) {
+    const k = this.key(id);
+    if (this.mode === 'cloud') {
+      const read = async () => { const s = await this.db.doc('accounts/' + k).get(); return s.exists ? JSON.parse(JSON.stringify(s.data())) : null; };
+      try { return await read(); } catch (e) { await sleep(700); return await read(); }
+    }
+    return this.localAll()[k] || null;
+  },
+  async put(id, data) {
+    const k = this.key(id);
+    try { const all = this.localAll(); all[k] = data; localStorage.setItem(LOCAL_ACCTS, JSON.stringify(all)); } catch (e) { }
+    if (this.mode === 'cloud') await this.db.doc('accounts/' + k).set(data);
+  },
+  async writeSave(sess, data) {
+    const now = Date.now();
+    if (this.mode === 'firebase') return this.fb.fs.collection(FB_COL).doc(sess.uid).set({ id: sess.id, save: data, created: sess.created, updated: now });
+    return this.put(sess.id, { id: sess.id, salt: sess.salt, hash: sess.hash, created: sess.created, updated: now, save: data });
+  }
+};
+async function hashPw(pw, salt) {
+  const enc = new TextEncoder();
+  if (window.crypto && crypto.subtle) {
+    try {
+      const key = await crypto.subtle.importKey('raw', enc.encode(pw), 'PBKDF2', false, ['deriveBits']);
+      const bits = await crypto.subtle.deriveBits({ name: 'PBKDF2', salt: enc.encode(salt), iterations: 60000, hash: 'SHA-256' }, key, 256);
+      return Array.from(new Uint8Array(bits)).map(b => b.toString(16).padStart(2, '0')).join('');
+    } catch (e) { }
+  }
+  let h = 2166136261; const t = salt + ':' + pw;
+  for (let r = 0; r < 2000; r++) for (let i = 0; i < t.length; i++) { h ^= t.charCodeAt(i) + r; h = Math.imul(h, 16777619); }
+  return 'f' + (h >>> 0).toString(16);
+}
+const randHex = n => Array.from(crypto.getRandomValues(new Uint8Array(n))).map(b => b.toString(16).padStart(2, '0')).join('');
+function fbError(e) {
+  const c = (e && e.code) || '';
+  if (c.includes('email-already-in-use')) return '이미 사용 중인 아이디입니다. 조공부터 소장까지 계정이 있다면 그 아이디로 바로 로그인하세요.';
+  if (c.includes('weak-password')) return '비밀번호는 6자 이상이어야 합니다.';
+  if (c.includes('invalid-credential') || c.includes('wrong-password') || c.includes('user-not-found') || c.includes('invalid-login')) return '아이디 또는 비밀번호가 맞지 않습니다.';
+  if (c.includes('too-many-requests')) return '로그인 시도가 너무 많습니다. 잠시 후 다시 시도하세요.';
+  if (c.includes('network')) return '인터넷 연결을 확인한 뒤 다시 시도하세요.';
+  if (c.includes('operation-not-allowed')) return 'Firebase에서 이메일/비밀번호 로그인이 꺼져 있습니다.';
+  if (c.includes('unauthorized-domain')) return '이 주소가 Firebase 승인 도메인에 없습니다.';
+  if (c.includes('permission-denied')) return '저장 권한이 없습니다. Firestore 보안 규칙에 holdem_saves를 추가했는지 확인하세요.';
+  return '처리하지 못했습니다. 잠시 후 다시 시도하세요. (' + (c || (e && e.message) || 'unknown') + ')';
+}
+async function signup(id, pw) {
+  if (!ID_RE.test(id)) throw new Error('아이디는 영문, 숫자, 밑줄(_)로 3~16자여야 합니다.');
+  if (pw.length < Store.minPw) throw new Error(`비밀번호는 ${Store.minPw}자 이상이어야 합니다.`);
+  const carry = guest && lastSaved ? JSON.parse(JSON.stringify(lastSaved)) : null;
+  const created = Date.now();
+  if (Store.mode === 'firebase') {
+    let cred; try { cred = await Store.fb.auth.createUserWithEmailAndPassword(Store.key(id) + FB_DOMAIN, pw); } catch (e) { throw new Error(fbError(e)); }
+    const acct = { id, uid: cred.user.uid, save: carry, created };
+    if (carry) { try { await Store.writeSave(acct, carry); } catch (e) { throw new Error(fbError(e)); } }
+    return acct;
+  }
+  if (await Store.get(id)) throw new Error('이미 사용 중인 아이디입니다. 다른 아이디를 입력하세요.');
+  const salt = randHex(12), hash = await hashPw(pw, salt);
+  const acct = { id, salt, hash, save: carry, created, updated: created };
+  await Store.put(id, acct);
+  return acct;
+}
+async function login(id, pw) {
+  if (!ID_RE.test(id)) throw new Error('아이디 형식이 맞지 않습니다.');
+  if (Store.mode === 'firebase') {
+    let cred; try { cred = await Store.fb.auth.signInWithEmailAndPassword(Store.key(id) + FB_DOMAIN, pw); } catch (e) { throw new Error(fbError(e)); }
+    try {
+      const snap = await Store.fb.fs.collection(FB_COL).doc(cred.user.uid).get();
+      const d = snap.exists ? snap.data() : null;
+      return { id: (d && d.id) || id, uid: cred.user.uid, save: d ? d.save : null, created: (d && d.created) || Date.now() };
+    } catch (e) { throw new Error(fbError(e)); }
+  }
+  const acct = await Store.get(id);
+  if (!acct) throw new Error('등록되지 않은 아이디입니다. 계정 만들기를 눌러 주세요.');
+  if (await hashPw(pw, acct.salt) !== acct.hash) throw new Error('비밀번호가 맞지 않습니다.');
+  return acct;
+}
+
+function snapshot() {
+  return { p: G.seats[0].chips, c: G.seats[1].chips, opp: G.opp, oppNo: G.oppNo, beaten: G.beaten, best: G.best, handNo: G.handNo, dealer: G.dealer, stats: G.stats };
+}
+function applySnap(d) {
+  if (!d || !d.opp || typeof d.p !== 'number') return false;
+  G.seats[0].chips = d.p; G.seats[1].chips = d.c; G.opp = d.opp; G.oppNo = d.oppNo || 1; G.beaten = d.beaten || 0;
+  G.best = d.best || 0; G.handNo = d.handNo || 0; G.dealer = d.dealer || 0;
+  G.stats = Object.assign({ hands: 0, won: 0, biggest: 0 }, d.stats || {});
+  return true;
+}
+let saveState = '', writing = Promise.resolve();
+function setSaveState(t) { saveState = t; const el = $('hSave'); if (el) { el.textContent = t === 'ok' ? '· 저장됨' : t === 'busy' ? '· 저장 중' : t === 'err' ? '· 저장 실패' : ''; el.className = t === 'ok' ? 'ok' : t === 'err' ? 'err' : ''; } }
+function save() {
+  lastSaved = JSON.parse(JSON.stringify(snapshot()));
+  if (guest) { try { localStorage.setItem(SAVE_KEY, JSON.stringify(lastSaved)); } catch (e) { } return; }
+  if (!session) return;
+  const sess = session, data = lastSaved;
+  setSaveState('busy');
+  writing = writing.then(() => Store.writeSave(sess, data)).then(() => { if (session === sess) setSaveState('ok'); })
+    .catch(e => { console.warn('저장 실패', e); if (session === sess) setSaveState('err'); });
+}
+function load() { return applySnap(lastSaved); }
+function clearSave() { lastSaved = null; if (guest) { try { localStorage.removeItem(SAVE_KEY); } catch (e) { } } }
+
+function newGame(keepBest) {
+  const b = keepBest ? G.best : 0;
+  if (!keepBest) G.stats = { hands: 0, won: 0, biggest: 0 };
+  G.seats[0].chips = 1000; G.oppNo = 1; G.beaten = 0; G.best = b; G.handNo = 0;
+  G.opp = makeOpp(1); G.seats[1].chips = G.opp.chips; G.dealer = Math.random() < .5 ? 0 : 1; G.log = [];
+  save();
+}
+function nextOpponent() {
+  G.oppNo++; G.opp = makeOpp(G.oppNo, G.opp && G.opp.name); G.seats[1].chips = G.opp.chips; G.handNo = 0; G.log = [];
+  save();
+}
+const alive = id => id === G.handId;
+function log(t) { G.log.unshift(t); if (G.log.length > 40) G.log.pop(); }
+
+/* ================= Hand flow ================= */
+function post(s, amt) { const a = Math.min(amt, s.chips); s.chips -= a; s.bet += a; if (s.chips === 0) s.allIn = true; return a; }
+function move(s, a) { a = Math.max(0, Math.min(a, s.chips)); s.chips -= a; s.bet += a; if (s.chips === 0) s.allIn = true; }
+const maxBet = () => Math.max(G.seats[0].bet, G.seats[1].bet);
+const potTotal = () => G.pot + G.seats[0].bet + G.seats[1].bet;
+
+function startHand() {
+  G.handId++;
+  G.dealer = 1 - G.dealer;
+  G.deck = shuffle(FULL); G.board = []; G.pot = 0; G.street = 0; G.reveal = false; G.winIds = null;
+  G.bubbles = ['', '']; G.msgWin = false; G.thinking = false; G.msgSub = '';
+  for (const s of G.seats) Object.assign(s, { hand: [G.deck.pop(), G.deck.pop()], bet: 0, folded: false, allIn: false, acted: false });
+  const [sb, bb] = blinds();
+  post(G.seats[G.dealer], sb); post(G.seats[1 - G.dealer], bb);
+  G.minRaise = bb; G.toAct = G.dealer; G.phase = 'betting';
+  log(`— 핸드 ${G.handNo + 1} · 블라인드 ${wonShort(sb)}/${wonShort(bb)} —`);
+  G.msg = '';
+  G.dealing = true;
+  render();
+  G.dealing = false;
+  const id = G.handId;
+  sleep(700).then(() => { if (alive(id)) step(); });
+}
+
+function roundComplete() {
+  const act = G.seats.filter(s => !s.folded && !s.allIn);
+  const mb = maxBet();
+  for (const s of act) {
+    if (s.bet < mb) return false;
+    if (!s.acted && act.length > 1) return false;
+  }
+  return true;
+}
+
+async function step() {
+  const id = G.handId;
+  let guard = 0;
+  while (alive(id) && guard++ < 50) {
+    if (G.seats.some(s => s.folded)) return finishFold();
+    if (roundComplete()) { const go = await endRound(id); if (!go) return; continue; }
+    const s = G.seats[G.toAct];
+    if (s.folded || s.allIn) { G.toAct = 1 - G.toAct; continue; }
+    if (G.toAct === 0) { G.msg = '당신의 차례입니다.'; render(); return; }
+    G.thinking = true; G.msg = `${G.opp.name} 생각 중`; render();
+    await sleep(rnd(650, 1300));
+    if (!alive(id)) return;
+    const d = cpuDecide();
+    G.thinking = false;
+    apply(1, d.type, d.to);
+    render();
+    await sleep(380);
+  }
+}
+
+function apply(i, type, to) {
+  const s = G.seats[i], o = G.seats[1 - i];
+  const mb = maxBet(), toCall = mb - s.bet;
+  let label;
+  if (type === 'raise' && (s.chips <= toCall || o.allIn)) type = 'call';
+  if (type === 'fold') { s.folded = true; label = '폴드'; }
+  else if (type === 'call') {
+    const a = Math.min(toCall, s.chips); move(s, a);
+    label = toCall === 0 ? '체크' : (s.allIn ? '올인 ' : '콜 ') + wonShort(a);
+  } else {
+    to = Math.min(Math.max(to, mb + G.minRaise), s.bet + s.chips);
+    const inc = to - mb;
+    move(s, to - s.bet);
+    if (inc >= G.minRaise) G.minRaise = inc;
+    if (inc > 0 && !o.allIn && !o.folded) o.acted = false;
+    label = (s.allIn ? '올인 ' : (mb === 0 ? '벳 ' : '레이즈 ')) + wonShort(s.bet);
+  }
+  s.acted = true;
+  G.bubbles[i] = label;
+  log(`${i === 0 ? '나' : G.opp.name}: ${label}`);
+  G.toAct = 1 - i;
+}
+
+function dealStreet() {
+  G.deck.pop(); // burn
+  if (G.board.length === 0) G.board.push(G.deck.pop(), G.deck.pop(), G.deck.pop());
+  else G.board.push(G.deck.pop());
+  G.street = G.board.length === 3 ? 1 : G.board.length === 4 ? 2 : 3;
+  log(['', '플랍', '턴', '리버'][G.street] + ': ' + G.board.map(cardStr).join(' '));
+}
+
+async function endRound(id) {
+  const [a, b] = G.seats;
+  if (a.bet !== b.bet) {
+    const hi = a.bet > b.bet ? a : b, lo = hi === a ? b : a, d = hi.bet - lo.bet;
+    hi.bet -= d; hi.chips += d; if (hi.chips > 0) hi.allIn = false;
+  }
+  G.pot += a.bet + b.bet; a.bet = b.bet = 0; a.acted = b.acted = false;
+  render();
+  await sleep(450); if (!alive(id)) return false;
+  G.bubbles = ['', ''];
+  if (G.street === 3) { await showdown(id); return false; }
+  const live = G.seats.filter(s => !s.allIn).length;
+  if (live < 2) {
+    G.reveal = true; G.msg = '올인! 남은 카드를 공개합니다.'; render();
+    while (G.board.length < 5) { await sleep(1000); if (!alive(id)) return false; dealStreet(); render(); }
+    await sleep(800); if (!alive(id)) return false;
+    await showdown(id); return false;
+  }
+  dealStreet();
+  G.minRaise = blinds()[1]; G.toAct = 1 - G.dealer;
+  render();
+  await sleep(550);
+  return alive(id);
+}
+
+function finishFold() {
+  const w = G.seats[0].folded ? 1 : 0, s = G.seats[w];
+  const amount = potTotal();
+  s.chips += amount; G.seats[0].bet = G.seats[1].bet = 0; G.pot = 0;
+  G.msg = w === 0 ? `${G.opp.name} 폴드 — 당신이 ${won(amount)}을 가져갑니다.` : `폴드 — ${G.opp.name}이(가) ${won(amount)}을 가져갑니다.`;
+  G.msgWin = w === 0;
+  if (w === 0) { G.stats.won++; G.stats.biggest = Math.max(G.stats.biggest, amount); }
+  log(`${w === 0 ? '나' : G.opp.name} 팟 획득 ${wonShort(amount)}`);
+  afterHand();
+}
+
+async function showdown(id) {
+  G.reveal = true;
+  const ev = G.seats.map(s => best(s.hand.concat(G.board)));
+  const amount = potTotal(); G.pot = 0;
+  const pn = describe(ev[0].score), cn = describe(ev[1].score);
+  G.winIds = new Set();
+  const why = (ws, ls) => {
+    const a = scoreDigits(ws), b = scoreDigits(ls);
+    if (a[0] !== b[0]) return null;
+    let i = 1; while (i < 6 && a[i] === b[i]) i++;
+    if (i <= 1 || i >= 6) return null;
+    const lab = a[0] === 2 && i === 2 ? '아래 페어' : a[0] === 6 && i === 2 ? '페어' : '키커';
+    return `${lab} ${rankLabel(a[i])} > ${rankLabel(b[i])}`;
+  };
+  G.msgSub = '금색 테두리 = 이긴 쪽의 최종 5장';
+  if (ev[0].score !== ev[1].score) {
+    const pw = ev[0].score > ev[1].score, wi = pw ? 0 : 1;
+    const ws = ev[wi].score, ls = ev[1 - wi].score, wn = describe(ws), ln = describe(ls);
+    G.seats[wi].chips += amount; ev[wi].cards.forEach(c => G.winIds.add(c.id));
+    const k = why(ws, ls);
+    const body = k ? `둘 다 ${wn}, ${k}` : `${wn} vs ${ln}`;
+    G.msg = pw ? `당신 승리! ${body} · +${won(amount)}` : `${G.opp.name} 승리 — ${body}`;
+    G.msgWin = pw;
+    if (pw) { G.stats.won++; G.stats.biggest = Math.max(G.stats.biggest, amount); }
+    log(`쇼다운: ${pw ? '나' : G.opp.name} 승리 · 나 ${pn} / ${G.opp.name} ${cn}${k ? ' (' + k + ')' : ''}`);
+  } else {
+    const half = Math.floor(amount / 2), rem = amount - half * 2;
+    G.seats[0].chips += half; G.seats[1].chips += half; G.seats[1 - G.dealer].chips += rem;
+    ev[0].cards.forEach(c => G.winIds.add(c.id)); ev[1].cards.forEach(c => G.winIds.add(c.id));
+    G.msg = `무승부 — 둘 다 ${pn}, 5장이 같아 팟을 나눕니다.`; G.msgWin = false;
+    G.msgSub = '금색 테두리 = 양쪽의 최종 5장';
+    log(`쇼다운: 무승부 (${pn})`);
+  }
+  afterHand();
+}
+
+function afterHand() {
+  G.phase = 'done'; G.thinking = false; G.handNo++; G.stats.hands++;
+  const pBust = G.seats[0].chips <= 0, cBust = G.seats[1].chips <= 0;
+  if (cBust) { G.beaten++; G.best = Math.max(G.best, G.beaten); }
+  save();
+  render();
+  const id = G.handId;
+  if (pBust) {
+    sleep(1600).then(() => {
+      if (!alive(id)) return;
+      showResult({
+        eyebrow: 'Game over', title: '파산했습니다', text: `${G.opp.name}에게 칩을 모두 잃었습니다. 1,000만원으로 처음부터 다시 시작합니다.`,
+        kv: [['처치한 상대', G.beaten + '명'], ['최고 기록', G.best + '명'], ['통산 승리 핸드', G.stats.won + ' / ' + G.stats.hands]], btn: '처음부터 다시',
+        onOk: () => { newGame(true); render(); startHand(); }
+      });
+    });
+  } else if (cBust) {
+    sleep(1600).then(() => {
+      if (!alive(id)) return;
+      const old = G.opp.name;
+      showResult({
+        eyebrow: `Opponent ${G.oppNo} down`, title: `${old} 파산!`, text: '다음 상대가 테이블에 앉습니다. 남은 칩은 그대로 가져갑니다.',
+        kv: [['내 칩', won(G.seats[0].chips)], ['처치한 상대', G.beaten + '명']], btn: '다음 상대와 대결',
+        onOk: () => { nextOpponent(); render(); startHand(); }
+      });
+    });
+  }
+}
+
+/* ================= CPU brain ================= */
+function cpuDecide() {
+  const me = G.seats[1], you = G.seats[0];
+  const st = styleOf(G.opp), skill = G.opp.skill;
+  const mb = maxBet(), toCall = mb - me.bet, pt = potTotal();
+  const iters = G.board.length === 0 ? 300 : 450;
+  const eq = equity(me.hand, G.board, iters);
+  const e = eq + (Math.random() * 2 - 1) * (1 - skill) * 0.16;
+  const R = Math.random();
+  const sizeTo = f => r10(mb + (pt + toCall) * f);
+  const strongT = 0.66 - st.aggr * 0.06 + (G.board.length === 0 ? -0.02 : 0);
+  const raise = to => ({ type: 'raise', to });
+  const allInTo = me.bet + me.chips;
+
+  if (toCall === 0) {
+    if (e > strongT) {
+      if (R < (1 - st.aggr) * 0.35) return { type: 'call' }; // slowplay
+      if (e > 0.85 && Math.random() < 0.2 + st.aggr * 0.2) return raise(Math.min(allInTo, sizeTo(rnd(0.9, 1.3))));
+      return raise(sizeTo(rnd(0.5, 0.9)));
+    }
+    if (e > 0.52 && R < st.aggr * 0.55) return raise(sizeTo(rnd(0.4, 0.66)));
+    if (R < st.bluff * 0.55) return raise(sizeTo(rnd(0.45, 0.8)));
+    return { type: 'call' };
+  }
+  const po = toCall / (pt + toCall);
+  const callNeed = po + st.tight * 0.09 - 0.03 - (st.key === 'station' ? 0.06 : 0);
+  if (e > 0.82 && R < 0.3 + st.aggr * 0.5) {
+    if (e > 0.88 && Math.random() < 0.35) return raise(allInTo);
+    return raise(sizeTo(rnd(0.7, 1.1)));
+  }
+  if (e > strongT + 0.04 && R < st.aggr * 0.4) return raise(sizeTo(rnd(0.55, 0.9)));
+  if (e >= callNeed) return { type: 'call' };
+  if (Math.random() < st.bluff * 0.14 && toCall < pt * 0.7) return raise(sizeTo(rnd(0.7, 1)));
+  if (toCall <= blinds()[1] / 2 && e > 0.3) return { type: 'call' };
+  return { type: 'fold' };
+}
+
+/* ================= Player controls ================= */
+function legal() {
+  const s = G.seats[0], o = G.seats[1];
+  const mb = maxBet(), toCall = mb - s.bet, pt = potTotal();
+  const maxTo = s.bet + s.chips;
+  const canRaise = s.chips > toCall && !o.allIn;
+  const minTo = Math.min(mb + G.minRaise, maxTo);
+  return { mb, toCall, pt, maxTo, minTo, canRaise };
+}
+let raiseTo = 0;
+function rangeToAmount(v, L) { if (v >= 1000) return L.maxTo; if (v <= 0) return L.minTo; return Math.min(L.maxTo, Math.max(L.minTo, r10(L.minTo + (L.maxTo - L.minTo) * v / 1000))); }
+function amountToRange(a, L) { return L.maxTo === L.minTo ? 1000 : Math.round((a - L.minTo) / (L.maxTo - L.minTo) * 1000); }
+function setRaise(a) {
+  const L = legal();
+  raiseTo = Math.min(L.maxTo, Math.max(L.minTo, a));
+  $('raiseRange').value = amountToRange(raiseTo, L);
+  updateRaiseLabel(L);
+}
+function updateRaiseLabel(L) {
+  const allin = raiseTo >= L.maxTo;
+  $('bRaise').textContent = allin ? `올인 ${wonShort(L.maxTo)}` : `${L.mb === 0 ? '벳' : '레이즈'} ${wonShort(raiseTo)}`;
+}
+function playerAct(type) {
+  if (G.phase !== 'betting' || G.toAct !== 0 || G.thinking) return;
+  apply(0, type, raiseTo);
+  render();
+  step();
+}
+
+/* ================= Rendering ================= */
+function render() {
+  const [p, c] = G.seats;
+  const [sb, bb] = blinds();
+  $('hOpp').textContent = G.oppNo; $('hBeaten').textContent = G.beaten;
+  $('hBlinds').textContent = `${wonShort(sb)}/${wonShort(bb)}`;
+  const shownHand = G.phase === 'done' ? G.handNo : G.handNo + 1;
+  $('hHand').textContent = shownHand;
+  const lvl = Math.floor(G.handNo / HPL);
+  $('hNext').textContent = lvl >= LEVELS.length - 1 ? '최고 레벨' : `${HPL - (G.handNo % HPL)}핸드 후 상승`;
+
+  const st = styleOf(G.opp);
+  $('cAvatar').textContent = G.opp.name.replace(/^.*\s/, '').slice(0, 1);
+  $('cAvatar').style.background = `hsl(${G.opp.hue} 45% 32%)`;
+  $('cName').textContent = G.opp.name;
+  $('cStyle').textContent = `${st.label} · ${'★'.repeat(Math.round(G.opp.skill * 5))}${'☆'.repeat(5 - Math.round(G.opp.skill * 5))}`;
+  $('cChips').textContent = won(c.chips);
+  $('pChips').textContent = won(p.chips);
+  $('cDealer').hidden = G.dealer !== 1; $('pDealer').hidden = G.dealer !== 0;
+
+  const setBet = (el, v) => { el.classList.toggle('empty', !v); el.lastElementChild.textContent = v ? won(v) : ''; };
+  setBet($('cBet'), c.bet || 0); setBet($('pBet'), p.bet || 0);
+  $('pot').textContent = '팟 ' + won(G.pot + (p.bet || 0) + (c.bet || 0));
+
+  const bub = (el, t) => { if (!t) { el.hidden = true; return; } if (el.textContent !== t || el.hidden) { el.hidden = true; void el.offsetWidth; el.textContent = t; el.hidden = false; } };
+  bub($('cBubble'), G.bubbles[1]); bub($('pBubble'), G.bubbles[0]);
+
+  const win = G.winIds;
+  const dimmed = id => win && !win.has(id);
+  const hasHand = p.hand && p.hand.length;
+  if (hasHand) {
+    setCards($('pCards'), p.hand.map((cd, i) => ({ card: cd, up: true, win: win && win.has(cd.id), dim: (p.folded) || dimmed(cd.id), delay: G.dealing ? i * 260 : 0 })));
+    setCards($('cCards'), c.hand.map((cd, i) => ({ card: cd, up: G.reveal, win: G.reveal && win && win.has(cd.id), dim: c.folded || (G.reveal && dimmed(cd.id)), delay: G.dealing ? 130 + i * 260 : 0 })));
+  }
+  const bl = [];
+  for (let i = 0; i < 5; i++) { const cd = G.board[i]; bl.push(cd ? { card: cd, up: true, win: win && win.has(cd.id), dim: dimmed(cd.id), delay: (i < 3 && G.board.length === 3) ? i * 120 : 0 } : { card: null }); }
+  setCards($('board'), bl);
+
+  // player's current hand
+  let hn = '';
+  if (hasHand && !p.folded) {
+    if (G.board.length >= 3) hn = describe(best(p.hand.concat(G.board)).score);
+    else hn = p.hand[0].r === p.hand[1].r ? `포켓 페어 (${rankLabel(p.hand[0].r)})` : (p.hand[0].s === p.hand[1].s ? '수딧' : '오프수트') + ' · ' + p.hand.map(cardStr).join(' ');
+  }
+  $('pHandName').textContent = hn;
+
+  $('hUser').textContent = session ? session.id : '게스트'; setSaveState(guest ? '' : saveState);
+  $('msgSub').textContent = G.msgSub || '';
+  const m = $('msg'); m.textContent = G.msg; m.classList.toggle('win', !!G.msgWin); m.classList.toggle('thinking', !!G.thinking);
+
+  // actions
+  const myTurn = G.phase === 'betting' && G.toAct === 0 && !G.thinking && !p.folded && !p.allIn;
+  const done = G.phase === 'done';
+  const over = done && (p.chips <= 0 || c.chips <= 0);
+  $('nextRow').hidden = !done || over;
+  $('actRow').hidden = done; $('raiseRow').hidden = done;
+  if (!done) {
+    const L = legal();
+    $('bFold').disabled = !myTurn || L.toCall === 0;
+    $('bCall').disabled = !myTurn;
+    $('bCall').textContent = L.toCall === 0 ? '체크' : (L.toCall >= p.chips ? `올인 콜 ${wonShort(p.chips)}` : `콜 ${wonShort(L.toCall)}`);
+    const rOk = myTurn && L.canRaise;
+    $('bRaise').disabled = !rOk; $('raiseRange').disabled = !rOk || L.minTo >= L.maxTo;
+    ['qHalf', 'qPot', 'qAll'].forEach(k => $(k).disabled = !rOk);
+    if (rOk) { if (raiseTo < L.minTo || raiseTo > L.maxTo || !G._raiseInit) { G._raiseInit = true; setRaise(L.minTo); } else setRaise(raiseTo); }
+    else { $('bRaise').textContent = L.mb === 0 ? '벳' : '레이즈'; G._raiseInit = false; }
+    $('status').textContent = myTurn ? (L.toCall ? `콜하려면 ${won(Math.min(L.toCall, p.chips))}` : '체크하거나 베팅하세요') : (G.phase === 'betting' ? (p.allIn ? '올인 상태입니다' : '상대 차례') : '');
+  } else {
+    $('status').textContent = over ? '' : '준비되면 다음 핸드를 시작하세요';
+  }
+  $('logList').innerHTML = G.log.map(t => `<li>${t.replace(/</g, '&lt;')}</li>`).join('');
+}
+
+/* ================= Modals & screens ================= */
+function openModal(id) { $(id).hidden = false; const b = $(id).querySelector('button'); if (b) b.focus(); }
+function closeModal(id) { $(id).hidden = true; }
+document.querySelectorAll('.modal-back').forEach(m => {
+  m.addEventListener('click', e => { if (e.target === m && m.id !== 'mResult') m.hidden = true; });
+  m.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', () => m.hidden = true));
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape') ['mRules', 'mReset'].forEach(closeModal); });
+
+let resultOk = null;
+function showResult({ eyebrow, title, text, kv, btn, onOk }) {
+  $('rEyebrow').textContent = eyebrow; $('rTitle').textContent = title; $('rText').textContent = text;
+  $('rKv').innerHTML = kv.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('');
+  $('rBtn').textContent = btn; resultOk = onOk; openModal('mResult');
+}
+$('rBtn').addEventListener('click', () => { closeModal('mResult'); const f = resultOk; resultOk = null; if (f) f(); });
+
+function showScreen(name) { $('start').hidden = name !== 'start'; $('game').hidden = name !== 'game'; window.scrollTo(0, 0); }
+function authMsg(t, cls) { const el = $('authMsg'); el.textContent = t || ''; el.className = 'authmsg' + (cls ? ' ' + cls : ''); }
+function refreshStart(msg) {
+  const inside = !!session || guest;
+  $('authForm').hidden = inside; $('menu').hidden = !inside;
+  if (inside) {
+    $('acctLine').innerHTML = session ? `<b>${session.id}</b> 님으로 로그인됨` : `<b>게스트</b> · 이 브라우저에만 저장됩니다`;
+    if (load()) {
+      $('saveInfo').innerHTML = `<b>${G.oppNo}번째 상대</b> (${G.opp.name}) · 내 칩 <b>${won(G.seats[0].chips)}</b><br>처치 ${G.beaten}명 · 최고 기록 ${G.best}명 · 승리 핸드 ${G.stats.won}/${G.stats.hands}`;
+      $('btnStart').textContent = '이어서 시작';
+    } else {
+      $('saveInfo').textContent = '시작 자금 1,000만원 · 블라인드 10만/20만원';
+      $('btnStart').textContent = '게임 시작';
+    }
+  } else {
+    $('saveInfo').textContent = '계정을 만들면 다른 기기에서도 이어서 할 수 있습니다.';
+  }
+  $('toast').textContent = msg || '';
+}
+function showStoreMode() {
+  const ml = $('modeLine'), txt = ml.querySelector('span');
+  ml.classList.toggle('on', Store.mode !== 'local');
+  txt.textContent = Store.mode === 'firebase' ? '온라인 계정 저장 (웹사이트 버전)' : Store.mode === 'cloud' ? '온라인 계정 저장 (Claude)' : '이 브라우저에 계정 저장';
+  $('pwHint').textContent = Store.minPw + '자 이상';
+}
+function useAccount(acct) {
+  session = { id: acct.id, uid: acct.uid, salt: acct.salt, hash: acct.hash, created: acct.created || Date.now() };
+  guest = false; saveState = '';
+  lastSaved = acct.save && acct.save.opp ? acct.save : null;
+  if (!load()) { G.stats = { hands: 0, won: 0, biggest: 0 }; newGame(false); }
+  try { localStorage.setItem('holdem_last_id', acct.id); } catch (e) { }
+}
+function useGuest() {
+  session = null; guest = true;
+  try { lastSaved = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); } catch (e) { lastSaved = null; }
+  if (!load()) { G.stats = { hands: 0, won: 0, biggest: 0 }; newGame(false); }
+}
+function setBusy(b) { ['btnLogin', 'btnSignup', 'btnGuest'].forEach(k => $(k).disabled = b); }
+async function waitStore() { if (!Store.ready) { authMsg('저장소에 연결하는 중…'); while (!Store.ready) await sleep(100); authMsg(''); } }
+$('authForm').addEventListener('submit', async e => {
+  e.preventDefault(); setBusy(true);
+  try { await waitStore(); const a = await login($('inId').value.trim(), $('inPw').value); useAccount(a); $('inPw').value = ''; authMsg(''); refreshStart(`${a.id} 님, 환영합니다.`); }
+  catch (err) { authMsg(err.message, 'err'); }
+  setBusy(false);
+});
+$('btnSignup').addEventListener('click', async () => {
+  setBusy(true);
+  try {
+    await waitStore();
+    const a = await signup($('inId').value.trim(), $('inPw').value);
+    useAccount(a); $('inPw').value = ''; authMsg('');
+    refreshStart(a.save ? '계정을 만들고 게스트 진행 상황을 옮겼습니다.' : '계정을 만들었습니다. 1,000만원으로 시작합니다.');
+  } catch (err) { authMsg(err.message, 'err'); }
+  setBusy(false);
+});
+$('btnGuest').addEventListener('click', () => { useGuest(); refreshStart('게스트로 시작합니다. 계정을 만들면 진행 상황을 옮길 수 있습니다.'); });
+$('btnLogout').addEventListener('click', async () => {
+  G.handId++;
+  if (Store.mode === 'firebase' && Store.fb) { try { await Store.fb.auth.signOut(); } catch (e) { } }
+  const wasGuest = guest;
+  session = null; guest = false; lastSaved = null;
+  refreshStart(wasGuest ? '게스트 진행 상황은 이 브라우저에 남아 있습니다.' : '로그아웃했습니다.');
+});
+function enterGame() {
+  if (!load() || G.seats[0].chips <= 0) newGame(true);
+  if (G.seats[1].chips <= 0) nextOpponent();
+  showScreen('game');
+  startHand();
+}
+function goMenu() {
+  G.handId++; // cancels the running hand; chips return to the last saved state
+  load();
+  refreshStart('진행 중이던 핸드는 취소되었습니다.');
+  showScreen('start');
+}
+function doReset() {
+  G.handId++;
+  clearSave();
+  G.best = 0;
+  newGame(false);
+  ['mResult', 'mReset'].forEach(closeModal);
+  refreshStart('초기화되었습니다. 1,000만원으로 새로 시작합니다.');
+  showScreen('start');
+}
+
+$('btnStart').addEventListener('click', enterGame);
+$('btnRulesStart').addEventListener('click', () => openModal('mRules'));
+$('btnRules').addEventListener('click', () => openModal('mRules'));
+$('btnResetStart').addEventListener('click', () => openModal('mReset'));
+$('btnReset').addEventListener('click', () => openModal('mReset'));
+$('bResetConfirm').addEventListener('click', doReset);
+$('btnMenu').addEventListener('click', goMenu);
+$('bFold').addEventListener('click', () => playerAct('fold'));
+$('bCall').addEventListener('click', () => playerAct('call'));
+$('bRaise').addEventListener('click', () => playerAct('raise'));
+$('bNext').addEventListener('click', startHand);
+$('raiseRange').addEventListener('input', e => { const L = legal(); raiseTo = rangeToAmount(+e.target.value, L); updateRaiseLabel(L); });
+$('qHalf').addEventListener('click', () => { const L = legal(); setRaise(r10(L.mb + (L.pt + L.toCall) / 2)); });
+$('qPot').addEventListener('click', () => { const L = legal(); setRaise(r10(L.mb + L.pt + L.toCall)); });
+$('qAll').addEventListener('click', () => { const L = legal(); setRaise(L.maxTo); });
+
+/* ================= Static content ================= */
+const RANKS = [
+  ['로열 플러시', '같은 무늬 10-J-Q-K-A', 'As Ks Qs Js Ts'],
+  ['스트레이트 플러시', '같은 무늬 연속 5장', '9h 8h 7h 6h 5h'],
+  ['포카드', '같은 숫자 4장', 'Qs Qh Qd Qc 7s'],
+  ['풀하우스', '트리플 + 원페어', 'Kh Ks Kd 4c 4h'],
+  ['플러시', '같은 무늬 5장', 'Ad Jd 8d 6d 2d'],
+  ['스트레이트', '연속된 숫자 5장 (A-2-3-4-5도 가능)', 'Tc 9d 8s 7h 6c'],
+  ['트리플', '같은 숫자 3장', '7c 7d 7s Kh 2c'],
+  ['투페어', '페어 2개', 'Jh Jc 5s 5d Ah'],
+  ['원페어', '같은 숫자 2장', 'Ah Ad 9c 6s 3d'],
+  ['하이카드', '아무 족보 없음 — 높은 카드로 비교', 'Ac Jh 8d 5s 3c']
+];
+$('rankList').innerHTML = RANKS.map(([t, d, cs], i) => `<div class="rank-item"><span class="no">${String(i + 1).padStart(2, '0')}</span><span class="t">${t}<small>${d}</small></span><span class="cs">${cs.split(' ').map(x => `<div class="card mini">${cardSVG(parseCard(x))}</div>`).join('')}</span></div>`).join('');
+
+const fan = ['Th', 'Js', 'Qd', 'Kc', 'As'];
+$('fan').innerHTML = fan.map((x, i) => { const a = (i - 2) * 11; return `<div class="card" style="transform:translateX(-50%) rotate(${a}deg)">${cardSVG(parseCard(x))}</div>`; }).join('');
+
+// initial state
+G.opp = makeOpp(1); G.seats[1].chips = G.opp.chips; G.dealer = 1;
+try { const last = localStorage.getItem('holdem_last_id'); if (last) $('inId').value = last; } catch (e) { }
+Store.init().then(showStoreMode);
+G.seats.forEach(s => Object.assign(s, { hand: [], bet: 0, folded: false, allIn: false, acted: false }));
+refreshStart();
+showScreen('start');
+})();
+</script>
