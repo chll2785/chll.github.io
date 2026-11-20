@@ -3,14 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="color-scheme" content="only dark">
+<meta name="color-scheme" content="only light">
 <meta name="darkreader-lock">
-<style>:root{color-scheme:only dark}html,body{margin:0;background:#0a1210}</style>
+<style>:root{color-scheme:only light}html,body{margin:0;background:#0a1210}</style>
 </head>
 <body>
 <title>헤즈업</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<meta name="color-scheme" content="only dark">
+<meta name="color-scheme" content="only light">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=IBM+Plex+Mono:wght@500;600&family=Noto+Sans+KR:wght@400;500;700&display=swap">
@@ -24,7 +24,9 @@
   --f-body:'Noto Sans KR',system-ui,-apple-system,sans-serif;
   --f-num:'IBM Plex Mono',ui-monospace,Menlo,monospace;
   --cw:clamp(46px,12.6vw,84px);
-  color-scheme:only dark;
+  /* "only light" is the browsers' official opt-out from automatic dark mode (Samsung Internet / Chrome dark websites),
+     which was turning the white cards grey. The page paints its own dark colors, so it still looks dark. */
+  color-scheme:only light;
 }
 html,body{height:100%}
 [hidden]{display:none!important}
@@ -159,8 +161,7 @@ details.log .lc.r{color:#c8102e}
 /* cards are painted into <canvas>: phone dark modes (Samsung Internet, Chrome "dark websites") re-color SVG and images but leave canvas alone */
 .card canvas.ci{display:block;width:100%;height:100%;border-radius:inherit;pointer-events:none}
 .card:not(.slot){background:transparent}
-/* tells phone browsers this page already has its own dark look (stops forced re-coloring) */
-@media (prefers-color-scheme: dark){:root{color-scheme:only dark}}
+
 .card{background:#fffdf7;-webkit-tap-highlight-color:transparent}
 .card.slot{background:rgba(0,0,0,.08)}
 .card.slot{border:2px dashed rgba(255,255,255,.14);box-shadow:none;background:rgba(0,0,0,.08)}
