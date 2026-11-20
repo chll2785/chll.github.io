@@ -208,6 +208,10 @@ ul.rp-log .lc.r{color:#c8102e}
 .rp-tab{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);color:var(--muted);border-radius:999px;padding:5px 11px;font-size:12.5px}
 .rp-tab[aria-pressed="true"]{background:var(--gold);border-color:var(--gold);color:var(--ink);font-weight:700}
 .rp-tab:disabled{opacity:.35;cursor:not-allowed}
+.rp-eq{position:relative;display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px;margin:2px 0 6px;padding:7px 10px 11px;border-radius:10px;background:rgba(255,255,255,.05);font-size:13px;color:var(--muted);overflow:hidden}
+.rp-eq b{font-family:var(--f-num);font-size:17px}
+.rp-eq small{font-size:11.5px;opacity:.85}
+.rp-eq i{position:absolute;left:0;bottom:0;height:4px;background:var(--gold);border-radius:0 4px 4px 0}
 /* last card of an all-in run-out comes slowly */
 .card.slowdeal{animation:slowdeal 1.1s cubic-bezier(.3,.7,.2,1) both}
 @keyframes slowdeal{0%{transform:translateY(-30px) rotateY(90deg) scale(.92);opacity:0}45%{transform:translateY(-8px) rotateY(90deg) scale(1.05);opacity:1}100%{transform:none;opacity:1}}
@@ -224,6 +228,13 @@ ul.rp-log .lc.r{color:#c8102e}
 /* opponent's face after the hand: happy hop / sad droop */
 .avatar.mood-win{animation:hop .5s ease-out 2}
 .avatar.mood-lose{filter:saturate(.55) brightness(.85)}
+.avatar.mood-tilt{border-color:#e8574f;animation:fume 1.4s ease-in-out infinite}
+@keyframes fume{50%{box-shadow:0 0 0 3px rgba(232,87,79,.35)}}
+.tilt-tag{font-size:11px;font-weight:700;color:#fff;background:#c4423b;border-radius:999px;padding:2px 7px;white-space:nowrap;flex:none}
+/* table felt colours (per viewer, remembered in this browser) */
+body[data-felt="blue"]{--felt:#163f6b;--felt-hi:#22609c;--felt-lo:#0d2846}
+body[data-felt="red"]{--felt:#6b1d22;--felt-hi:#952a31;--felt-lo:#431114}
+body[data-felt="purple"]{--felt:#3f2466;--felt-hi:#5a3592;--felt-lo:#261540}
 @keyframes hop{40%{transform:translateY(-5px) rotate(-6deg)}}
 .avatar.rface{width:72px;height:72px;margin:2px auto 8px;border-width:3px}
 .status{font-size:13px;color:var(--muted);text-align:center;min-height:1.3em}
@@ -319,6 +330,7 @@ details.log ol{margin:6px 0 0;padding-left:20px;max-height:160px;overflow:auto;f
       <div class="bar-btns">
         <button class="mini-btn" id="btnRules" title="설명서" aria-label="설명서"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="8"/><path d="M7.6 7.6a2.5 2.5 0 1 1 3.4 2.3c-.7.3-1 .8-1 1.5v.6"/><circle cx="10" cy="14.6" r=".6" fill="currentColor"/></svg><span class="lb">설명서</span></button>
         <button class="mini-btn" id="btnStats" title="기록" aria-label="기록"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 17h14M5.5 14V9M10 14V4.5M14.5 14v-7"/></svg><span class="lb">기록</span></button>
+        <button class="mini-btn" id="btnFelt" title="테이블 색 바꾸기" aria-label="테이블 색"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 2.8a7.2 7.2 0 1 0 0 14.4c1.1 0 1.6-.8 1.3-1.7-.4-1 .3-2 1.4-2h1.8a2.7 2.7 0 0 0 2.7-2.7C17.2 6.4 14 2.8 10 2.8z"/><circle cx="6.6" cy="9" r="1" fill="currentColor"/><circle cx="9.4" cy="6" r="1" fill="currentColor"/><circle cx="13" cy="7" r="1" fill="currentColor"/></svg></button>
         <button class="mini-btn" id="btnSound" aria-pressed="true" title="효과음 켜기/끄기" aria-label="소리"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3.5 7.5h3l4-3.5v12l-4-3.5h-3z"/><path class="wave" d="M13.5 7.2a4 4 0 0 1 0 5.6M15.6 5.2a7 7 0 0 1 0 9.6"/><path class="mute" d="M13 7.5l5 5M18 7.5l-5 5"/></svg><span class="lb">소리</span></button>
         <button class="mini-btn" id="btnReset" title="초기화" aria-label="초기화"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4.5 10a5.5 5.5 0 1 0 1.7-4"/><path d="M5.5 2.8v3.6h3.6"/></svg><span class="lb">초기화</span></button>
         <button class="mini-btn" id="btnMenu" title="메뉴" aria-label="메뉴"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3.5 5.5h13M3.5 10h13M3.5 14.5h13"/></svg><span class="lb">메뉴</span></button>
@@ -330,6 +342,7 @@ details.log ol{margin:6px 0 0;padding-left:20px;max-height:160px;overflow:auto;f
         <div class="plate">
           <div class="avatar" id="cAvatar">?</div>
           <div class="who"><span class="nm" id="cName">상대</span><span class="st" id="cStyle"></span></div>
+          <span class="tilt-tag" id="cTilt" title="크게 져서 흥분했습니다. 몇 판 동안 거칠게 칩니다." hidden>흥분</span>
           <span class="stack" id="cChips">0</span>
           <span class="eq" id="cEq" hidden></span>
           <span class="dealer" id="cDealer" hidden>D</span>
@@ -418,6 +431,9 @@ details.log ol{margin:6px 0 0;padding-left:20px;max-height:160px;overflow:auto;f
       <li>둘 다 올인해서 승부가 아직 갈리지 않았으면, 마지막 카드(리버)는 잠깐 뜸을 들인 뒤 천천히 뒤집힙니다.</li>
       <li>헤더의 <b>기록</b>에서 최근 핸드 동안 내 칩이 어떻게 변했는지 그래프로 볼 수 있습니다.</li>
       <li>처음 30판 동안은 카드 위에 내 시작 패의 힘(<b>아주 좋음 · 좋음 · 보통 · 약함</b>)이 나옵니다. 1:1에서는 꽤 많은 패로 게임에 참여해도 됩니다.</li>
+      <li>상대가 큰 팟을 잃으면 <b>흥분</b>할 때가 있습니다. 얼굴이 빨개지고 이름 옆에 빨간 <b>흥분</b> 표시가 나오며, 몇 판 동안 더 자주 올리고 블러프도 늘어납니다. 좋은 패로 기다렸다가 받아치세요. 실력이 낮은 상대일수록 더 오래 흥분합니다.</li>
+      <li>헤더의 <b>팔레트 그림</b> 버튼을 누르면 테이블 색이 초록 → 파랑 → 빨강 → 보라로 바뀝니다. 고른 색은 이 브라우저에 기억됩니다.</li>
+      <li>다시보기에서 프리플랍·플랍·턴·리버 단계를 누르면 <b>그 순간 내 이길 확률</b>도 나옵니다 (상대 카드가 공개된 판은 상대 카드를 알고 계산).</li>
     </ul>
 
     <h3>한 핸드의 진행</h3>
@@ -852,16 +868,18 @@ function faceSVG(style, hue, mood) {
     ? '<circle cx="13.2" cy="25.6" r="2.1" fill="#ef7f86" opacity=".7"/><circle cx="26.8" cy="25.6" r="2.1" fill="#ef7f86" opacity=".7"/><path d="M33.5 7 l.9 2.1 2.1.9-2.1.9-.9 2.1-.9-2.1-2.1-.9 2.1-.9z" fill="#ffe27a"/>'
     : mood === 'lose'
       ? '<path d="M29.6 12.5 Q31.8 16 31.8 17.4 a2.2 2.2 0 0 1-4.4 0 Q27.4 16 29.6 12.5Z" fill="#8fd3ff" stroke="#3f8fc0" stroke-width=".6"/>'
-      : '';
+      : mood === 'tilt' // angry: red face flush, frowning brows, steam puffs
+        ? '<circle cx="20" cy="22" r="10" fill="#e8574f" opacity=".38"/><path d="M13 17.6 L18.2 19.6 M27 17.6 L21.8 19.6" stroke="#2a1d15" stroke-width="1.7" stroke-linecap="round"/><g fill="#f4f7f9" stroke="#9fb3c0" stroke-width=".5"><circle cx="8.5" cy="11" r="2.6"/><circle cx="6.8" cy="6.8" r="1.9"/><circle cx="31.5" cy="11" r="2.6"/><circle cx="33.2" cy="6.8" r="1.9"/></g>'
+        : '';
   return `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M5 41 Q7 32 20 32 Q33 32 35 41Z" fill="${coat}"/><rect x="17" y="29" width="6" height="4" fill="#e3c19e"/><circle cx="20" cy="22" r="10" fill="${skin}"/>${hair}${face}${top}${moodArt}</svg>`;
 }
 /* Table talk — each style has its own voice */
 const LINES = {
-  rock: { shove: ['또 올인이시네요. 이번엔 받겠습니다.', '올인이 너무 잦으세요. 콜.'], again: ['또 뵙네요. 이번엔 더 조심하겠습니다.'], intro: ['천천히 하죠. 저는 좋은 패만 기다립니다.', '조용히 앉아 있을게요.'], raise: ['이번엔 진짜예요.', '오래 기다린 패입니다.'], steal: ['고맙습니다. 조금씩 모으면 되죠.', '작은 팟도 팟이죠.'], bust: ['참을성만으론 안 되네요. 잘 치셨습니다.'], champ: ['기다리면 기회는 옵니다.'] },
-  tag: { shove: ['올인이 너무 잦아요. 계산상 콜이에요.', '그 올인, 이제 안 무서워요.'], again: ['지난번 승부, 다 기억하고 있어요.'], intro: ['계산대로 갑니다. 잘 부탁해요.', '숫자는 거짓말을 안 하죠.'], raise: ['확률이 제 편이에요.', '이 정도는 걸어야죠.'], steal: ['접는 것도 실력이죠.', '현명한 선택이었어요.'], bust: ['오늘은 제 계산이 졌네요.'], champ: ['계산대로 끝났습니다.'] },
-  lag: { shove: ['또 올인이에요? 이번엔 받아 줄게요!', '올인 버튼 고장 났어요? 콜!'], again: ['다시 만났네요! 복수전 가볼까요?'], intro: ['심심한 판은 싫어요. 달려볼까요?', '많이 칠 거예요. 따라오세요.'], raise: ['콜 하실 거예요?', '겁나면 접으셔도 돼요.'], steal: ['또 접으셨네요?', '제가 뭘 들었을까요?'], bust: ['너무 달렸나 보네요. 다음엔 안 봐줍니다!'], champ: ['압박을 이길 순 없죠.'] },
-  station: { shove: ['또 올인이에요? 그럼 저도 끝까지 가죠!', '올인 좋아하시네요. 콜이요!'], again: ['또 오셨네요! 이번에도 끝까지 볼게요.'], intro: ['저는 웬만하면 다 봅니다.', '카드 구경하는 게 제일 재밌어요.'], raise: ['오, 이번엔 저도 올려볼게요.', '어라, 패가 좋은데요?'], steal: ['어? 벌써 끝났어요?', '보여주지도 않고요?'], bust: ['끝까지 봤는데 아쉽네요!'], champ: ['끝까지 보길 잘했네요!'] },
-  maniac: { shove: ['올인 대 올인! 좋아요!', '또 올인? 저랑 성격이 똑같네요! 콜!'], again: ['또 만났다! 이번엔 더 세게 갑니다!'], intro: ['올인 좋아하세요? 저는 좋아해요!', '칩은 쓰라고 있는 겁니다!'], raise: ['가자! 전부 다!', '하하, 받아 보시죠!'], steal: ['역시 무서우셨죠?', '기세에서 이겼습니다!'], bust: ['와, 롤러코스터였네요! 재밌었어요.'], champ: ['이게 바로 기세죠!'] }
+  rock: { tilt: ['…이건 좀 아프네요.', '참을 만큼 참았습니다.'], shove: ['또 올인이시네요. 이번엔 받겠습니다.', '올인이 너무 잦으세요. 콜.'], again: ['또 뵙네요. 이번엔 더 조심하겠습니다.'], intro: ['천천히 하죠. 저는 좋은 패만 기다립니다.', '조용히 앉아 있을게요.'], raise: ['이번엔 진짜예요.', '오래 기다린 패입니다.'], steal: ['고맙습니다. 조금씩 모으면 되죠.', '작은 팟도 팟이죠.'], bust: ['참을성만으론 안 되네요. 잘 치셨습니다.'], champ: ['기다리면 기회는 옵니다.'] },
+  tag: { tilt: ['계산이 틀릴 리가 없는데…', '확률이 말이 안 되잖아요!'], shove: ['올인이 너무 잦아요. 계산상 콜이에요.', '그 올인, 이제 안 무서워요.'], again: ['지난번 승부, 다 기억하고 있어요.'], intro: ['계산대로 갑니다. 잘 부탁해요.', '숫자는 거짓말을 안 하죠.'], raise: ['확률이 제 편이에요.', '이 정도는 걸어야죠.'], steal: ['접는 것도 실력이죠.', '현명한 선택이었어요.'], bust: ['오늘은 제 계산이 졌네요.'], champ: ['계산대로 끝났습니다.'] },
+  lag: { tilt: ['좋아요, 이제 진짜 화났어요!', '그건 운이었어요. 다시 붙어요!'], shove: ['또 올인이에요? 이번엔 받아 줄게요!', '올인 버튼 고장 났어요? 콜!'], again: ['다시 만났네요! 복수전 가볼까요?'], intro: ['심심한 판은 싫어요. 달려볼까요?', '많이 칠 거예요. 따라오세요.'], raise: ['콜 하실 거예요?', '겁나면 접으셔도 돼요.'], steal: ['또 접으셨네요?', '제가 뭘 들었을까요?'], bust: ['너무 달렸나 보네요. 다음엔 안 봐줍니다!'], champ: ['압박을 이길 순 없죠.'] },
+  station: { tilt: ['아니 그걸 맞춘다고요?!', '으으, 다음엔 다 콜할 거예요!'], shove: ['또 올인이에요? 그럼 저도 끝까지 가죠!', '올인 좋아하시네요. 콜이요!'], again: ['또 오셨네요! 이번에도 끝까지 볼게요.'], intro: ['저는 웬만하면 다 봅니다.', '카드 구경하는 게 제일 재밌어요.'], raise: ['오, 이번엔 저도 올려볼게요.', '어라, 패가 좋은데요?'], steal: ['어? 벌써 끝났어요?', '보여주지도 않고요?'], bust: ['끝까지 봤는데 아쉽네요!'], champ: ['끝까지 보길 잘했네요!'] },
+  maniac: { tilt: ['으아아! 전부 다 걸 거예요!', '열 받네! 이제 봐주는 거 없습니다!'], shove: ['올인 대 올인! 좋아요!', '또 올인? 저랑 성격이 똑같네요! 콜!'], again: ['또 만났다! 이번엔 더 세게 갑니다!'], intro: ['올인 좋아하세요? 저는 좋아해요!', '칩은 쓰라고 있는 겁니다!'], raise: ['가자! 전부 다!', '하하, 받아 보시죠!'], steal: ['역시 무서우셨죠?', '기세에서 이겼습니다!'], bust: ['와, 롤러코스터였네요! 재밌었어요.'], champ: ['이게 바로 기세죠!'] }
 };
 const lineOf = (o, ev) => pick((LINES[o.style] || LINES.tag)[ev]);
 let sayT1 = 0, sayT2 = 0;
@@ -907,7 +925,10 @@ const ACH = [
   ['royal', '로열 플러시', '쇼다운에서 로열 플러시로 이기기'],
   ['comeback', '기적의 역전', '올인 때 이길 확률 30% 아래에서 이기기'],
   ['hero', '읽었다!', '리버에서 상대 블러프를 콜로 잡기'],
-  ['rich', '1억 클럽', '내 칩 1억원 넘기기']
+  ['rich', '1억 클럽', '내 칩 1억원 넘기기'],
+  ['bust20', '클럽 황제', '한 번에 상대 20명 처치'],
+  ['rich5', '5억 클럽', '내 칩 5억원 넘기기'],
+  ['tilt', '약 올리기', '큰 팟을 이겨 상대를 흥분하게 만들기']
 ];
 function achOf() {
   if (G.stats.ach) return G.stats.ach;
@@ -951,8 +972,9 @@ function checkAch(cBust) {
     if (r.comeback) grant('comeback');
     if (r.hero) grant('hero');
   }
-  if (cBust) { grant('bust1'); if (G.beaten >= 3) grant('bust3'); if (G.beaten >= 5) grant('bust5'); if (G.beaten >= 10) grant('bust10'); }
+  if (cBust) { grant('bust1'); if (G.beaten >= 3) grant('bust3'); if (G.beaten >= 5) grant('bust5'); if (G.beaten >= 10) grant('bust10'); if (G.beaten >= 20) grant('bust20'); }
   if (G.seats[0].chips >= 10000) grant('rich');
+  if (G.seats[0].chips >= 50000) grant('rich5');
 }
 
 /* ================= Game state ================= */
@@ -1132,6 +1154,7 @@ function startHand() {
   G.bubbles = ['', '']; G.msgWin = false; G.thinking = false; G.msgSub = ''; G.eq = null; G.pAggr = false;
   G.pSizes = []; G.cRiverBet = false; G.eqStart = null; G.last = null; G.mood = ''; G.tense = false; G.slowRiver = false;
   for (const s of G.seats) Object.assign(s, { hand: [G.deck.pop(), G.deck.pop()], bet: 0, folded: false, allIn: false, acted: false });
+  G.cStart = G.seats[1].chips; // opponent's stack before this hand (to notice a painful loss → tilt)
   const [sb, bb] = blinds();
   post(G.seats[G.dealer], sb); post(G.seats[1 - G.dealer], bb);
   G.minRaise = bb; G.toAct = G.dealer; G.phase = 'betting';
@@ -1151,6 +1174,8 @@ function startHand() {
   for (let k = 0; k < 4; k++) Snd.play('card', k * 0.13);
   hideSay();
   if (G.handNo === 0) say(lineOf(G.opp, G.opp.meetNo > 1 ? 'again' : 'intro'), 3200);
+  else if (G.tiltNew) { say(lineOf(G.opp, 'tilt'), 3000); if (!G.msgSub) G.msgSub = `${G.opp.name}이(가) 흥분했습니다! 몇 판 동안 거칠게 칩니다.`; render(); }
+  G.tiltNew = false;
   const id = G.handId;
   sleep(700).then(() => { if (alive(id)) step(); });
 }
@@ -1384,6 +1409,16 @@ function afterHand() {
   const pBust = G.seats[0].chips <= 0, cBust = G.seats[1].chips <= 0;
   if (cBust) { G.beaten++; G.best = Math.max(G.best, G.beaten); metOf(G.opp.name).beat++; }
   else if (pBust) metOf(G.opp.name).lost++;
+  try { // tilt: after losing a painful pot the opponent plays wilder for a few hands (kept in opp.tilt — old saves just have none)
+    const o = G.opp;
+    if (o.tilt > 0) o.tilt--;
+    const lost = (G.cStart || 0) - G.seats[1].chips;
+    if (!cBust && !pBust && G.last && G.last.win === 0 && lost >= Math.max(G.cStart * 0.35, blinds()[1] * 25)) {
+      const n = Math.round(3 + (1 - o.skill) * 3);
+      if (!(o.tilt > 0)) { G.tiltNew = true; G.stats.tilts = (G.stats.tilts || 0) + 1; grant('tilt'); log(`${o.name}이(가) 흥분했다 (${n}판)`); }
+      o.tilt = Math.max(o.tilt || 0, n);
+    }
+  } catch (e) { console.warn(e); }
   try { checkAch(cBust); } catch (e) { console.warn(e); }
   try { // chip history for the graph in 기록: [my chips, 0 normal / 1 beat an opponent / 2 I went broke]
     const hs = Array.isArray(G.stats.hist) ? G.stats.hist : (G.stats.hist = []);
@@ -1431,7 +1466,7 @@ function bigWin() {
 /* Last hand replay: copy of the finished hand (only kept while playing, not saved) */
 function keepReplay() {
   const lines = [];
-  for (const t of G.log) { if (t.startsWith('업적 달성')) continue; lines.unshift(t); if (t.startsWith('— 핸드')) break; }
+  for (const t of G.log) { if (t.startsWith('업적 달성') || t.includes('흥분했다')) continue; lines.unshift(t); if (t.startsWith('— 핸드')) break; }
   const [p, c] = G.seats;
   G.replay = { no: G.handNo, me: (p.hand || []).slice(), cpu: (c.hand || []).slice(), shown: !!G.reveal && !c.folded, board: G.board.slice(),
     win: G.winIds ? [...G.winIds] : [], msg: G.msg, good: !!G.msgWin, name: G.opp.name, lines };
@@ -1473,11 +1508,26 @@ function drawReplay() {
     row('나', r.me.map(cd => mini(cd, true)).join('')) +
     row(r.name.length > 5 ? '상대' : r.name, r.cpu.map(cd => mini(cd, showCpu)).join('') + (showCpu ? '' : `<small style="align-self:center;margin-left:4px">${full ? '공개 안 함' : '아직 모름'}</small>`)) +
     row('공용 카드', nb ? r.board.slice(0, nb).map(cd => mini(cd, true)).join('') : `<small>${full ? '플랍 전에 끝남' : '아직 없음'}</small>`) +
-    (full ? `<p class="rp-res${r.good ? ' win' : ''}">${esc(r.msg || '')}</p>` : `<p class="rp-res" style="color:var(--muted);font-weight:500">${segs[rpStep].name} 까지의 진행</p>`) +
+    (full ? `<p class="rp-res${r.good ? ' win' : ''}">${esc(r.msg || '')}</p>` : `<p class="rp-res" style="color:var(--muted);font-weight:500">${segs[rpStep].name} 까지의 진행</p>${replayEq(r, nb)}`) +
     `<ul class="rp-log">${items}</ul>`;
   paintCards($('rpBody'));
   $('rpBody').querySelectorAll('.rp-tab').forEach(b => b.addEventListener('click', () => { rpStep = +b.dataset.st; drawReplay(); }));
   const nx = $('rpNext'); if (nx) nx.textContent = full ? '처음부터 ▶' : (rpStep >= segs.length - 1 ? '결과 ▶' : '다음 단계 ▶');
+}
+/* replay: my chance to win at that moment (exact when the opponent's cards were shown, otherwise vs. any hand) */
+function replayEq(r, nb) {
+  try {
+    if (!r.me || r.me.length < 2) return '';
+    const c = r.eqc || (r.eqc = {});
+    if (c[nb] == null) {
+      const b = r.board.slice(0, nb);
+      c[nb] = r.shown && r.cpu.length === 2 ? equityVs(r.me, r.cpu, b) : equity(r.me, b, 1500);
+    }
+    const v = c[nb], vs = Array.isArray(v);
+    const p = Math.round((vs ? v[0] + v[2] / 2 : v) * 100);
+    const col = p >= 60 ? '#8fe0b0' : p <= 40 ? '#ffb3ad' : 'var(--cream)';
+    return `<div class="rp-eq"><span>이 순간 내 이길 확률</span><b style="color:${col}">${p}%</b><small>${vs ? '상대 카드를 알고 계산' : '상대 카드 모름 · 아무 패 상대 기준'}</small><i style="width:${p}%"></i></div>`;
+  } catch (e) { return ''; }
 }
 function replayNext() {
   const r = G.replay; if (!r) return;
@@ -1498,7 +1548,11 @@ function boardTexture(b) {
 }
 function cpuDecide() {
   const me = G.seats[1], you = G.seats[0];
-  const st = styleOf(G.opp), skill = G.opp.skill;
+  let st = styleOf(G.opp), skill = G.opp.skill;
+  if (G.opp.tilt > 0) { // tilted: looser, more aggressive, more bluffs, sloppier reads
+    st = Object.assign({}, st, { tight: st.tight * 0.4, aggr: Math.min(1, st.aggr + 0.25), bluff: Math.min(0.6, st.bluff + 0.15) });
+    skill = skill * 0.8;
+  }
   const mb = maxBet(), toCall = mb - me.bet, pt = potTotal();
   const iters = G.board.length === 0 ? 300 : 450;
   const eq = equity(me.hand, G.board, iters);
@@ -1617,13 +1671,14 @@ function render() {
   $('hNext').innerHTML = lvl >= LEVELS.length - 1 ? '최고 레벨' : `${HPL - (G.handNo % HPL)}<span class="lg">핸드 후 상승</span><span class="sm">판 뒤 ↑</span>`;
 
   const st = styleOf(G.opp);
-  const mood = G.phase === 'done' ? G.mood || '' : '';
+  const mood = (G.phase === 'done' && G.mood) || (G.opp.tilt > 0 ? 'tilt' : '');
   const avKey = G.opp.style + '/' + G.opp.hue + '/' + mood;
   if ($('cAvatar').dataset.k !== avKey) {
     const av = $('cAvatar'); av.dataset.k = avKey; av.innerHTML = faceSVG(G.opp.style, G.opp.hue, mood);
-    av.classList.remove('mood-win', 'mood-lose'); if (mood) { void av.offsetWidth; av.classList.add('mood-' + mood); }
+    av.classList.remove('mood-win', 'mood-lose', 'mood-tilt'); if (mood) { void av.offsetWidth; av.classList.add('mood-' + mood); }
   }
-  $('cAvatar').title = st.label;
+  $('cAvatar').title = st.label + (G.opp.tilt > 0 ? ` · 흥분 중 (${G.opp.tilt}판 남음)` : '');
+  $('cTilt').hidden = !(G.opp.tilt > 0);
   $('cAvatar').style.background = `hsl(${G.opp.hue} 45% 32%)`;
   $('cName').textContent = G.opp.name;
   $('cStyle').textContent = `${st.label} · ${'★'.repeat(Math.round(G.opp.skill * 5))}${'☆'.repeat(5 - Math.round(G.opp.skill * 5))}`;
@@ -1821,6 +1876,19 @@ $('btnReset').addEventListener('click', () => openModal('mReset'));
 $('bResetConfirm').addEventListener('click', doReset);
 $('btnMenu').addEventListener('click', goMenu);
 $('btnSound').addEventListener('click', () => { Snd.set(!Snd.on); if (Snd.on) Snd.play('chip'); $('btnSound').setAttribute('aria-pressed', Snd.on ? 'true' : 'false'); });
+/* table felt colour: green → blue → red → purple (remembered in this browser only) */
+const FELTS = [['green', '초록'], ['blue', '파랑'], ['red', '빨강'], ['purple', '보라']];
+function setFelt(k) {
+  const f = FELTS.find(x => x[0] === k) || FELTS[0];
+  if (f[0] === 'green') delete document.body.dataset.felt; else document.body.dataset.felt = f[0];
+  $('btnFelt').title = `테이블 색 바꾸기 (지금: ${f[1]})`;
+  try { localStorage.setItem('holdem_felt', f[0]); } catch (e) { }
+}
+$('btnFelt').addEventListener('click', () => {
+  const cur = document.body.dataset.felt || 'green', i = FELTS.findIndex(x => x[0] === cur);
+  setFelt(FELTS[(i + 1) % FELTS.length][0]); Snd.play('chip');
+});
+try { setFelt(localStorage.getItem('holdem_felt') || 'green'); } catch (e) { setFelt('green'); }
 /* small line chart of my chips over the last hands (self-contained SVG) */
 function chipGraph() {
   const hs = (Array.isArray(G.stats.hist) ? G.stats.hist : []).filter(x => Array.isArray(x) && typeof x[0] === 'number');
@@ -1851,7 +1919,7 @@ function openStats() {
   const s = G.stats, pct = s.hands ? Math.round(s.won / s.hands * 100) + '%' : '-';
   const row = ([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`;
   $('sKv').innerHTML = [['플레이한 핸드', s.hands + '판'], ['이긴 핸드', `${s.won}판 (${pct})`], ['가장 큰 팟', s.biggest ? won(s.biggest) : '-'], ['연승 (지금 / 최고)', `${s.streak || 0} / ${s.bestStreak || 0}`],
-    ['처치한 상대', G.beaten + '명'], ['최고 기록', G.best + '명'], ['내 칩', won(G.seats[0].chips)]].map(row).join('');
+    ['처치한 상대', G.beaten + '명'], ['최고 기록', G.best + '명'], ['상대를 흥분시킨 횟수', (s.tilts || 0) + '번'], ['내 칩', won(G.seats[0].chips)]].map(row).join('');
   const r = readOf(G.opp), rd = readRates(G.opp);
   const aggrTxt = r.act < 6 ? '아직 모름' : rd.aggr > 0.4 ? '공격적 (자주 올림)' : rd.aggr < 0.2 ? '조심스러움 (잘 안 올림)' : '보통';
   const foldTxt = r.faced < 4 ? '아직 모름' : rd.fold > 0.55 ? '잘 접음' : rd.fold < 0.25 ? '거의 안 접음' : '보통';
@@ -1925,6 +1993,7 @@ refreshStart();
 showScreen('start');
 })();
 </script>
+
 
 
 
