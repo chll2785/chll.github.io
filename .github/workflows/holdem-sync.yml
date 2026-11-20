@@ -1,0 +1,39 @@
+name: 홀덤 웹사이트 동기화
+# Claude 자동 개선 작업이 구글 드라이브에 올린 최신 홀덤 빌드를 가져와 holdem/index.html만 바꿉니다.
+on:
+  schedule:
+    - cron: '50 * * * *'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: holdem-sync
+  cancel-in-progress: false
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: 최신 빌드 내려받기
+        run: |
+          set -euo pipefail
+          curl -fsSL "https://docs.google.com/spreadsheets/d/1XkpMP6LrEAdMq5txJ5cB6x98oVexP8zy9b4I8498D6Y/export?format=csv&gid=0" -o /tmp/list.csv
+          ID=$(head -n1 /tmp/list.csv | cut -d, -f1 | tr -d '"\r')
+          SHA=$(head -n1 /tmp/list.csv | cut -d, -f2 | tr -d '"\r')
+          echo "파일 $ID / $SHA"
+          [[ "$ID" =~ ^[A-Za-z0-9_-]{20,}$ ]] || { echo "시트 A1의 파일 번호가 이상함"; exit 1; }
+          [[ "$SHA" =~ ^[0-9a-f]{64}$ ]] || { echo "시트 B1의 확인값이 이상함"; exit 1; }
+          curl -fsSL "https://drive.usercontent.google.com/download?id=${ID}&export=download&confirm=t" -o /tmp/new.html
+          echo "$SHA  /tmp/new.html" | sha256sum -c -
+          grep -q 'window.JOGONG_FIREBASE' /tmp/new.html
+          grep -q '헤즈업 홀덤 클럽' /tmp/new.html
+      - name: 바뀌었으면 올리기
+        run: |
+          set -euo pipefail
+          if cmp -s /tmp/new.html holdem/index.html; then echo "변경 없음"; exit 0; fi
+          cp /tmp/new.html holdem/index.html
+          git config user.name "holdem-sync"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add holdem/index.html
+          git commit -m "홀덤 웹사이트 자동 동기화"
+          git push
