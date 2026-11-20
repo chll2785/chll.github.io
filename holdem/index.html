@@ -183,7 +183,40 @@ details.log .lc.r{color:#c8102e}
 .qbtn:disabled{opacity:.35;cursor:not-allowed}
 .act-row{display:grid;grid-template-columns:1fr 1.2fr 1.4fr;gap:8px}
 .act-row .btn{padding:14px 8px;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.next-row{display:grid}
+.next-row{display:flex;gap:8px}
+.next-row #bNext{flex:1}
+.next-row .btn-ghost{padding:14px 14px;font-size:14px}
+/* big pot won by the player: the table rail glows gold */
+.table.bigwin{animation:bigwin 2.4s ease-out}
+@keyframes bigwin{15%,55%{box-shadow:inset 0 0 0 3px var(--gold),inset 0 0 70px rgba(227,185,94,.45),0 0 0 3px var(--gold),0 0 46px rgba(227,185,94,.75)}}
+.bigwin-tag{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:7;font-family:var(--f-display);font-size:clamp(26px,7vw,40px);color:var(--gold);text-shadow:0 2px 0 #000,0 0 18px rgba(227,185,94,.8);background:rgba(6,14,11,.72);border:1.5px solid var(--gold);border-radius:999px;padding:4px 22px;pointer-events:none;animation:bigTag 1.8s ease-out forwards;white-space:nowrap}
+@keyframes bigTag{0%{opacity:0;transform:translate(-50%,-30%) scale(.7)}20%{opacity:1;transform:translate(-50%,-50%) scale(1.05)}75%{opacity:1}100%{opacity:0;transform:translate(-50%,-70%)}}
+/* last hand replay window */
+.rp-row{display:grid;grid-template-columns:4.6em 1fr;gap:6px 10px;align-items:center;margin-top:8px;font-size:13px;color:var(--muted)}
+.rp-row .cs{display:flex;gap:4px;flex-wrap:wrap}
+.rp-row .card.mini{--cw:40px}
+.rp-row .card.mini.win{transform:none}
+.rp-res{margin:12px 0 4px;color:var(--cream);font-weight:700;line-height:1.5}
+.rp-res.win{color:var(--gold)}
+ul.rp-log{list-style:none;margin:6px 0 0;padding-left:0;font-family:var(--f-num);font-size:12.5px;line-height:1.75;color:#d6d9cf}
+ul.rp-log li{padding-left:12px}
+ul.rp-log li.st{padding-left:0;color:var(--gold);margin-top:4px}
+ul.rp-log .lc{display:inline-block;background:#fffdf7;color:#16171b;border-radius:3px;padding:0 3px;margin:0 1px;font-weight:600;line-height:1.35}
+ul.rp-log .lc.r{color:#c8102e}
+/* replay: street tabs (프리플랍 · 플랍 · 턴 · 리버 · 결과) */
+.rp-tabs{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 2px}
+.rp-tab{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);color:var(--muted);border-radius:999px;padding:5px 11px;font-size:12.5px}
+.rp-tab[aria-pressed="true"]{background:var(--gold);border-color:var(--gold);color:var(--ink);font-weight:700}
+.rp-tab:disabled{opacity:.35;cursor:not-allowed}
+/* last card of an all-in run-out comes slowly */
+.card.slowdeal{animation:slowdeal 1.1s cubic-bezier(.3,.7,.2,1) both}
+@keyframes slowdeal{0%{transform:translateY(-30px) rotateY(90deg) scale(.92);opacity:0}45%{transform:translateY(-8px) rotateY(90deg) scale(1.05);opacity:1}100%{transform:none;opacity:1}}
+.msg.tense{color:#ffe7a3;letter-spacing:.04em}
+/* chip graph in the stats window */
+.cg{display:block;width:100%;height:auto;margin-top:8px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:10px}
+.cg-note{font-size:12px;color:var(--muted);margin-top:4px;line-height:1.5}
+.pre{font-size:11.5px;font-weight:700;padding:1px 7px;border-radius:999px;margin-left:6px;vertical-align:1px}
+.pre.s4{background:var(--gold);color:var(--ink)}.pre.s3{background:#8fe0b0;color:#0b2a1b}.pre.s2{background:rgba(255,255,255,.18);color:var(--cream)}.pre.s1{background:rgba(212,86,79,.35);color:#ffd2ce}
 /* PC only: show the keyboard key next to each action button */
 @media (hover:hover) and (pointer:fine) and (min-width:700px){
   .act-row .btn[data-key]::after,.next-row .btn[data-key]::after{content:attr(data-key);display:inline-block;margin-left:7px;font:600 10.5px/1.5 var(--f-num);padding:0 5px;border:1px solid currentColor;border-radius:4px;opacity:.55;vertical-align:1px}
@@ -344,6 +377,7 @@ details.log ol{margin:6px 0 0;padding-left:20px;max-height:160px;overflow:auto;f
         <button class="btn btn-gold" id="bRaise" title="벳/레이즈 (D)" data-key="D">레이즈</button>
       </div>
       <div class="next-row" id="nextRow" hidden>
+        <button class="btn btn-ghost" id="bReplay" title="방금 끝난 핸드를 처음부터 다시 봅니다">↺ 다시보기</button>
         <button class="btn btn-gold" id="bNext" title="다음 핸드 (N 또는 Enter)" data-key="N">다음 핸드 ▶</button>
       </div>
       <div class="status" id="status"></div>
@@ -378,6 +412,12 @@ details.log ol{margin:6px 0 0;padding-left:20px;max-height:160px;overflow:auto;f
       <li>컴퓨터 키보드로도 할 수 있습니다: <b>A</b> 폴드 · <b>S</b> 체크/콜 · <b>D</b> 벳/레이즈 · <b>N</b> 또는 <b>Enter</b> 다음 핸드. (한글 자판 상태여도 됩니다. PC에서는 버튼 옆에 작은 글자로 키가 보입니다.)</li>
       <li>컴퓨터는 내가 <b>올인을 얼마나 자주 하는지</b>도 기억합니다. 올인을 너무 자주 하면 약한 패로도 콜을 받게 됩니다.</li>
       <li>상대 얼굴은 판이 끝나면 표정이 바뀝니다 (이기면 볼이 빨개지고, 지면 식은땀).</li>
+      <li>핸드가 끝나면 <b>↺ 다시보기</b>로 방금 판의 카드와 베팅을 거리(프리플랍·플랍·턴·리버)별로 다시 볼 수 있습니다.</li>
+      <li>큰 팟을 이기면 테이블 가장자리가 금빛으로 빛납니다.</li>
+      <li>다시보기 창 위쪽의 <b>프리플랍 · 플랍 · 턴 · 리버 · 결과</b> 버튼을 누르면 그 순간까지의 카드와 베팅만 한 단계씩 볼 수 있습니다.</li>
+      <li>둘 다 올인해서 승부가 아직 갈리지 않았으면, 마지막 카드(리버)는 잠깐 뜸을 들인 뒤 천천히 뒤집힙니다.</li>
+      <li>헤더의 <b>기록</b>에서 최근 핸드 동안 내 칩이 어떻게 변했는지 그래프로 볼 수 있습니다.</li>
+      <li>처음 30판 동안은 카드 위에 내 시작 패의 힘(<b>아주 좋음 · 좋음 · 보통 · 약함</b>)이 나옵니다. 1:1에서는 꽤 많은 패로 게임에 참여해도 됩니다.</li>
     </ul>
 
     <h3>한 핸드의 진행</h3>
@@ -421,6 +461,8 @@ details.log ol{margin:6px 0 0;padding-left:20px;max-height:160px;overflow:auto;f
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="statsTitle" style="max-width:440px">
     <h2 id="statsTitle">내 기록</h2>
     <dl class="kv" id="sKv"></dl>
+    <h3>내 칩 변화 <small style="font-weight:400;color:var(--muted)">(최근 핸드)</small></h3>
+    <div id="sGraph"></div>
     <h3>상대가 본 나</h3>
     <dl class="kv" id="sRead"></dl>
     <p class="note" id="sNote"></p>
@@ -429,6 +471,14 @@ details.log ol{margin:6px 0 0;padding-left:20px;max-height:160px;overflow:auto;f
     <h3 id="sAchTitle">업적</h3>
     <div class="badges" id="sAch"></div>
     <div class="btns"><button class="btn btn-gold" data-close>닫기</button></div>
+  </div>
+</div>
+
+<div class="modal-back" id="mReplay" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="rpTitle" style="max-width:460px">
+    <h2 id="rpTitle">지난 핸드</h2>
+    <div id="rpBody"></div>
+    <div class="btns"><button class="btn btn-ghost" id="rpNext" type="button">처음부터 ▶</button><button class="btn btn-gold" data-close>닫기</button></div>
   </div>
 </div>
 
@@ -609,7 +659,7 @@ function setCards(el, list) {
       n.dataset.key = key; n.innerHTML = html; paintCards(n);
       if (it.card) {
         const wasBack = node && node.dataset.key.startsWith('b');
-        n.classList.add(wasBack && it.up ? 'flip' : 'deal');
+        n.classList.add(wasBack && it.up ? 'flip' : it.slow ? 'slowdeal' : 'deal');
         if (it.delay) n.style.animationDelay = it.delay + 'ms';
       }
       if (node) el.replaceChild(n, node); else el.appendChild(n);
@@ -807,11 +857,11 @@ function faceSVG(style, hue, mood) {
 }
 /* Table talk — each style has its own voice */
 const LINES = {
-  rock: { again: ['또 뵙네요. 이번엔 더 조심하겠습니다.'], intro: ['천천히 하죠. 저는 좋은 패만 기다립니다.', '조용히 앉아 있을게요.'], raise: ['이번엔 진짜예요.', '오래 기다린 패입니다.'], steal: ['고맙습니다. 조금씩 모으면 되죠.', '작은 팟도 팟이죠.'], bust: ['참을성만으론 안 되네요. 잘 치셨습니다.'], champ: ['기다리면 기회는 옵니다.'] },
-  tag: { again: ['지난번 승부, 다 기억하고 있어요.'], intro: ['계산대로 갑니다. 잘 부탁해요.', '숫자는 거짓말을 안 하죠.'], raise: ['확률이 제 편이에요.', '이 정도는 걸어야죠.'], steal: ['접는 것도 실력이죠.', '현명한 선택이었어요.'], bust: ['오늘은 제 계산이 졌네요.'], champ: ['계산대로 끝났습니다.'] },
-  lag: { again: ['다시 만났네요! 복수전 가볼까요?'], intro: ['심심한 판은 싫어요. 달려볼까요?', '많이 칠 거예요. 따라오세요.'], raise: ['콜 하실 거예요?', '겁나면 접으셔도 돼요.'], steal: ['또 접으셨네요?', '제가 뭘 들었을까요?'], bust: ['너무 달렸나 보네요. 다음엔 안 봐줍니다!'], champ: ['압박을 이길 순 없죠.'] },
-  station: { again: ['또 오셨네요! 이번에도 끝까지 볼게요.'], intro: ['저는 웬만하면 다 봅니다.', '카드 구경하는 게 제일 재밌어요.'], raise: ['오, 이번엔 저도 올려볼게요.', '어라, 패가 좋은데요?'], steal: ['어? 벌써 끝났어요?', '보여주지도 않고요?'], bust: ['끝까지 봤는데 아쉽네요!'], champ: ['끝까지 보길 잘했네요!'] },
-  maniac: { again: ['또 만났다! 이번엔 더 세게 갑니다!'], intro: ['올인 좋아하세요? 저는 좋아해요!', '칩은 쓰라고 있는 겁니다!'], raise: ['가자! 전부 다!', '하하, 받아 보시죠!'], steal: ['역시 무서우셨죠?', '기세에서 이겼습니다!'], bust: ['와, 롤러코스터였네요! 재밌었어요.'], champ: ['이게 바로 기세죠!'] }
+  rock: { shove: ['또 올인이시네요. 이번엔 받겠습니다.', '올인이 너무 잦으세요. 콜.'], again: ['또 뵙네요. 이번엔 더 조심하겠습니다.'], intro: ['천천히 하죠. 저는 좋은 패만 기다립니다.', '조용히 앉아 있을게요.'], raise: ['이번엔 진짜예요.', '오래 기다린 패입니다.'], steal: ['고맙습니다. 조금씩 모으면 되죠.', '작은 팟도 팟이죠.'], bust: ['참을성만으론 안 되네요. 잘 치셨습니다.'], champ: ['기다리면 기회는 옵니다.'] },
+  tag: { shove: ['올인이 너무 잦아요. 계산상 콜이에요.', '그 올인, 이제 안 무서워요.'], again: ['지난번 승부, 다 기억하고 있어요.'], intro: ['계산대로 갑니다. 잘 부탁해요.', '숫자는 거짓말을 안 하죠.'], raise: ['확률이 제 편이에요.', '이 정도는 걸어야죠.'], steal: ['접는 것도 실력이죠.', '현명한 선택이었어요.'], bust: ['오늘은 제 계산이 졌네요.'], champ: ['계산대로 끝났습니다.'] },
+  lag: { shove: ['또 올인이에요? 이번엔 받아 줄게요!', '올인 버튼 고장 났어요? 콜!'], again: ['다시 만났네요! 복수전 가볼까요?'], intro: ['심심한 판은 싫어요. 달려볼까요?', '많이 칠 거예요. 따라오세요.'], raise: ['콜 하실 거예요?', '겁나면 접으셔도 돼요.'], steal: ['또 접으셨네요?', '제가 뭘 들었을까요?'], bust: ['너무 달렸나 보네요. 다음엔 안 봐줍니다!'], champ: ['압박을 이길 순 없죠.'] },
+  station: { shove: ['또 올인이에요? 그럼 저도 끝까지 가죠!', '올인 좋아하시네요. 콜이요!'], again: ['또 오셨네요! 이번에도 끝까지 볼게요.'], intro: ['저는 웬만하면 다 봅니다.', '카드 구경하는 게 제일 재밌어요.'], raise: ['오, 이번엔 저도 올려볼게요.', '어라, 패가 좋은데요?'], steal: ['어? 벌써 끝났어요?', '보여주지도 않고요?'], bust: ['끝까지 봤는데 아쉽네요!'], champ: ['끝까지 보길 잘했네요!'] },
+  maniac: { shove: ['올인 대 올인! 좋아요!', '또 올인? 저랑 성격이 똑같네요! 콜!'], again: ['또 만났다! 이번엔 더 세게 갑니다!'], intro: ['올인 좋아하세요? 저는 좋아해요!', '칩은 쓰라고 있는 겁니다!'], raise: ['가자! 전부 다!', '하하, 받아 보시죠!'], steal: ['역시 무서우셨죠?', '기세에서 이겼습니다!'], bust: ['와, 롤러코스터였네요! 재밌었어요.'], champ: ['이게 바로 기세죠!'] }
 };
 const lineOf = (o, ev) => pick((LINES[o.style] || LINES.tag)[ev]);
 let sayT1 = 0, sayT2 = 0;
@@ -1059,7 +1109,7 @@ function newGame(keepBest) {
   const b = keepBest ? G.best : 0;
   if (!keepBest) G.stats = { hands: 0, won: 0, biggest: 0 };
   G.seats[0].chips = 1000; G.oppNo = 1; G.beaten = 0; G.best = b; G.handNo = 0;
-  G.opp = makeOpp(1); meet(G.opp); G.seats[1].chips = G.opp.chips; G.dealer = Math.random() < .5 ? 0 : 1; G.log = [];
+  G.opp = makeOpp(1); meet(G.opp); G.seats[1].chips = G.opp.chips; G.dealer = Math.random() < .5 ? 0 : 1; G.log = []; G.replay = null;
   save();
 }
 function nextOpponent() {
@@ -1080,7 +1130,7 @@ function startHand() {
   G.dealer = 1 - G.dealer;
   G.deck = shuffle(FULL); G.board = []; G.pot = 0; G.street = 0; G.reveal = false; G.winIds = null;
   G.bubbles = ['', '']; G.msgWin = false; G.thinking = false; G.msgSub = ''; G.eq = null; G.pAggr = false;
-  G.pSizes = []; G.cRiverBet = false; G.eqStart = null; G.last = null; G.mood = '';
+  G.pSizes = []; G.cRiverBet = false; G.eqStart = null; G.last = null; G.mood = ''; G.tense = false; G.slowRiver = false;
   for (const s of G.seats) Object.assign(s, { hand: [G.deck.pop(), G.deck.pop()], bet: 0, folded: false, allIn: false, acted: false });
   const [sb, bb] = blinds();
   post(G.seats[G.dealer], sb); post(G.seats[1 - G.dealer], bb);
@@ -1139,6 +1189,10 @@ async function stepLoop(id) {
     G.thinking = false;
     const potBefore = potTotal();
     apply(1, d.type, d.to);
+    G.msg = `${G.opp.name}: ${G.bubbles[1]}`; // show what the opponent just did, instead of leaving "생각 중" up
+    if (d.type === 'call' && G.seats[0].allIn && G.seats[0].bet > blinds()[1] && $('cSay').hidden) { // calling a player who shoves all the time
+      const sv = shoveRate(G.opp); if (sv.n >= 3 && sv.rate > 0.35 && Math.random() < 0.75) say(lineOf(G.opp, 'shove'));
+    }
     if (d.type === 'raise' && $('cSay').hidden && (s.allIn || (G.board.length && G.seats[1].bet >= potBefore * 0.8)) && Math.random() < (st => st === 'lag' || st === 'maniac' ? 0.5 : 0.3)(G.opp.style)) say(lineOf(G.opp, 'raise'));
     render();
     await sleep(380);
@@ -1209,7 +1263,18 @@ async function endRound(id) {
     G.reveal = true; G.msg = '올인! 남은 카드를 공개합니다.'; hideSay();
     const upd = () => { G.eq = equityVs(G.seats[0].hand, G.seats[1].hand, G.board); };
     upd(); if (G.eq) G.eqStart = G.eq[0]; render();
-    while (G.board.length < 5) { await sleep(1100); if (!alive(id)) return false; dealStreet(); upd(); render(); }
+    while (G.board.length < 5) {
+      await sleep(1100); if (!alive(id)) return false;
+      // the river decides a close race: hold for a moment, then turn it slowly
+      const close = G.board.length === 4 && G.eq && Math.min(G.eq[0], G.eq[1]) > 0.04;
+      if (close) {
+        G.msg = '마지막 카드…'; G.tense = true; render(); Snd.play('turn');
+        await sleep(1300); if (!alive(id)) return false;
+        G.slowRiver = true;
+      }
+      dealStreet(); upd(); render(); G.slowRiver = false;
+      if (close) { await sleep(700); if (!alive(id)) return false; G.tense = false; }
+    }
     await sleep(800); if (!alive(id)) return false;
     await showdown(id); return false;
   }
@@ -1320,9 +1385,16 @@ function afterHand() {
   if (cBust) { G.beaten++; G.best = Math.max(G.best, G.beaten); metOf(G.opp.name).beat++; }
   else if (pBust) metOf(G.opp.name).lost++;
   try { checkAch(cBust); } catch (e) { console.warn(e); }
+  try { // chip history for the graph in 기록: [my chips, 0 normal / 1 beat an opponent / 2 I went broke]
+    const hs = Array.isArray(G.stats.hist) ? G.stats.hist : (G.stats.hist = []);
+    hs.push([Math.max(0, Math.round(G.seats[0].chips)), cBust ? 1 : pBust ? 2 : 0]);
+    if (hs.length > 120) hs.splice(0, hs.length - 120);
+  } catch (e) { console.warn(e); }
+  try { keepReplay(); } catch (e) { console.warn(e); }
   save();
   render();
   if (G.flyTo) { flyChips(G.flyTo); G.flyTo = null; }
+  if (G.last && G.last.win === 0 && G.last.amount >= Math.max(800, blinds()[1] * 30)) bigWin();
   const id = G.handId;
   if (pBust) {
     sleep(1600).then(() => {
@@ -1344,6 +1416,74 @@ function afterHand() {
       });
     });
   }
+}
+
+/* Big pot won: gold rail + a short word in the middle of the table */
+function bigWin() {
+  try {
+    const t = document.querySelector('#game .table'); if (!t) return;
+    t.classList.remove('bigwin'); void t.offsetWidth; t.classList.add('bigwin');
+    if (!calmMotion()) { const w = document.createElement('div'); w.className = 'bigwin-tag'; w.textContent = '큰 팟!'; t.appendChild(w); setTimeout(() => w.remove(), 1900); }
+    Snd.play('ach', 0.45);
+    setTimeout(() => t.classList.remove('bigwin'), 2500);
+  } catch (e) { }
+}
+/* Last hand replay: copy of the finished hand (only kept while playing, not saved) */
+function keepReplay() {
+  const lines = [];
+  for (const t of G.log) { if (t.startsWith('업적 달성')) continue; lines.unshift(t); if (t.startsWith('— 핸드')) break; }
+  const [p, c] = G.seats;
+  G.replay = { no: G.handNo, me: (p.hand || []).slice(), cpu: (c.hand || []).slice(), shown: !!G.reveal && !c.folded, board: G.board.slice(),
+    win: G.winIds ? [...G.winIds] : [], msg: G.msg, good: !!G.msgWin, name: G.opp.name, lines };
+}
+/* The replay can be watched street by street: tabs 프리플랍 · 플랍 · 턴 · 리버 · 결과 (결과 = everything) */
+let rpStep = -1;
+function replaySegs(r) {
+  const segs = [];
+  for (const t of r.lines) {
+    if (t.startsWith('— 핸드')) { segs.push({ name: '프리플랍', n: 0, head: t.replace(/—/g, '').trim().replace(/^핸드 \d+ · /, '· '), lines: [] }); continue; }
+    const m = t.match(/^(플랍|턴|리버): (.*)$/);
+    if (m) { segs.push({ name: m[1], n: m[1] === '플랍' ? 3 : m[1] === '턴' ? 4 : 5, head: m[2], lines: [] }); continue; }
+    if (!segs.length) segs.push({ name: '프리플랍', n: 0, head: '', lines: [] });
+    segs[segs.length - 1].lines.push(t);
+  }
+  return segs;
+}
+function openReplay() { if (!G.replay) return; rpStep = -1; drawReplay(); openModal('mReplay'); }
+function drawReplay() {
+  const r = G.replay; if (!r) return;
+  const esc = t => t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/(10|[2-9AJQK])([♠♥♦♣])/g, (m, a, su) => `<span class="lc${su === '♥' || su === '♦' ? ' r' : ''}">${a}${su}</span>`);
+  const segs = replaySegs(r), full = rpStep < 0 || rpStep >= segs.length;
+  const win = new Set(full ? r.win : []);
+  const isEnd = t => /^(공개|쇼다운): /.test(t) || t.includes('팟 획득');
+  const mini = (cd, up) => `<div class="card mini${up && win.has(cd.id) ? ' win' : ''}">${up ? cardHTML(cd) : backHTML()}</div>`;
+  const row = (k, html) => `<div class="rp-row"><span>${k}</span><span class="cs">${html}</span></div>`;
+  let items = '';
+  segs.forEach((sg, i) => {
+    if (!full && i > rpStep) return;
+    items += `<li class="st">${sg.name} ${esc(sg.head)}</li>`;
+    for (const t of sg.lines) if (full || !isEnd(t)) items += `<li>${esc(t)}</li>`;
+  });
+  const nb = full ? r.board.length : Math.min(r.board.length, segs[rpStep].n);
+  const showCpu = full && r.shown;
+  const tabs = segs.map((sg, i) => `<button class="rp-tab" type="button" data-st="${i}" aria-pressed="${!full && rpStep === i}">${sg.name}</button>`).join('') +
+    `<button class="rp-tab" type="button" data-st="-1" aria-pressed="${full}">결과</button>`;
+  $('rpTitle').textContent = `지난 핸드 · ${r.no}번째`;
+  $('rpBody').innerHTML = `<div class="rp-tabs" role="group" aria-label="볼 단계">${tabs}</div>` +
+    row('나', r.me.map(cd => mini(cd, true)).join('')) +
+    row(r.name.length > 5 ? '상대' : r.name, r.cpu.map(cd => mini(cd, showCpu)).join('') + (showCpu ? '' : `<small style="align-self:center;margin-left:4px">${full ? '공개 안 함' : '아직 모름'}</small>`)) +
+    row('공용 카드', nb ? r.board.slice(0, nb).map(cd => mini(cd, true)).join('') : `<small>${full ? '플랍 전에 끝남' : '아직 없음'}</small>`) +
+    (full ? `<p class="rp-res${r.good ? ' win' : ''}">${esc(r.msg || '')}</p>` : `<p class="rp-res" style="color:var(--muted);font-weight:500">${segs[rpStep].name} 까지의 진행</p>`) +
+    `<ul class="rp-log">${items}</ul>`;
+  paintCards($('rpBody'));
+  $('rpBody').querySelectorAll('.rp-tab').forEach(b => b.addEventListener('click', () => { rpStep = +b.dataset.st; drawReplay(); }));
+  const nx = $('rpNext'); if (nx) nx.textContent = full ? '처음부터 ▶' : (rpStep >= segs.length - 1 ? '결과 ▶' : '다음 단계 ▶');
+}
+function replayNext() {
+  const r = G.replay; if (!r) return;
+  const n = replaySegs(r).length;
+  rpStep = rpStep < 0 ? 0 : rpStep + 1 >= n ? -1 : rpStep + 1;
+  drawReplay();
 }
 
 /* ================= CPU brain ================= */
@@ -1449,6 +1589,22 @@ function playerAct(type) {
   step();
 }
 
+/* Starting-hand strength for beginners (a simple point count: high card, pair, same suit, how close the two cards are) */
+function preStrength(h) {
+  const hi = Math.max(h[0].r, h[1].r), lo = Math.min(h[0].r, h[1].r);
+  const pts = r => r === 14 ? 10 : r === 13 ? 8 : r === 12 ? 7 : r === 11 ? 6 : r / 2;
+  let s = pts(hi);
+  if (hi === lo) s = Math.max(5, s * 2);
+  else {
+    if (h[0].s === h[1].s) s += 2;
+    const gap = hi - lo - 1;
+    s -= gap <= 0 ? 0 : gap === 1 ? 1 : gap === 2 ? 2 : gap === 3 ? 4 : 5;
+    if (gap <= 1 && hi < 12) s += 1;
+  }
+  s = Math.ceil(s);
+  return s >= 9 ? [4, '아주 좋음'] : s >= 6 ? [3, '좋음'] : s >= 3 ? [2, '보통'] : [1, '약함'];
+}
+
 /* ================= Rendering ================= */
 function render() {
   const [p, c] = G.seats;
@@ -1494,16 +1650,19 @@ function render() {
     setCards($('cCards'), c.hand.map((cd, i) => ({ card: cd, up: G.reveal, win: G.reveal && win && win.has(cd.id), dim: c.folded || (G.reveal && dimmed(cd.id)), delay: G.dealing ? 130 + i * 260 : 0 })));
   }
   const bl = [];
-  for (let i = 0; i < 5; i++) { const cd = G.board[i]; bl.push(cd ? { card: cd, up: true, win: win && win.has(cd.id), dim: dimmed(cd.id), delay: (i < 3 && G.board.length === 3) ? i * 120 : 0 } : { card: null }); }
+  for (let i = 0; i < 5; i++) { const cd = G.board[i]; bl.push(cd ? { card: cd, up: true, win: win && win.has(cd.id), dim: dimmed(cd.id), delay: (i < 3 && G.board.length === 3) ? i * 120 : 0, slow: i === 4 && !!G.slowRiver } : { card: null }); }
   setCards($('board'), bl);
 
   // player's current hand
   let hn = '';
   if (hasHand && !p.folded) {
     if (G.board.length >= 3) hn = describe(best(p.hand.concat(G.board)).score);
-    else hn = p.hand[0].r === p.hand[1].r ? `포켓 페어 (${rankLabel(p.hand[0].r)})` : (p.hand[0].s === p.hand[1].s ? '수딧' : '오프수트') + ' · ' + p.hand.map(cardStr).join(' ');
+    else {
+      hn = p.hand[0].r === p.hand[1].r ? `포켓 페어 (${rankLabel(p.hand[0].r)})` : (p.hand[0].s === p.hand[1].s ? '수딧' : '오프수트') + ' · ' + p.hand.map(cardStr).join(' ');
+      if (G.stats.hands < 30) { const ps = preStrength(p.hand); hn += `<span class="pre s${ps[0]}" title="시작 패의 힘 (처음 30판만 표시)">${ps[1]}</span>`; }
+    }
   }
-  $('pHandName').textContent = hn;
+  if ($('pHandName').innerHTML !== hn) $('pHandName').innerHTML = hn;
 
   $('hUser').textContent = session ? session.id : '게스트'; setSaveState(guest ? '' : saveState);
   // beginner help for the first few hands of a fresh record
@@ -1517,13 +1676,14 @@ function render() {
   }
   const ms = $('msgSub'); ms.classList.toggle('tip', !!tip);
   if (tip) { if (ms.innerHTML !== tip) ms.innerHTML = tip; } else ms.textContent = G.msgSub || '';
-  const m = $('msg'); m.textContent = G.msg; m.classList.toggle('win', !!G.msgWin); m.classList.toggle('thinking', !!G.thinking);
+  const m = $('msg'); m.textContent = G.msg; m.classList.toggle('win', !!G.msgWin); m.classList.toggle('thinking', !!G.thinking); m.classList.toggle('tense', !!G.tense && G.phase !== 'done');
 
   // actions
   const myTurn = G.phase === 'betting' && G.toAct === 0 && !G.thinking && !p.folded && !p.allIn;
   const done = G.phase === 'done';
   const over = done && (p.chips <= 0 || c.chips <= 0);
   $('nextRow').hidden = !done || over;
+  $('bReplay').hidden = !G.replay;
   $('actRow').hidden = done; $('raiseRow').hidden = done;
   if (!done) {
     const L = legal();
@@ -1554,7 +1714,7 @@ document.querySelectorAll('.modal-back').forEach(m => {
   m.addEventListener('click', e => { if (e.target === m && m.id !== 'mResult') m.hidden = true; });
   m.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', () => m.hidden = true));
 });
-document.addEventListener('keydown', e => { if (e.key === 'Escape') ['mRules', 'mReset', 'mStats'].forEach(closeModal); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') ['mRules', 'mReset', 'mStats', 'mReplay'].forEach(closeModal); });
 
 let resultOk = null;
 function showResult({ eyebrow, title, text, quote, kv, btn, onOk, mood }) {
@@ -1661,7 +1821,33 @@ $('btnReset').addEventListener('click', () => openModal('mReset'));
 $('bResetConfirm').addEventListener('click', doReset);
 $('btnMenu').addEventListener('click', goMenu);
 $('btnSound').addEventListener('click', () => { Snd.set(!Snd.on); if (Snd.on) Snd.play('chip'); $('btnSound').setAttribute('aria-pressed', Snd.on ? 'true' : 'false'); });
+/* small line chart of my chips over the last hands (self-contained SVG) */
+function chipGraph() {
+  const hs = (Array.isArray(G.stats.hist) ? G.stats.hist : []).filter(x => Array.isArray(x) && typeof x[0] === 'number');
+  if (hs.length < 2) return '<p class="cg-note">핸드를 몇 판 더 하면 그래프가 나옵니다.</p>';
+  const W = 400, H = 150, L = 8, R = 8, T = 16, B = 18;
+  const top = Math.max(1000, ...hs.map(x => x[0])) * 1.08;
+  const X = i => L + (W - L - R) * i / (hs.length - 1), Y = v => T + (H - T - B) * (1 - v / top);
+  const pts = hs.map((x, i) => `${X(i).toFixed(1)},${Y(x[0]).toFixed(1)}`).join(' ');
+  const area = `${X(0).toFixed(1)},${Y(0).toFixed(1)} ${pts} ${X(hs.length - 1).toFixed(1)},${Y(0).toFixed(1)}`;
+  const base = Y(1000).toFixed(1);
+  const dots = hs.map((x, i) => x[1] === 1 ? `<circle cx="${X(i).toFixed(1)}" cy="${Y(x[0]).toFixed(1)}" r="4.2" fill="#5fd39a" stroke="#0a1210" stroke-width="1.5"/>`
+    : x[1] === 2 ? `<circle cx="${X(i).toFixed(1)}" cy="${Y(x[0]).toFixed(1)}" r="4.2" fill="#d4564f" stroke="#0a1210" stroke-width="1.5"/>` : '').join('');
+  const last = hs[hs.length - 1][0], peak = Math.max(...hs.map(x => x[0]));
+  const ko = hs.filter(x => x[1] === 1).length, bust = hs.filter(x => x[1] === 2).length;
+  return `<svg class="cg" viewBox="0 0 ${W} ${H}" role="img" aria-label="최근 ${hs.length}핸드 동안 내 칩 변화">
+    <rect x="0" y="0" width="${W}" height="${H}" fill="none"/>
+    <line x1="${L}" y1="${base}" x2="${W - R}" y2="${base}" stroke="#9fb3a6" stroke-opacity=".5" stroke-width="1" stroke-dasharray="4 4"/>
+    <text x="${W - R}" y="${(+base - 4).toFixed(1)}" text-anchor="end" font-size="10.5" fill="#9fb3a6" font-family="IBM Plex Mono,monospace">1,000만</text>
+    <polygon points="${area}" fill="#e3b95e" fill-opacity=".12"/>
+    <polyline points="${pts}" fill="none" stroke="#e3b95e" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>
+    ${dots}
+    <text x="${L}" y="${H - 4}" font-size="10.5" fill="#9fb3a6" font-family="IBM Plex Mono,monospace">${hs.length}판 전</text>
+    <text x="${W - R}" y="${H - 4}" text-anchor="end" font-size="10.5" fill="#9fb3a6" font-family="IBM Plex Mono,monospace">지금</text>
+  </svg><p class="cg-note">지금 <b style="color:var(--cream)">${won(last)}</b> · 이 기간 최고 ${won(peak)}${ko ? ` · <span style="color:#5fd39a">●</span> 상대 처치 ${ko}번` : ''}${bust ? ` · <span style="color:#ff8f87">●</span> 파산 ${bust}번` : ''}</p>`;
+}
 function openStats() {
+  $('sGraph').innerHTML = chipGraph();
   const s = G.stats, pct = s.hands ? Math.round(s.won / s.hands * 100) + '%' : '-';
   const row = ([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`;
   $('sKv').innerHTML = [['플레이한 핸드', s.hands + '판'], ['이긴 핸드', `${s.won}판 (${pct})`], ['가장 큰 팟', s.biggest ? won(s.biggest) : '-'], ['연승 (지금 / 최고)', `${s.streak || 0} / ${s.bestStreak || 0}`],
@@ -1682,6 +1868,8 @@ function openStats() {
   openModal('mStats');
 }
 $('btnStats').addEventListener('click', openStats);
+$('bReplay').addEventListener('click', openReplay);
+$('rpNext').addEventListener('click', replayNext);
 $('bFold').addEventListener('click', () => playerAct('fold'));
 $('bCall').addEventListener('click', () => playerAct('call'));
 $('bRaise').addEventListener('click', () => playerAct('raise'));
@@ -1737,6 +1925,8 @@ refreshStart();
 showScreen('start');
 })();
 </script>
+
+
 
 
 
