@@ -3,6 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="color-scheme" content="only dark">
+<meta name="darkreader-lock">
+<style>:root{color-scheme:only dark}html,body{margin:0;background:#0a1210}</style>
 </head>
 <body>
 <title>헤즈업</title>
@@ -115,7 +118,13 @@ details.log .lc.r{color:#c8102e}
   display:grid;grid-template-rows:auto 1fr auto;justify-items:center;align-items:center;padding:clamp(14px,3vw,24px) 10px;gap:6px}
 .seat{display:flex;flex-direction:column;align-items:center;gap:8px;position:relative}
 .plate{display:flex;align-items:center;gap:9px;background:rgba(6,14,11,.72);border:1px solid rgba(227,185,94,.25);border-radius:999px;padding:5px 14px 5px 5px;min-width:0;max-width:100%}
-.avatar{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;font-family:var(--f-display);font-size:18px;color:#fff;flex:none;border:2px solid rgba(255,255,255,.25)}
+.avatar{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;font-family:var(--f-display);font-size:18px;color:#fff;flex:none;border:2px solid rgba(255,255,255,.25);overflow:hidden}
+.avatar svg{width:100%;height:100%;display:block}
+.tag.lvup{animation:lvup 1.6s ease-out 2}
+@keyframes lvup{30%{border-color:var(--gold);background:rgba(227,185,94,.28);color:var(--cream)}}
+.msgsub{max-width:30em;padding:0 8px;line-height:1.45}
+.msgsub.tip{color:#cfe3d6}
+.msgsub.tip b{color:var(--gold)}
 .who{display:flex;flex-direction:column;line-height:1.25;min-width:0}
 .who .nm{font-weight:700;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .who .st{font-size:11px;color:var(--muted);white-space:nowrap}
@@ -147,6 +156,10 @@ details.log .lc.r{color:#c8102e}
 /* ---------- Cards ---------- */
 .card{width:var(--cw);aspect-ratio:5/7;border-radius:7%;box-shadow:0 2px 0 rgba(0,0,0,.25),0 6px 14px rgba(0,0,0,.35);position:relative;flex:none;transition:transform .25s,box-shadow .25s,filter .25s;max-width:100%}
 .card svg{display:block;width:100%;height:100%;color-scheme:only light;forced-color-adjust:none}
+/* cards are bitmaps (img) so phone dark modes don't wash them out */
+.card img.ci{display:block;width:100%;height:100%;border-radius:inherit;-webkit-user-drag:none;user-select:none;-webkit-user-select:none;pointer-events:none;forced-color-adjust:none}
+/* tells phone browsers this page already has its own dark look (stops forced re-coloring) */
+@media (prefers-color-scheme: dark){:root{color-scheme:only dark}}
 .card{background:#fffdf7;-webkit-tap-highlight-color:transparent}
 .card.slot{background:rgba(0,0,0,.08)}
 .card.slot{border:2px dashed rgba(255,255,255,.14);box-shadow:none;background:rgba(0,0,0,.08)}
@@ -339,12 +352,13 @@ details.log ol{margin:6px 0 0;padding-left:20px;max-height:160px;overflow:auto;f
       <li>1,000만원으로 시작합니다. 남은 칩은 다음 상대에게 그대로 이어집니다.</li>
       <li>상대를 파산시키면 새로운 상대가 무작위로 등장합니다. 뒤로 갈수록 상대의 칩이 많아지고 실력도 좋아집니다.</li>
       <li>내 칩이 0원이 되면 1번째 상대, 1,000만원부터 다시 시작합니다.</li>
-      <li>블라인드는 10만/20만원에서 시작해 같은 상대와 8핸드마다 올라갑니다.</li>
+      <li>블라인드는 10만/20만원에서 시작해 같은 상대와 8핸드마다 올라갑니다. 오를 때는 테이블 가운데에 알림이 나오고 헤더의 블라인드 표시가 빛납니다.</li>
+      <li>처음 3판 동안은 테이블 가운데에 짧은 <b>도움말</b>이 나옵니다.</li>
       <li>계정을 만들면 진행 상황이 핸드가 끝날 때마다 계정에 저장되어, 다른 기기에서도 이어서 할 수 있습니다. 게스트는 지금 쓰는 브라우저에만 저장됩니다. <b>초기화</b>를 누르면 그 계정이 처음 상태로 돌아갑니다.</li>
       <li>쇼다운에서 금색 테두리로 빛나는 카드는 이긴 쪽의 최종 5장입니다. 족보가 같으면 남은 카드(키커)를 큰 것부터 비교합니다.</li>
       <li>둘 다 올인하면 남은 카드를 펼치는 동안 이름 옆에 지금 이길 확률(%)이 나옵니다.</li>
       <li>컴퓨터는 내 플레이 습관(자주 올리는지, 베팅에 자주 접는지, 블러프를 들켰는지)을 기억하고 맞춰서 대응합니다. 뒤로 갈수록 더 잘 기억합니다. 헤더의 <b>기록</b>에서 볼 수 있습니다.</li>
-      <li>상대마다 성격이 달라서 말투와 플레이가 다릅니다. 컴퓨터가 딜러일 때는 좋은 패로 먼저 올리고, 나쁜 패는 접기도 합니다.</li>
+      <li>상대마다 성격이 달라서 얼굴 그림, 말투, 플레이가 다릅니다 (안경 = 계산형, 선글라스 = 공격형, 모자 = 끝까지 보는 콜러, 헝클어진 머리 = 매니악). 컴퓨터가 딜러일 때는 좋은 패로 먼저 올리고, 나쁜 패는 접기도 합니다.</li>
       <li>컴퓨터는 공용 카드 모양도 봅니다. 플러시·스트레이트가 될 것 같은 보드에서는 좋은 패로 크게 걸고, 밋밋한 보드에서는 작게 걸기도 합니다.</li>
       <li>콜할 차례에는 <b>필요 승률</b>이 나옵니다. 내 패가 이길 확률이 이보다 높다고 생각되면 콜하는 것이 길게 보면 이득입니다.</li>
       <li>같은 이름의 상대를 다시 만나면 지난 전적이 나옵니다. 헤더의 <b>기록</b>에서 상대별 전적을 볼 수 있습니다.</li>
@@ -540,14 +554,39 @@ function backSVG() {
     <g transform="translate(100 140)"><circle r="40" fill="#9e1b2a" stroke="#f3e6c8" stroke-width="2"/><path d="M0 -30 L21 0 L0 30 L-21 0Z" fill="#f3e6c8"/><path d="M0 -18 L12 0 L0 18 L-12 0Z" fill="#9e1b2a"/></g></svg>`;
 }
 
+/* Cards as images: some phone browsers (Samsung Internet, in-app browsers in dark mode) re-color inline SVG,
+   which made the cards look washed out. Each card is drawn once into a PNG bitmap, which those browsers leave alone.
+   Until the PNG is ready the same picture is shown as an SVG image. */
+const CARD_PNG = {}, CARD_WAIT = {};
+function svgUrl(svg) { return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg.replace('<svg ', '<svg xmlns="http://www.w3.org/2000/svg" width="400" height="560" ')); }
+function rasterize(key, svg) {
+  if (CARD_PNG[key] || CARD_WAIT[key]) return; CARD_WAIT[key] = 1;
+  const im = new Image();
+  im.onload = () => {
+    try {
+      const cv = document.createElement('canvas'); cv.width = 400; cv.height = 560;
+      cv.getContext('2d').drawImage(im, 0, 0, 400, 560);
+      CARD_PNG[key] = cv.toDataURL('image/png');
+      document.querySelectorAll('img.ci[data-ck="' + key + '"]').forEach(e => { e.src = CARD_PNG[key]; });
+    } catch (e) { }
+  };
+  im.src = svgUrl(svg);
+}
+function cardImg(key, svg, label) {
+  if (!CARD_PNG[key]) rasterize(key, svg);
+  return `<img class="ci" data-ck="${key}" alt="${label}" draggable="false" src="${CARD_PNG[key] || svgUrl(svg)}">`;
+}
+const cardHTML = c => cardImg(c.id, cardSVG(c), cardStr(c));
+const backHTML = () => cardImg('back', backSVG(), '뒷면');
+
 /* Render a list of card descriptors into a container, reusing nodes whose key matches */
 function setCards(el, list) {
   const kids = [...el.children];
   list.forEach((it, i) => {
     let key, html, cls = '';
     if (!it.card) { key = 'slot' + i; html = ''; cls = 'slot'; }
-    else if (it.up) { key = 'u' + it.card.id + '#' + G.handId; html = cardSVG(it.card); }
-    else { key = 'b' + i + '#' + G.handId; html = backSVG(); }
+    else if (it.up) { key = 'u' + it.card.id + '#' + G.handId; html = cardHTML(it.card); }
+    else { key = 'b' + i + '#' + G.handId; html = backHTML(); }
     let node = kids[i];
     if (!node || node.dataset.key !== key) {
       const n = document.createElement('div');
@@ -716,6 +755,35 @@ function makeOpp(n, prevName) {
   return { name, style: st.key, skill: Math.min(.95, .3 + n * .1), chips: 1000 + (n - 1) * 500, hue: Math.floor(Math.random() * 360) };
 }
 const styleOf = o => STYLES.find(s => s.key === o.style) || STYLES[1];
+/* Opponent face drawn per style (self-contained SVG, no shared ids) */
+function faceSVG(style, hue) {
+  const skin = '#f1d3b3', ln = '#2a1d15', coat = `hsl(${hue} 40% 20%)`;
+  const eyes = '<circle cx="16" cy="22" r="1.4" fill="' + ln + '"/><circle cx="24" cy="22" r="1.4" fill="' + ln + '"/>';
+  let hair = '', face = '', top = '';
+  switch (style) {
+    case 'rock': // neat hair, calm closed eyes, flat mouth
+      hair = `<path d="M9 21 Q9 9 20 9 Q31 9 31 21 Q29 14 20 14 Q11 14 9 21Z" fill="#3b2a1e"/>`;
+      face = `<path d="M14.5 22.5 h3 M22.5 22.5 h3" stroke="${ln}" stroke-width="1.4" stroke-linecap="round"/><path d="M17.5 28 h5" stroke="${ln}" stroke-width="1.3" stroke-linecap="round"/>`;
+      break;
+    case 'tag': // glasses, tie, small smile
+      hair = `<path d="M9 20 Q10 9 21 9 Q31 10 31 20 Q27 13 18 14 Q12 15 9 20Z" fill="#1e1a18"/>`;
+      face = eyes + `<g fill="none" stroke="${ln}" stroke-width="1.2"><circle cx="16" cy="22" r="3.2"/><circle cx="24" cy="22" r="3.2"/><path d="M19.2 22 h1.6"/></g><path d="M17 27.5 Q20 29.5 23 27.5" stroke="${ln}" stroke-width="1.2" fill="none" stroke-linecap="round"/>`;
+      top = `<path d="M18.6 33 L21.4 33 L22.4 40 L17.6 40Z" fill="#b3192f"/>`;
+      break;
+    case 'lag': // sunglasses, slick hair, smirk
+      hair = `<path d="M9 21 Q8 8 22 8 Q32 9 32 18 Q26 12 15 15 Q11 17 9 21Z" fill="#20160f"/>`;
+      face = `<path d="M11.5 20 h17 v1.2 q-.3 3.8-3.8 3.8 q-3.2 0-3.7-3.2 h-2 q-.5 3.2-3.7 3.2 q-3.5 0-3.8-3.8z" fill="#111"/><path d="M17 28 Q21 29.5 24 27" stroke="${ln}" stroke-width="1.3" fill="none" stroke-linecap="round"/>`;
+      break;
+    case 'station': // cap, round eyes, big smile
+      top = `<path d="M8.5 18 Q9 8 20 8 Q31 8 31.5 18Z" fill="hsl(${(hue + 160) % 360} 55% 42%)"/><path d="M8 18 h25 q2 0 1 2 h-26z" fill="hsl(${(hue + 160) % 360} 55% 30%)"/>`;
+      face = '<circle cx="16" cy="23" r="1.7" fill="' + ln + '"/><circle cx="24" cy="23" r="1.7" fill="' + ln + '"/>' + `<path d="M15.5 27 Q20 32 24.5 27Z" fill="#7a2230"/>`;
+      break;
+    default: // maniac: wild hair, angled brows, toothy grin
+      hair = `<path d="M8 21 L7 12 L11 15 L12 7 L16 12 L20 5 L23 11 L28 6 L28.5 13 L33 11 L32 21 Q28 14 20 14 Q12 14 8 21Z" fill="#c2471c"/>`;
+      face = eyes + `<path d="M13.5 18.5 L18 20 M26.5 18.5 L22 20" stroke="${ln}" stroke-width="1.4" stroke-linecap="round"/><path d="M14.5 26 Q20 31.5 25.5 26Z" fill="#fff" stroke="${ln}" stroke-width="1.1"/><path d="M16.5 26.6 L23.5 26.6" stroke="${ln}" stroke-width=".7"/>`;
+  }
+  return `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M5 41 Q7 32 20 32 Q33 32 35 41Z" fill="${coat}"/><rect x="17" y="29" width="6" height="4" fill="#e3c19e"/><circle cx="20" cy="22" r="10" fill="${skin}"/>${hair}${face}${top}</svg>`;
+}
 /* Table talk — each style has its own voice */
 const LINES = {
   rock: { again: ['또 뵙네요. 이번엔 더 조심하겠습니다.'], intro: ['천천히 하죠. 저는 좋은 패만 기다립니다.', '조용히 앉아 있을게요.'], raise: ['이번엔 진짜예요.', '오래 기다린 패입니다.'], steal: ['고맙습니다. 조금씩 모으면 되죠.', '작은 팟도 팟이죠.'], bust: ['참을성만으론 안 되네요. 잘 치셨습니다.'], champ: ['기다리면 기회는 옵니다.'] },
@@ -758,9 +826,12 @@ const ACH = [
   ['bust1', '첫 처치', '상대 1명 파산시키기'],
   ['bust3', '사냥꾼', '한 번에 상대 3명 처치'],
   ['bust5', '클럽의 전설', '한 번에 상대 5명 처치'],
+  ['bust10', '클럽 지배자', '한 번에 상대 10명 처치'],
   ['bluff', '블러프 성공', '하이카드로 베팅해서 상대를 접게 하기'],
   ['bigPot', '큰 판', '2,000만원 이상 팟 이기기'],
   ['monster', '괴물 패', '풀하우스 이상으로 쇼다운 이기기'],
+  ['quads', '네 장의 힘', '포카드 이상으로 쇼다운 이기기'],
+  ['royal', '로열 플러시', '쇼다운에서 로열 플러시로 이기기'],
   ['comeback', '기적의 역전', '올인 때 이길 확률 30% 아래에서 이기기'],
   ['hero', '읽었다!', '리버에서 상대 블러프를 콜로 잡기'],
   ['rich', '1억 클럽', '내 칩 1억원 넘기기']
@@ -802,10 +873,12 @@ function checkAch(cBust) {
     if (r.amount >= 2000) grant('bigPot');
     if (r.bluff) grant('bluff');
     if (r.monster) grant('monster');
+    if (r.quads) grant('quads');
+    if (r.royal) grant('royal');
     if (r.comeback) grant('comeback');
     if (r.hero) grant('hero');
   }
-  if (cBust) { grant('bust1'); if (G.beaten >= 3) grant('bust3'); if (G.beaten >= 5) grant('bust5'); }
+  if (cBust) { grant('bust1'); if (G.beaten >= 3) grant('bust3'); if (G.beaten >= 5) grant('bust5'); if (G.beaten >= 10) grant('bust10'); }
   if (G.seats[0].chips >= 10000) grant('rich');
 }
 
@@ -992,6 +1065,13 @@ function startHand() {
   log(`— 핸드 ${G.handNo + 1} · 블라인드 ${wonShort(sb)}/${wonShort(bb)} —`);
   G.msg = '';
   if (G.handNo === 0 && G.opp.meetNo > 1) { const m = metOf(G.opp.name); G.msgSub = `${G.opp.meetNo}번째 만남 · 지난 전적 ${m.beat}승 ${m.lost}패`; }
+  // blinds just went up: tell the player once, and make the header tag glow
+  const lvNow = Math.floor(G.handNo / HPL);
+  if (G.handNo > 0 && G.handNo % HPL === 0 && lvNow <= LEVELS.length - 1) {
+    G.msgSub = `블라인드가 올랐습니다 → ${wonShort(sb)}/${wonShort(bb)}`;
+    try { const tg = $('hBlinds').closest('.tag'); tg.classList.remove('lvup'); void tg.offsetWidth; tg.classList.add('lvup'); } catch (e) { }
+    Snd.play('turn', 0.5);
+  }
   G.dealing = true;
   render();
   G.dealing = false;
@@ -1165,7 +1245,8 @@ async function showdown(id) {
     const body = wn === ln ? (k ? `둘 다 ${wn}, ${k}` : `둘 다 ${wn}`) : `${wn} vs ${ln}` + (k ? `, ${k}` : '');
     G.msg = pw ? `당신 승리! ${body} · +${won(amount)}` : `${G.opp.name} 승리 — ${body}`;
     G.msgWin = pw;
-    G.last = { win: wi, amount, monster: pw && Math.floor(ws / P5) >= 6, comeback: pw && G.eqStart != null && G.eqStart < 0.3,
+    G.last = { win: wi, amount, monster: pw && Math.floor(ws / P5) >= 6, quads: pw && Math.floor(ws / P5) >= 7,
+      royal: pw && Math.floor(ws / P5) === 8 && Math.floor(ws / P4) % 15 === 14, comeback: pw && G.eqStart != null && G.eqStart < 0.3,
       hero: pw && G.cRiverBet && Math.floor(ev[1].score / P5) === 0 };
     Snd.play(pw ? 'win' : 'lose', 0.2);
     if (pw) { G.stats.won++; G.stats.biggest = Math.max(G.stats.biggest, amount); }
@@ -1351,7 +1432,9 @@ function render() {
   $('hNext').innerHTML = lvl >= LEVELS.length - 1 ? '최고 레벨' : `${HPL - (G.handNo % HPL)}<span class="lg">핸드 후 상승</span><span class="sm">판 뒤 ↑</span>`;
 
   const st = styleOf(G.opp);
-  $('cAvatar').textContent = G.opp.name.replace(/^.*\s/, '').slice(0, 1);
+  const avKey = G.opp.style + '/' + G.opp.hue;
+  if ($('cAvatar').dataset.k !== avKey) { $('cAvatar').dataset.k = avKey; $('cAvatar').innerHTML = faceSVG(G.opp.style, G.opp.hue); }
+  $('cAvatar').title = st.label;
   $('cAvatar').style.background = `hsl(${G.opp.hue} 45% 32%)`;
   $('cName').textContent = G.opp.name;
   $('cStyle').textContent = `${st.label} · ${'★'.repeat(Math.round(G.opp.skill * 5))}${'☆'.repeat(5 - Math.round(G.opp.skill * 5))}`;
@@ -1390,7 +1473,17 @@ function render() {
   $('pHandName').textContent = hn;
 
   $('hUser').textContent = session ? session.id : '게스트'; setSaveState(guest ? '' : saveState);
-  $('msgSub').textContent = G.msgSub || '';
+  // beginner help for the first few hands of a fresh record
+  const tipOn = !G.msgSub && G.stats.hands < 3 && G.phase === 'betting' && G.toAct === 0 && !G.thinking && !p.folded && !p.allIn;
+  let tip = '';
+  if (tipOn) {
+    const tc = maxBet() - p.bet;
+    if (G.board.length === 0) tip = '처음이라면: 페어나 A·K 같은 높은 카드는 <b>레이즈</b>, 낮고 따로 노는 카드는 <b>폴드</b>해도 괜찮아요.';
+    else if (tc > 0) tip = '아래 <b>필요 승률</b>보다 이길 것 같으면 콜, 아니면 폴드가 좋아요.';
+    else tip = '카드 위의 내 족보 이름을 보세요. 좋으면 <b>벳</b>, 애매하면 돈 없이 <b>체크</b>할 수 있어요.';
+  }
+  const ms = $('msgSub'); ms.classList.toggle('tip', !!tip);
+  if (tip) { if (ms.innerHTML !== tip) ms.innerHTML = tip; } else ms.textContent = G.msgSub || '';
   const m = $('msg'); m.textContent = G.msg; m.classList.toggle('win', !!G.msgWin); m.classList.toggle('thinking', !!G.thinking);
 
   // actions
@@ -1585,12 +1678,13 @@ const RANKS = [
   ['원페어', '같은 숫자 2장', 'Ah Ad 9c 6s 3d'],
   ['하이카드', '아무 족보 없음 — 높은 카드로 비교', 'Ac Jh 8d 5s 3c']
 ];
-$('rankList').innerHTML = RANKS.map(([t, d, cs], i) => `<div class="rank-item"><span class="no">${String(i + 1).padStart(2, '0')}</span><span class="t">${t}<small>${d}</small></span><span class="cs">${cs.split(' ').map(x => `<div class="card mini">${cardSVG(parseCard(x))}</div>`).join('')}</span></div>`).join('');
+$('rankList').innerHTML = RANKS.map(([t, d, cs], i) => `<div class="rank-item"><span class="no">${String(i + 1).padStart(2, '0')}</span><span class="t">${t}<small>${d}</small></span><span class="cs">${cs.split(' ').map(x => `<div class="card mini">${cardHTML(parseCard(x))}</div>`).join('')}</span></div>`).join('');
 
 const fan = ['Th', 'Js', 'Qd', 'Kc', 'As'];
-$('fan').innerHTML = fan.map((x, i) => { const a = (i - 2) * 11; return `<div class="card" style="transform:translateX(-50%) rotate(${a}deg)">${cardSVG(parseCard(x))}</div>`; }).join('');
+$('fan').innerHTML = fan.map((x, i) => { const a = (i - 2) * 11; return `<div class="card" style="transform:translateX(-50%) rotate(${a}deg)">${cardHTML(parseCard(x))}</div>`; }).join('');
 
 // initial state
+setTimeout(() => { rasterize('back', backSVG()); FULL.forEach(c => rasterize(c.id, cardSVG(c))); }, 200); // prepare all card bitmaps
 G.opp = makeOpp(1); G.seats[1].chips = G.opp.chips; G.dealer = 1;
 try { const last = localStorage.getItem('holdem_last_id'); if (last) $('inId').value = last; } catch (e) { }
 Store.init().then(showStoreMode);
@@ -1599,7 +1693,5 @@ refreshStart();
 showScreen('start');
 })();
 </script>
-
-
 </body>
 </html>
