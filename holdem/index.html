@@ -91,7 +91,21 @@ h1{font-family:var(--f-display);font-weight:400;font-size:clamp(40px,10vw,72px);
 .fly{position:fixed;left:0;top:0;width:16px;height:16px;border-radius:50%;z-index:40;pointer-events:none;background:repeating-conic-gradient(#c73a3a 0 30deg,#f4ecd8 30deg 45deg);box-shadow:inset 0 0 0 3px #c73a3a,0 1px 2px rgba(0,0,0,.6);transition:transform .6s cubic-bezier(.4,.1,.3,1),opacity .2s .5s}
 .stack.bump,.pot.bump{animation:bump .45s ease-out}
 @keyframes bump{40%{transform:scale(1.18);color:#fff3c4}}
-details.log .rs{color:#ff8f86}
+details.log .lc{display:inline-block;background:#fffdf7;color:#16171b;border-radius:3px;padding:0 3px;margin:0 1px;font-weight:600;line-height:1.35;box-shadow:0 1px 0 rgba(0,0,0,.55)}
+details.log .lc.r{color:#c8102e}
+/* achievement pop-up and badge list */
+.ach{position:fixed;left:50%;top:max(14px,env(safe-area-inset-top,0px));transform:translateX(-50%);z-index:45;display:flex;align-items:center;gap:10px;background:linear-gradient(180deg,#2a2412,#17140a);border:1.5px solid var(--gold);border-radius:14px;padding:8px 14px 8px 8px;box-shadow:0 10px 26px rgba(0,0,0,.55);max-width:min(340px,calc(100vw - 32px));box-sizing:border-box;animation:achIn .35s cubic-bezier(.2,.9,.3,1.3);pointer-events:none}
+.ach.out{opacity:0;transform:translate(-50%,-10px);transition:opacity .35s,transform .35s}
+.ach b{display:block;color:var(--gold);font-size:14px}
+.ach span{font-size:12px;color:var(--muted);line-height:1.4}
+@keyframes achIn{from{opacity:0;transform:translate(-50%,-16px) scale(.9)}}
+.medal{width:34px;height:34px;flex:none}
+.badges{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-top:8px}
+.badge{display:flex;gap:8px;align-items:center;padding:7px 9px;border-radius:10px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);font-size:12.5px;line-height:1.35;color:var(--muted)}
+.badge .medal{width:26px;height:26px}
+.badge b{display:block;font-size:13px;color:var(--cream)}
+.badge.off{opacity:.45}
+.badge.off .medal{filter:grayscale(1)}
 
 /* ---------- Table ---------- */
 .table{position:relative;flex:1;min-height:470px;border-radius:clamp(90px,22vw,180px);
@@ -301,12 +315,12 @@ details.log ol{margin:6px 0 0;padding-left:20px;max-height:160px;overflow:auto;f
         </div>
       </div>
       <div class="act-row" id="actRow">
-        <button class="btn btn-danger" id="bFold">폴드</button>
-        <button class="btn btn-cream" id="bCall">체크</button>
-        <button class="btn btn-gold" id="bRaise">레이즈</button>
+        <button class="btn btn-danger" id="bFold" title="폴드 (F)">폴드</button>
+        <button class="btn btn-cream" id="bCall" title="체크/콜 (C)">체크</button>
+        <button class="btn btn-gold" id="bRaise" title="벳/레이즈 (R)">레이즈</button>
       </div>
       <div class="next-row" id="nextRow" hidden>
-        <button class="btn btn-gold" id="bNext">다음 핸드 ▶</button>
+        <button class="btn btn-gold" id="bNext" title="다음 핸드 (N)">다음 핸드 ▶</button>
       </div>
       <div class="status" id="status"></div>
       <details class="log"><summary>핸드 기록</summary><ol id="logList"></ol></details>
@@ -334,6 +348,9 @@ details.log ol{margin:6px 0 0;padding-left:20px;max-height:160px;overflow:auto;f
       <li>컴퓨터는 공용 카드 모양도 봅니다. 플러시·스트레이트가 될 것 같은 보드에서는 좋은 패로 크게 걸고, 밋밋한 보드에서는 작게 걸기도 합니다.</li>
       <li>콜할 차례에는 <b>필요 승률</b>이 나옵니다. 내 패가 이길 확률이 이보다 높다고 생각되면 콜하는 것이 길게 보면 이득입니다.</li>
       <li>같은 이름의 상대를 다시 만나면 지난 전적이 나옵니다. 헤더의 <b>기록</b>에서 상대별 전적을 볼 수 있습니다.</li>
+      <li>컴퓨터는 내 <b>베팅 크기</b>도 기억합니다. 크게 걸 때 블러프가 많았는지, 작게 걸 때 진짜 패가 많았는지 보고 콜을 정합니다.</li>
+      <li><b>업적</b> — 첫 처치, 3연승, 블러프 성공, 기적의 역전 같은 목표를 이루면 메달을 받습니다. 헤더의 <b>기록</b>에서 모아 볼 수 있습니다.</li>
+      <li>컴퓨터 키보드로도 할 수 있습니다: <b>F</b> 폴드 · <b>C</b> 체크/콜 · <b>R</b> 벳/레이즈 · <b>N</b> 또는 <b>Enter</b> 다음 핸드.</li>
     </ul>
 
     <h3>한 핸드의 진행</h3>
@@ -382,9 +399,13 @@ details.log ol{margin:6px 0 0;padding-left:20px;max-height:160px;overflow:auto;f
     <p class="note" id="sNote"></p>
     <h3>상대별 전적</h3>
     <dl class="kv" id="sMet"></dl>
+    <h3 id="sAchTitle">업적</h3>
+    <div class="badges" id="sAch"></div>
     <div class="btns"><button class="btn btn-gold" data-close>닫기</button></div>
   </div>
 </div>
+
+<div class="ach" id="achPop" role="status" hidden></div>
 
 <div class="modal-back" id="mResult" hidden>
   <div class="modal" role="dialog" aria-modal="true" style="max-width:440px;text-align:center">
@@ -673,6 +694,7 @@ const Snd = {
         case 'turn': this.tone(a, 880, 0.14, 'sine', 0.05, at); break;
         case 'win': [523, 659, 784, 1047].forEach((f, i) => this.tone(a, f, 0.22, 'triangle', 0.08, at + i * 0.09)); break;
         case 'lose': this.tone(a, 330, 0.25, 'sine', 0.06, at, 220); break;
+        case 'ach': [784, 988, 1175, 1568].forEach((f, i) => this.tone(a, f, 0.3, 'sine', 0.06, at + i * 0.07)); break;
       }
     } catch (e) { }
   }
@@ -712,7 +734,13 @@ function say(text, ms) {
   sayT2 = setTimeout(hideSay, (ms || 2600) + 450);
 }
 /* What this opponent has learned about the player (kept inside opp, so old saves still load) */
-function readOf(o) { if (!o.read) o.read = { act: 0, aggr: 0, faced: 0, fold: 0, shows: 0, bluffs: 0 }; return o.read; }
+const READ0 = { act: 0, aggr: 0, faced: 0, fold: 0, shows: 0, bluffs: 0, bigShows: 0, bigBluffs: 0, smallShows: 0, smallBluffs: 0 };
+function readOf(o) { const r = o.read || (o.read = {}); for (const k in READ0) if (typeof r[k] !== 'number') r[k] = 0; return r; }
+/* how often the player's big (≥70% pot) or small bets after the flop turned out to be bluffs */
+function sizeBluff(o, big) {
+  const r = readOf(o), sh = big ? r.bigShows : r.smallShows, bl = big ? r.bigBluffs : r.smallBluffs;
+  return { rate: (bl + 0.5) / (sh + 2), n: sh };
+}
 function readRates(o) {
   const r = readOf(o);
   return { aggr: (r.aggr + 1) / (r.act + 4), fold: (r.fold + 1) / (r.faced + 3), bluff: (r.bluffs + 0.5) / (r.shows + 2), n: r.act, conf: Math.min(1, r.act / 20) };
@@ -721,6 +749,65 @@ function readRates(o) {
 /* Who the player has met (by name) — kept in stats, so old saves still load */
 function metOf(name) { const m = G.stats.met || (G.stats.met = {}); return m[name] || (m[name] = { n: 0, beat: 0, lost: 0 }); }
 function meet(o) { const m = metOf(o.name); m.n++; o.meetNo = m.n; }
+
+/* ================= Achievements (kept in stats.ach, so old saves still load) ================= */
+const ACH = [
+  ['firstWin', '첫 승리', '핸드를 처음 이기기'],
+  ['streak3', '3연승', '핸드 3번 연속 이기기'],
+  ['streak5', '5연승', '핸드 5번 연속 이기기'],
+  ['bust1', '첫 처치', '상대 1명 파산시키기'],
+  ['bust3', '사냥꾼', '한 번에 상대 3명 처치'],
+  ['bust5', '클럽의 전설', '한 번에 상대 5명 처치'],
+  ['bluff', '블러프 성공', '하이카드로 베팅해서 상대를 접게 하기'],
+  ['bigPot', '큰 판', '2,000만원 이상 팟 이기기'],
+  ['monster', '괴물 패', '풀하우스 이상으로 쇼다운 이기기'],
+  ['comeback', '기적의 역전', '올인 때 이길 확률 30% 아래에서 이기기'],
+  ['hero', '읽었다!', '리버에서 상대 블러프를 콜로 잡기'],
+  ['rich', '1억 클럽', '내 칩 1억원 넘기기']
+];
+function achOf() {
+  if (G.stats.ach) return G.stats.ach;
+  const a = G.stats.ach = {}, s = G.stats; // older saves: give what the record already proves
+  if (s.won > 0) a.firstWin = 1;
+  if (s.biggest >= 2000) a.bigPot = 1;
+  if (G.best >= 1) a.bust1 = 1; if (G.best >= 3) a.bust3 = 1; if (G.best >= 5) a.bust5 = 1;
+  return a;
+}
+let achQ = [], achBusy = false;
+const MEDAL = '<svg class="medal" viewBox="0 0 40 40" aria-hidden="true"><path d="M13 2h6l3 12h-6z" fill="#b3192f"/><path d="M27 2h-6l-3 12h6z" fill="#22396b"/><circle cx="20" cy="25" r="12" fill="#e3b95e" stroke="#8a6a28" stroke-width="2"/><circle cx="20" cy="25" r="8" fill="none" stroke="#fff3c4" stroke-width="1.4" opacity=".7"/><path d="M20 19.5l1.7 3.5 3.8.5-2.8 2.6.7 3.8-3.4-1.8-3.4 1.8.7-3.8-2.8-2.6 3.8-.5z" fill="#fff8e0"/></svg>';
+function grant(key) {
+  const a = achOf(); if (a[key]) return;
+  a[key] = G.stats.hands || 1;
+  const d = ACH.find(x => x[0] === key); if (!d) return;
+  log(`업적 달성: ${d[1]}`);
+  achQ.push(d); if (!achBusy) nextAch();
+}
+async function nextAch() {
+  const d = achQ.shift(); if (!d) { achBusy = false; return; }
+  achBusy = true; const el = $('achPop');
+  el.innerHTML = `${MEDAL}<div><b>업적 달성 · ${d[1]}</b><span>${d[2]}</span></div>`;
+  el.classList.remove('out'); el.hidden = false; Snd.play('ach');
+  await sleep(2600); el.classList.add('out'); await sleep(380); el.hidden = true;
+  nextAch();
+}
+/* called once at the end of every hand */
+function checkAch(cBust) {
+  const s = G.stats, r = G.last || {};
+  if (r.win === 0) { s.streak = (s.streak || 0) + 1; s.bestStreak = Math.max(s.bestStreak || 0, s.streak); }
+  else if (r.win === 1) s.streak = 0;
+  if (r.win === 0) {
+    grant('firstWin');
+    if (s.streak >= 3) grant('streak3');
+    if (s.streak >= 5) grant('streak5');
+    if (r.amount >= 2000) grant('bigPot');
+    if (r.bluff) grant('bluff');
+    if (r.monster) grant('monster');
+    if (r.comeback) grant('comeback');
+    if (r.hero) grant('hero');
+  }
+  if (cBust) { grant('bust1'); if (G.beaten >= 3) grant('bust3'); if (G.beaten >= 5) grant('bust5'); }
+  if (G.seats[0].chips >= 10000) grant('rich');
+}
 
 /* ================= Game state ================= */
 const LEVELS = [[10, 20], [20, 40], [30, 60], [50, 100], [100, 200], [150, 300], [200, 400], [300, 600], [500, 1000], [1000, 2000]];
@@ -897,6 +984,7 @@ function startHand() {
   G.dealer = 1 - G.dealer;
   G.deck = shuffle(FULL); G.board = []; G.pot = 0; G.street = 0; G.reveal = false; G.winIds = null;
   G.bubbles = ['', '']; G.msgWin = false; G.thinking = false; G.msgSub = ''; G.eq = null; G.pAggr = false;
+  G.pSizes = []; G.cRiverBet = false; G.eqStart = null; G.last = null;
   for (const s of G.seats) Object.assign(s, { hand: [G.deck.pop(), G.deck.pop()], bet: 0, folded: false, allIn: false, acted: false });
   const [sb, bb] = blinds();
   post(G.seats[G.dealer], sb); post(G.seats[1 - G.dealer], bb);
@@ -973,6 +1061,11 @@ function apply(i, type, to) {
   } else {
     to = Math.min(Math.max(to, mb + G.minRaise), s.bet + s.chips);
     const inc = to - mb;
+    if (G.board.length) {
+      const add = to - s.bet, potNow = potTotal();
+      if (i === 0 && G.pSizes) G.pSizes.push(add >= potNow * 0.7 ? 1 : 0); // remember how big the player bets
+      if (i === 1 && G.street === 3) G.cRiverBet = true;
+    }
     move(s, to - s.bet);
     if (inc >= G.minRaise) G.minRaise = inc;
     if (inc > 0 && !o.allIn && !o.folded) o.acted = false;
@@ -1011,7 +1104,7 @@ async function endRound(id) {
   if (live < 2) {
     G.reveal = true; G.msg = '올인! 남은 카드를 공개합니다.'; hideSay();
     const upd = () => { G.eq = equityVs(G.seats[0].hand, G.seats[1].hand, G.board); };
-    upd(); render();
+    upd(); if (G.eq) G.eqStart = G.eq[0]; render();
     while (G.board.length < 5) { await sleep(1100); if (!alive(id)) return false; dealStreet(); upd(); render(); }
     await sleep(800); if (!alive(id)) return false;
     await showdown(id); return false;
@@ -1029,6 +1122,7 @@ function finishFold() {
   s.chips += amount; G.seats[0].bet = G.seats[1].bet = 0; G.pot = 0;
   G.msg = w === 0 ? `${G.opp.name} 폴드 — 당신이 ${won(amount)}을 가져갑니다.` : `폴드 — ${G.opp.name}이(가) ${won(amount)}을 가져갑니다.`;
   G.msgWin = w === 0;
+  G.last = { win: w, amount, bluff: w === 0 && G.pAggr && G.board.length >= 3 && Math.floor(best(G.seats[0].hand.concat(G.board)).score / P5) === 0 };
   if (w === 0) { G.stats.won++; G.stats.biggest = Math.max(G.stats.biggest, amount); }
   else if (Math.random() < 0.4) say(lineOf(G.opp, 'steal'));
   G.flyTo = [w];
@@ -1042,8 +1136,14 @@ async function showdown(id) {
   const ev = G.seats.map(s => best(s.hand.concat(G.board)));
   if (G.pAggr) { // remember if the player's aggression was a bluff
     const r = readOf(G.opp), cat = Math.floor(ev[0].score / P5);
-    r.shows++; if (cat === 0 || (cat === 1 && ev[0].score < ev[1].score)) r.bluffs++;
+    const isBluff = cat === 0 || (cat === 1 && ev[0].score < ev[1].score);
+    r.shows++; if (isBluff) r.bluffs++;
+    if (G.pSizes && G.pSizes.length) { // the last bet after the flop tells the most
+      const big = G.pSizes[G.pSizes.length - 1] === 1;
+      if (big) { r.bigShows++; if (isBluff) r.bigBluffs++; } else { r.smallShows++; if (isBluff) r.smallBluffs++; }
+    }
   }
+  log(`공개: 나 ${G.seats[0].hand.map(cardStr).join(' ')} · ${G.opp.name} ${G.seats[1].hand.map(cardStr).join(' ')}`);
   const amount = potTotal(); G.pot = 0;
   const pn = describe(ev[0].score), cn = describe(ev[1].score);
   G.winIds = new Set();
@@ -1065,6 +1165,8 @@ async function showdown(id) {
     const body = wn === ln ? (k ? `둘 다 ${wn}, ${k}` : `둘 다 ${wn}`) : `${wn} vs ${ln}` + (k ? `, ${k}` : '');
     G.msg = pw ? `당신 승리! ${body} · +${won(amount)}` : `${G.opp.name} 승리 — ${body}`;
     G.msgWin = pw;
+    G.last = { win: wi, amount, monster: pw && Math.floor(ws / P5) >= 6, comeback: pw && G.eqStart != null && G.eqStart < 0.3,
+      hero: pw && G.cRiverBet && Math.floor(ev[1].score / P5) === 0 };
     Snd.play(pw ? 'win' : 'lose', 0.2);
     if (pw) { G.stats.won++; G.stats.biggest = Math.max(G.stats.biggest, amount); }
     log(`쇼다운: ${pw ? '나' : G.opp.name} 승리 · 나 ${pn} / ${G.opp.name} ${cn}${k ? ' (' + k + ')' : ''}`);
@@ -1072,7 +1174,7 @@ async function showdown(id) {
     const half = Math.floor(amount / 2), rem = amount - half * 2;
     G.seats[0].chips += half; G.seats[1].chips += half; G.seats[1 - G.dealer].chips += rem; G.flyTo = [0, 1];
     ev[0].cards.forEach(c => G.winIds.add(c.id)); ev[1].cards.forEach(c => G.winIds.add(c.id));
-    G.msg = `무승부 — 둘 다 ${pn}, 5장이 같아 팟을 나눕니다.`; G.msgWin = false;
+    G.msg = `무승부 — 둘 다 ${pn}, 5장이 같아 팟을 나눕니다.`; G.msgWin = false; G.last = { win: -1, amount };
     G.msgSub = '금색 테두리 = 양쪽의 최종 5장';
     log(`쇼다운: 무승부 (${pn})`);
   }
@@ -1111,6 +1213,7 @@ function afterHand() {
   const pBust = G.seats[0].chips <= 0, cBust = G.seats[1].chips <= 0;
   if (cBust) { G.beaten++; G.best = Math.max(G.best, G.beaten); metOf(G.opp.name).beat++; }
   else if (pBust) metOf(G.opp.name).lost++;
+  try { checkAch(cBust); } catch (e) { console.warn(e); }
   save();
   render();
   if (G.flyTo) { flyChips(G.flyTo); G.flyTo = null; }
@@ -1192,6 +1295,10 @@ function cpuDecide() {
   callNeed -= clamp(((rd.aggr - 0.3) * 0.3 + (rd.bluff - 0.25) * 0.25) * w, -0.08, 0.1);
   if (rd.aggr < 0.2 && toCall > pt * 0.6) callNeed += 0.05 * w;
   if (tex.scary && toCall > pt * 0.5) callNeed += 0.03 * skill; // a big bet on a scary board usually means it hit
+  if (G.board.length && toCall > 0) { // bet size tells: does this player bluff with big bets, or only bet big with real hands?
+    const big = toCall >= (pt - toCall) * 0.7, sb = sizeBluff(G.opp, big);
+    callNeed -= clamp((sb.rate - 0.25) * 0.35 * skill * Math.min(1, sb.n / 4), -0.06, 0.1);
+  }
   if (e > 0.82 && R < 0.3 + st.aggr * 0.5) {
     if (e > 0.88 && Math.random() < 0.35) return raise(allInTo);
     return raise(sizeTo(rnd(0.7, 1.1) + more * 0.5));
@@ -1307,12 +1414,15 @@ function render() {
   } else {
     $('status').textContent = over ? '' : '준비되면 다음 핸드를 시작하세요';
   }
-  const logHtml = G.log.map(t => `<li>${t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/([0-9AJQK]{1,2}[♥♦])/g, '<span class="rs">$1</span>')}</li>`).join('');
+  const logHtml = G.log.map(t => `<li>${t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/(10|[2-9AJQK])([♠♥♦♣])/g, (m, r, su) => `<span class="lc${su === '♥' || su === '♦' ? ' r' : ''}">${r}${su}</span>`)}</li>`).join('');
   if (logHtml !== G._logHtml) { G._logHtml = logHtml; $('logList').innerHTML = logHtml; }
 }
 
 /* ================= Modals & screens ================= */
-function openModal(id) { $(id).hidden = false; const b = $(id).querySelector('button'); if (b) b.focus(); }
+function openModal(id) {
+  $(id).hidden = false; const b = $(id).querySelector('button'); if (b) b.focus({ preventScroll: true });
+  const md = $(id).querySelector('.modal'); if (md) md.scrollTop = 0; // long windows open at the top, not at the close button
+}
 function closeModal(id) { $(id).hidden = true; }
 document.querySelectorAll('.modal-back').forEach(m => {
   m.addEventListener('click', e => { if (e.target === m && m.id !== 'mResult') m.hidden = true; });
@@ -1426,13 +1536,17 @@ $('btnSound').addEventListener('click', () => { Snd.set(!Snd.on); if (Snd.on) Sn
 function openStats() {
   const s = G.stats, pct = s.hands ? Math.round(s.won / s.hands * 100) + '%' : '-';
   const row = ([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`;
-  $('sKv').innerHTML = [['플레이한 핸드', s.hands + '판'], ['이긴 핸드', `${s.won}판 (${pct})`], ['가장 큰 팟', s.biggest ? won(s.biggest) : '-'],
+  $('sKv').innerHTML = [['플레이한 핸드', s.hands + '판'], ['이긴 핸드', `${s.won}판 (${pct})`], ['가장 큰 팟', s.biggest ? won(s.biggest) : '-'], ['연승 (지금 / 최고)', `${s.streak || 0} / ${s.bestStreak || 0}`],
     ['처치한 상대', G.beaten + '명'], ['최고 기록', G.best + '명'], ['내 칩', won(G.seats[0].chips)]].map(row).join('');
   const r = readOf(G.opp), rd = readRates(G.opp);
   const aggrTxt = r.act < 6 ? '아직 모름' : rd.aggr > 0.4 ? '공격적 (자주 올림)' : rd.aggr < 0.2 ? '조심스러움 (잘 안 올림)' : '보통';
   const foldTxt = r.faced < 4 ? '아직 모름' : rd.fold > 0.55 ? '잘 접음' : rd.fold < 0.25 ? '거의 안 접음' : '보통';
   const bluffTxt = r.shows < 2 ? '아직 모름' : `${r.bluffs}번 / 공개 ${r.shows}번`;
-  $('sRead').innerHTML = [['상대', G.opp.name], ['내 베팅 성향', aggrTxt], ['베팅을 받으면', foldTxt], ['들킨 블러프', bluffTxt]].map(row).join('');
+  const sizeTxt = big => { const b = sizeBluff(G.opp, big); return b.n < 2 ? '아직 모름' : b.rate > 0.45 ? '블러프가 많음' : b.rate < 0.2 ? '대부분 진짜 패' : '반반'; };
+  $('sRead').innerHTML = [['상대', G.opp.name], ['내 베팅 성향', aggrTxt], ['베팅을 받으면', foldTxt], ['들킨 블러프', bluffTxt], ['크게 걸 때', sizeTxt(true)], ['작게 걸 때', sizeTxt(false)]].map(row).join('');
+  const a = achOf(), got = ACH.filter(d => a[d[0]]).length;
+  $('sAchTitle').textContent = `업적 (${got} / ${ACH.length})`;
+  $('sAch').innerHTML = ACH.map(([k, t, d]) => `<div class="badge${a[k] ? '' : ' off'}">${MEDAL}<div><b>${t}</b>${d}</div></div>`).join('');
   const met = Object.entries(G.stats.met || {}).sort((a, b) => b[1].n - a[1].n || b[1].beat - a[1].beat).slice(0, 8);
   $('sMet').innerHTML = met.length ? met.map(([nm, m]) => row([nm, `만남 ${m.n}번 · ${m.beat}승 ${m.lost}패`])).join('') : row(['아직 없음', '-']);
   $('sNote').textContent = '컴퓨터는 이 습관을 보고 전략을 바꿉니다. 잘 접으면 블러프가 늘고, 자주 올리면 더 가볍게 콜합니다. 새 상대는 처음부터 다시 배웁니다.';
@@ -1442,7 +1556,17 @@ $('btnStats').addEventListener('click', openStats);
 $('bFold').addEventListener('click', () => playerAct('fold'));
 $('bCall').addEventListener('click', () => playerAct('call'));
 $('bRaise').addEventListener('click', () => playerAct('raise'));
-$('bNext').addEventListener('click', startHand);
+$('bNext').addEventListener('click', () => { if (G.phase === 'done' && $('mResult').hidden && G.seats[0].chips > 0 && G.seats[1].chips > 0) startHand(); });
+/* keyboard: F fold · C check/call · R bet/raise · N or Enter next hand */
+document.addEventListener('keydown', e => {
+  if ($('game').hidden || e.ctrlKey || e.metaKey || e.altKey || e.repeat) return;
+  if (document.querySelector('.modal-back:not([hidden])')) return;
+  const t = e.target, tag = t && t.tagName;
+  if (tag === 'INPUT' && t.type !== 'range' || tag === 'TEXTAREA' || tag === 'BUTTON' || tag === 'SUMMARY') return;
+  const k = e.key.toLowerCase(), hit = id => { const b = $(id); if (b && !b.disabled && !b.closest('[hidden]')) { e.preventDefault(); b.click(); } };
+  if (k === 'f') hit('bFold'); else if (k === 'c') hit('bCall'); else if (k === 'r') hit('bRaise');
+  else if (k === 'n' || k === 'enter') hit('bNext');
+});
 $('raiseRange').addEventListener('input', e => { const L = legal(); raiseTo = rangeToAmount(+e.target.value, L); updateRaiseLabel(L); });
 $('qHalf').addEventListener('click', () => { const L = legal(); setRaise(r10(L.mb + (L.pt + L.toCall) / 2)); });
 $('qPot').addEventListener('click', () => { const L = legal(); setRaise(r10(L.mb + L.pt + L.toCall)); });
