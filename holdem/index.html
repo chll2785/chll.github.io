@@ -156,8 +156,9 @@ details.log .lc.r{color:#c8102e}
 /* ---------- Cards ---------- */
 .card{width:var(--cw);aspect-ratio:5/7;border-radius:7%;box-shadow:0 2px 0 rgba(0,0,0,.25),0 6px 14px rgba(0,0,0,.35);position:relative;flex:none;transition:transform .25s,box-shadow .25s,filter .25s;max-width:100%}
 .card svg{display:block;width:100%;height:100%;color-scheme:only light;forced-color-adjust:none}
-/* cards are bitmaps (img) so phone dark modes don't wash them out */
-.card img.ci{display:block;width:100%;height:100%;border-radius:inherit;-webkit-user-drag:none;user-select:none;-webkit-user-select:none;pointer-events:none;forced-color-adjust:none}
+/* cards are painted into <canvas>: phone dark modes (Samsung Internet, Chrome "dark websites") re-color SVG and images but leave canvas alone */
+.card canvas.ci{display:block;width:100%;height:100%;border-radius:inherit;pointer-events:none}
+.card:not(.slot){background:transparent}
 /* tells phone browsers this page already has its own dark look (stops forced re-coloring) */
 @media (prefers-color-scheme: dark){:root{color-scheme:only dark}}
 .card{background:#fffdf7;-webkit-tap-highlight-color:transparent}
@@ -554,28 +555,29 @@ function backSVG() {
     <g transform="translate(100 140)"><circle r="40" fill="#9e1b2a" stroke="#f3e6c8" stroke-width="2"/><path d="M0 -30 L21 0 L0 30 L-21 0Z" fill="#f3e6c8"/><path d="M0 -18 L12 0 L0 18 L-12 0Z" fill="#9e1b2a"/></g></svg>`;
 }
 
-/* Cards as images: some phone browsers (Samsung Internet, in-app browsers in dark mode) re-color inline SVG,
-   which made the cards look washed out. Each card is drawn once into a PNG bitmap, which those browsers leave alone.
-   Until the PNG is ready the same picture is shown as an SVG image. */
-const CARD_PNG = {}, CARD_WAIT = {};
-function svgUrl(svg) { return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg.replace('<svg ', '<svg xmlns="http://www.w3.org/2000/svg" width="400" height="560" ')); }
-function rasterize(key, svg) {
-  if (CARD_PNG[key] || CARD_WAIT[key]) return; CARD_WAIT[key] = 1;
-  const im = new Image();
-  im.onload = () => {
-    try {
-      const cv = document.createElement('canvas'); cv.width = 400; cv.height = 560;
-      cv.getContext('2d').drawImage(im, 0, 0, 400, 560);
-      CARD_PNG[key] = cv.toDataURL('image/png');
-      document.querySelectorAll('img.ci[data-ck="' + key + '"]').forEach(e => { e.src = CARD_PNG[key]; });
-    } catch (e) { }
-  };
-  im.src = svgUrl(svg);
+/* Cards on canvas: some phone browsers in dark mode (Samsung Internet, Chrome "dark theme for websites")
+   re-color inline SVG and even <img> pictures, which made the cards grey/pink. Canvas drawings are left alone,
+   so each card picture (the same SVG) is drawn into a <canvas>. */
+const CARD_IMG = {};
+function svgUrl(svg) { return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg.replace('<svg ', '<svg xmlns="http://www.w3.org/2000/svg" width="300" height="420" ')); }
+function drawCard(cv) {
+  const e = CARD_IMG[cv.dataset.ck]; if (!e || !e.ok) return;
+  try { const x = cv.getContext('2d'); x.clearRect(0, 0, cv.width, cv.height); x.drawImage(e.img, 0, 0, cv.width, cv.height); } catch (err) { }
+}
+function cardBitmap(key, svg) {
+  let e = CARD_IMG[key];
+  if (!e) {
+    e = CARD_IMG[key] = { img: new Image(), ok: false };
+    e.img.onload = () => { e.ok = true; document.querySelectorAll('canvas.ci[data-ck="' + key + '"]').forEach(drawCard); };
+    e.img.src = svgUrl(svg);
+  }
+  return e;
 }
 function cardImg(key, svg, label) {
-  if (!CARD_PNG[key]) rasterize(key, svg);
-  return `<img class="ci" data-ck="${key}" alt="${label}" draggable="false" src="${CARD_PNG[key] || svgUrl(svg)}">`;
+  cardBitmap(key, svg);
+  return `<canvas class="ci" data-ck="${key}" width="300" height="420" role="img" aria-label="${label}"></canvas>`;
 }
+function paintCards(root) { if (root) root.querySelectorAll('canvas.ci').forEach(drawCard); }
 const cardHTML = c => cardImg(c.id, cardSVG(c), cardStr(c));
 const backHTML = () => cardImg('back', backSVG(), '뒷면');
 
@@ -591,7 +593,7 @@ function setCards(el, list) {
     if (!node || node.dataset.key !== key) {
       const n = document.createElement('div');
       n.className = 'card' + (cls ? ' ' + cls : '');
-      n.dataset.key = key; n.innerHTML = html;
+      n.dataset.key = key; n.innerHTML = html; paintCards(n);
       if (it.card) {
         const wasBack = node && node.dataset.key.startsWith('b');
         n.classList.add(wasBack && it.up ? 'flip' : 'deal');
@@ -1679,12 +1681,14 @@ const RANKS = [
   ['하이카드', '아무 족보 없음 — 높은 카드로 비교', 'Ac Jh 8d 5s 3c']
 ];
 $('rankList').innerHTML = RANKS.map(([t, d, cs], i) => `<div class="rank-item"><span class="no">${String(i + 1).padStart(2, '0')}</span><span class="t">${t}<small>${d}</small></span><span class="cs">${cs.split(' ').map(x => `<div class="card mini">${cardHTML(parseCard(x))}</div>`).join('')}</span></div>`).join('');
+paintCards($('rankList'));
 
 const fan = ['Th', 'Js', 'Qd', 'Kc', 'As'];
 $('fan').innerHTML = fan.map((x, i) => { const a = (i - 2) * 11; return `<div class="card" style="transform:translateX(-50%) rotate(${a}deg)">${cardHTML(parseCard(x))}</div>`; }).join('');
+paintCards($('fan'));
 
 // initial state
-setTimeout(() => { rasterize('back', backSVG()); FULL.forEach(c => rasterize(c.id, cardSVG(c))); }, 200); // prepare all card bitmaps
+setTimeout(() => { cardBitmap('back', backSVG()); FULL.forEach(c => cardBitmap(c.id, cardSVG(c))); }, 200); // prepare all card pictures
 G.opp = makeOpp(1); G.seats[1].chips = G.opp.chips; G.dealer = 1;
 try { const last = localStorage.getItem('holdem_last_id'); if (last) $('inId').value = last; } catch (e) { }
 Store.init().then(showStoreMode);
